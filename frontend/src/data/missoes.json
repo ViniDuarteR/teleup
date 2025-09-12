@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "titulo": "Maratona de Chamadas",
+    "descricao": "Complete 50 chamadas hoje e ganhe 200 pontos!",
+    "progresso": 35,
+    "meta": 50,
+    "pontos_recompensa": 200,
+    "tipo": "diaria",
+    "status": "ativa"
+  },
+  {
+    "id": 2,
+    "titulo": "Rei da Resolução",
+    "descricao": "Resolva 25 chamadas sem transferir",
+    "progresso": 18,
+    "meta": 25,
+    "pontos_recompensa": 350,
+    "tipo": "semanal",
+    "status": "ativa"
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "titulo": "Primeiras 100 Chamadas",
+    "descricao": "Completou suas primeiras 100 chamadas",
+    "icone": "phone",
+    "desbloqueada": true,
+    "data": "2024-01-15"
+  },
+  {
+    "id": 2,
+    "titulo": "Operador Mais Rápido",
+    "descricao": "Tempo médio de atendimento abaixo de 3 minutos",
+    "icone": "zap",
+    "desbloqueada": true,
+    "data": "2024-01-20"
+  },
+  {
+    "id": 3,
+    "titulo": "Mestre da Satisfação",
+    "descricao": "95% de satisfação do cliente por uma semana",
+    "icone": "star",
+    "desbloqueada": true,
+    "data": "2024-01-25"
+  },
+  {
+    "id": 4,
+    "titulo": "Ninja das Vendas",
+    "descricao": "Complete 100 vendas em um mês",
+    "icone": "target",
+    "desbloqueada": false,
+    "data": null
+  },
+  {
+    "id": 5,
+    "titulo": "Guerreiro da Madrugada",
+    "descricao": "Trabalhe 30 turnos noturnos",
+    "icone": "moon",
+    "desbloqueada": false,
+    "data": null
+  }
+]
