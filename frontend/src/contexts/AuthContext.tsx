@@ -99,11 +99,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('teleup_token');
-    localStorage.removeItem('teleup_user');
+  const logout = async () => {
+    try {
+      // Chamar API de logout para invalidar sessão no backend
+      if (token) {
+        await fetch('http://localhost:3001/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao fazer logout no backend:', error);
+      // Continuar com logout local mesmo se der erro no backend
+    } finally {
+      // Limpar dados locais
+      setToken(null);
+      setUser(null);
+      localStorage.removeItem('teleup_token');
+      localStorage.removeItem('teleup_user');
+    }
   };
 
   const isAuthenticated = !!token && !!user;

@@ -1,8 +1,11 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Home, ArrowLeft } from "lucide-react";
+import { Home, ArrowLeft, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface HeaderProps {
   operador: {
@@ -17,7 +20,20 @@ interface HeaderProps {
 }
 
 const Header = ({ operador }: HeaderProps) => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const xpPercentage = (operador.xp_atual / operador.xp_proximo_nivel) * 100;
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Logout realizado com sucesso!");
+      navigate("/login");
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+      toast.error("Erro ao fazer logout. Tente novamente.");
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 gaming-card-glow border-b">
@@ -77,6 +93,19 @@ const Header = ({ operador }: HeaderProps) => {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Botão de Logout */}
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleLogout}
+              className="text-muted-foreground hover:text-destructive hover:border-destructive transition-colors"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sair
+            </Button>
           </div>
         </div>
       </div>
