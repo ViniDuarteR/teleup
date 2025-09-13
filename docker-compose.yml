@@ -8,6 +8,7 @@ services:
       - /usr/src/app/backend/node_modules
     environment:
       - DB_HOST=db
+      - DB_PORT=3306
       - DB_USER=teleup_user
       - DB_PASSWORD=teleup_pass
       - DB_NAME=teleup_db
@@ -31,7 +32,7 @@ services:
       MYSQL_USER: teleup_user
       MYSQL_PASSWORD: teleup_pass
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql-data:/var/lib/mysql
 

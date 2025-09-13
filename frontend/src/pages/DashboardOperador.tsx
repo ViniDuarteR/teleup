@@ -1,25 +1,131 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import Header from "../components/Header";
 import GridMetas from "../components/GridMetas";
 import FilaInteligente from "../components/FilaInteligente";
 import PainelGamificacao from "../components/PainelGamificacao";
+import { toast } from "sonner";
 
-// Import mock data
-import operadorData from "../data/operador.json";
-import metasData from "../data/metas.json";
-import missoesData from "../data/missoes.json";
-import conquistasData from "../data/conquistas.json";
+interface Meta {
+  id: number;
+  tipo: string;
+  valor_meta: number;
+  valor_atual: number;
+  periodo: string;
+  concluida: boolean;
+  pontos_recompensa: number;
+}
+
+interface Missao {
+  id: number;
+  titulo: string;
+  descricao: string;
+  tipo: string;
+  objetivo: number;
+  progresso_atual: number;
+  concluida: boolean;
+  recompensa_pontos: number;
+  recompensa_xp: number;
+}
+
+interface Conquista {
+  id: number;
+  nome: string;
+  descricao: string;
+  icone: string;
+  categoria: string;
+  pontos_recompensa: number;
+}
 
 const DashboardOperador = () => {
-  const [operador] = useState(operadorData);
-  const [metas] = useState(metasData);
-  const [missoes] = useState(missoesData);
-  const [conquistas] = useState(conquistasData.filter(c => c.desbloqueada).slice(0, 3));
+  const { user, token } = useAuth();
+  const [metas, setMetas] = useState<Meta[]>([]);
+  const [missoes, setMissoes] = useState<Missao[]>([]);
+  const [conquistas, setConquistas] = useState<Conquista[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const API_BASE_URL = 'http://localhost:3001/api';
+
+  // Buscar dados do dashboard
+  const buscarDadosDashboard = async () => {
+    if (!token) return;
+
+    try {
+      setIsLoading(true);
+
+      // Buscar metas
+      const metasResponse = await fetch(`${API_BASE_URL}/gamificacao/metas`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const metasData = await metasResponse.json();
+      if (metasData.success) {
+        setMetas(metasData.data);
+      }
+
+      // Buscar missões
+      const missoesResponse = await fetch(`${API_BASE_URL}/gamificacao/missoes`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const missoesData = await missoesResponse.json();
+      if (missoesData.success) {
+        setMissoes(missoesData.data);
+      }
+
+      // Buscar conquistas
+      const conquistasResponse = await fetch(`${API_BASE_URL}/gamificacao/conquistas`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const conquistasData = await conquistasResponse.json();
+      if (conquistasData.success) {
+        setConquistas(conquistasData.data.slice(0, 3));
+      }
+
+    } catch (error) {
+      console.error('Erro ao buscar dados do dashboard:', error);
+      toast.error('Erro ao carregar dados do dashboard');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    buscarDadosDashboard();
+  }, [token]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Carregando dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-muted-foreground">Usuário não encontrado</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header fixo */}
-      <Header operador={operador} />
+      <Header operador={user} />
       
       {/* Layout principal */}
       <div className="flex gap-6 p-6 pt-24">
@@ -29,7 +135,7 @@ const DashboardOperador = () => {
           <GridMetas metas={metas} />
           
           {/* Fila inteligente */}
-          <FilaInteligente status={operador.status} />
+          <FilaInteligente status={user.status} />
         </div>
         
         {/* Painel lateral de gamificação */}
@@ -37,7 +143,7 @@ const DashboardOperador = () => {
           <PainelGamificacao 
             missoes={missoes} 
             conquistas={conquistas}
-            pontos={operador.pontos_totais}
+            pontos={user.pontos_totais}
           />
         </div>
       </div>
