@@ -102,6 +102,7 @@ export interface AuthRequest extends Request {
         tipo: string;
     };
     operador?: Operador;
+    empresa?: Empresa;
     token?: string;
 }
 export interface ApiResponse<T = any> {
@@ -182,5 +183,12 @@ export interface SocketData {
     chamada_id?: number;
     pontos_ganhos?: number;
     nova_conquista?: Conquista;
+}
+export interface Empresa {
+    id: number;
+    nome: string;
+    email: string;
+    status: string;
+    data_ultimo_login?: Date;
 }
 //# sourceMappingURL=index.d.ts.map

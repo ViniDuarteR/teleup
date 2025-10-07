@@ -114,6 +114,7 @@ export interface AuthRequest extends Request {
     tipo: string;
   };
   operador?: Operador;
+  empresa?: Empresa;
   token?: string;
 }
 
@@ -205,4 +206,13 @@ export interface SocketData {
   chamada_id?: number;
   pontos_ganhos?: number;
   nova_conquista?: Conquista;
+}
+
+// Tipos para empresa
+export interface Empresa {
+  id: number;
+  nome: string;
+  email: string;
+  status: string;
+  data_ultimo_login?: Date;
 }

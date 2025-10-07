@@ -19,6 +19,8 @@ import gestorAuthRoutes from './routes/gestorAuth';
 import gestoresRoutes from './routes/gestores';
 import usuariosRoutes from './routes/usuarios';
 import recompensasRoutes from './routes/recompensas';
+import empresaAuthRoutes from './routes/empresaAuth';
+import empresasRoutes from './routes/empresas';
 
 // Importar tipos
 import { SocketData } from './types';
@@ -78,6 +80,8 @@ app.use('/api/gestor-auth', gestorAuthRoutes);
 app.use('/api/gestores', gestoresRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/recompensas', recompensasRoutes);
+app.use('/api/empresa-auth', empresaAuthRoutes);
+app.use('/api/empresas', empresasRoutes);
 
 // Rota de health check
 app.get('/api/health', (req, res) => {
