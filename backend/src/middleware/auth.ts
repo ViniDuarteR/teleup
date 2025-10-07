@@ -24,12 +24,25 @@ export const authenticateToken = async (
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'seu_jwt_secret_super_seguro_aqui') as any;
     
     // Verificar se a sessão ainda está ativa no banco
-    const [sessions] = await pool.execute(
-      'SELECT * FROM sessoes WHERE operador_id = ? AND token = ? AND ativo = TRUE AND expiracao > NOW()',
-      [decoded.operadorId || decoded.gestorId, token]
-    );
+    let sessions: any[] = [];
+    
+    if (decoded.tipo === 'gestor') {
+      // Para gestores, verificar sessoes_empresa
+      const [empresaSessions] = await pool.execute(
+        'SELECT * FROM sessoes_empresa WHERE empresa_id = (SELECT empresa_id FROM gestores WHERE id = ?) AND token = ? AND ativo = TRUE AND expiracao > NOW()',
+        [decoded.gestorId, token]
+      );
+      sessions = empresaSessions as any[];
+    } else {
+      // Para operadores, verificar sessoes
+      const [operadorSessions] = await pool.execute(
+        'SELECT * FROM sessoes WHERE operador_id = ? AND token = ? AND ativo = TRUE AND expiracao > NOW()',
+        [decoded.operadorId, token]
+      );
+      sessions = operadorSessions as any[];
+    }
 
-    if ((sessions as any[]).length === 0) {
+    if (sessions.length === 0) {
       res.status(401).json({ 
         success: false, 
         message: 'Sessão expirada ou inválida' 

@@ -175,7 +175,7 @@ const MetasPessoais = () => {
 
           {/* Lista de Metas */}
           <div className="space-y-4">
-            {metas.length === 0 ? (
+            {!metas || metas.length === 0 ? (
               <Card className="gaming-card">
                 <CardContent className="p-8 text-center">
                   <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -232,7 +232,7 @@ const MetasPessoais = () => {
                       <div className="space-y-3">
                         <div className="flex justify-between text-sm">
                           <span>Progresso</span>
-                          <span>{meta.valor_atual.toFixed(1)} / {meta.valor_meta} {meta.tipo.toLowerCase()}</span>
+                          <span>{meta.valor_atual?.toFixed(1) || '0.0'} / {meta.valor_meta || 0} {meta.tipo.toLowerCase()}</span>
                         </div>
                         
                         <Progress 
@@ -241,10 +241,10 @@ const MetasPessoais = () => {
                         />
                         
                         <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>{progresso.toFixed(1)}% completo</span>
+                          <span>{progresso?.toFixed(1) || '0.0'}% completo</span>
                           <span>
                             {meta.valor_meta - meta.valor_atual > 0 
-                              ? `Faltam ${(meta.valor_meta - meta.valor_atual).toFixed(1)}`
+                              ? `Faltam ${((meta.valor_meta || 0) - (meta.valor_atual || 0)).toFixed(1)}`
                               : 'Meta atingida!'
                             }
                           </span>

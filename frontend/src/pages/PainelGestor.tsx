@@ -232,7 +232,7 @@ const PainelGestor = () => {
                 <CardContent className="p-6 text-center">
                   <Users className="w-8 h-8 text-primary mx-auto mb-3" />
                   <div className="text-3xl font-bold text-foreground mb-1">
-                    {metricas.total_operadores}
+                    {metricas?.total_operadores || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">Total de Operadores</div>
                 </CardContent>
@@ -242,7 +242,7 @@ const PainelGestor = () => {
                 <CardContent className="p-6 text-center">
                   <CheckCircle className="w-8 h-8 text-success mx-auto mb-3" />
                   <div className="text-3xl font-bold text-foreground mb-1">
-                    {metricas.operadores_online}
+                    {metricas?.operadores_online || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">Online</div>
                 </CardContent>
@@ -252,7 +252,7 @@ const PainelGestor = () => {
                 <CardContent className="p-6 text-center">
                   <Phone className="w-8 h-8 text-primary mx-auto mb-3" />
                   <div className="text-3xl font-bold text-foreground mb-1">
-                    {metricas.chamadas_ativas}
+                    {metricas?.chamadas_ativas || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">Chamadas Ativas</div>
                 </CardContent>
@@ -262,7 +262,7 @@ const PainelGestor = () => {
                 <CardContent className="p-6 text-center">
                   <Star className="w-8 h-8 text-warning mx-auto mb-3" />
                   <div className="text-3xl font-bold text-foreground mb-1">
-                    {metricas.satisfacao_media_geral.toFixed(1)}
+                    {metricas?.satisfacao_media_geral?.toFixed(1) || '0.0'}
                   </div>
                   <div className="text-sm text-muted-foreground">Satisfação Média</div>
                 </CardContent>
@@ -289,7 +289,7 @@ const PainelGestor = () => {
                           <span>Online</span>
                         </div>
                         <Badge className="bg-success text-white">
-                          {metricas.operadores_online}
+                          {metricas?.operadores_online || 0}
                         </Badge>
                       </div>
                       
@@ -299,7 +299,7 @@ const PainelGestor = () => {
                           <span>Em Chamada</span>
                         </div>
                         <Badge className="bg-primary text-white">
-                          {metricas.operadores_em_chamada}
+                          {metricas?.operadores_em_chamada || 0}
                         </Badge>
                       </div>
                       
@@ -309,7 +309,7 @@ const PainelGestor = () => {
                           <span>Em Pausa</span>
                         </div>
                         <Badge className="bg-warning text-white">
-                          {metricas.operadores_em_pausa}
+                          {metricas?.operadores_em_pausa || 0}
                         </Badge>
                       </div>
                       
@@ -319,7 +319,7 @@ const PainelGestor = () => {
                           <span>Offline</span>
                         </div>
                         <Badge className="bg-muted text-muted-foreground">
-                          {metricas.operadores_offline}
+                          {metricas?.operadores_offline || 0}
                         </Badge>
                       </div>
                     </>
@@ -342,10 +342,10 @@ const PainelGestor = () => {
                       <div>
                         <div className="flex justify-between text-sm mb-2">
                           <span>Chamadas do Dia</span>
-                          <span>{metricas.chamadas_hoje} / {metricas.meta_diaria_chamadas}</span>
+                          <span>{metricas?.chamadas_hoje || 0} / {metricas?.meta_diaria_chamadas || 0}</span>
                         </div>
                         <Progress 
-                          value={(metricas.chamadas_hoje / metricas.meta_diaria_chamadas) * 100} 
+                          value={metricas?.meta_diaria_chamadas ? ((metricas?.chamadas_hoje || 0) / metricas.meta_diaria_chamadas) * 100 : 0} 
                           className="h-3" 
                         />
                       </div>
@@ -353,13 +353,13 @@ const PainelGestor = () => {
                       <div className="grid grid-cols-2 gap-4 text-center">
                         <div>
                           <div className="text-2xl font-bold text-foreground">
-                            {metricas.tempo_medio_atendimento}min
+                            {metricas?.tempo_medio_atendimento || 0}min
                           </div>
                           <div className="text-sm text-muted-foreground">Tempo Médio</div>
                         </div>
                         <div>
                           <div className="text-2xl font-bold text-foreground">
-                            {metricas.taxa_resolucao}%
+                            {metricas?.taxa_resolucao || 0}%
                           </div>
                           <div className="text-sm text-muted-foreground">Taxa Resolução</div>
                         </div>
@@ -387,7 +387,7 @@ const PainelGestor = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {operadores.length === 0 ? (
+                {!operadores || operadores.length === 0 ? (
                   <div className="text-center py-8">
                     <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground">Nenhum operador encontrado</p>
@@ -416,7 +416,7 @@ const PainelGestor = () => {
                         <div className="text-right">
                           <div className="font-semibold">{operador.chamadas_hoje} chamadas</div>
                           <div className="text-sm text-muted-foreground">
-                            {operador.satisfacao_media.toFixed(1)} ⭐
+                            {operador.satisfacao_media?.toFixed(1) || '0.0'} ⭐
                           </div>
                         </div>
                       </div>

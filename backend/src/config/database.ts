@@ -15,6 +15,8 @@ interface DatabaseConfig {
   acquireTimeout: number;
   timeout: number;
   reconnect: boolean;
+  charset: string;
+  timezone: string;
 }
 
 const dbConfig: DatabaseConfig = {
@@ -28,7 +30,9 @@ const dbConfig: DatabaseConfig = {
   queueLimit: 0,
   acquireTimeout: 60000,
   timeout: 60000,
-  reconnect: true
+  reconnect: true,
+  charset: 'utf8mb4',
+  timezone: 'Z'
 };
 
 // Criar pool de conexões

@@ -5,7 +5,7 @@ import { pool } from '../config/database';
 import { ApiResponse, AuthRequest } from '../types';
 
 // Login da empresa
-export const loginEmpresa = async (req: Request, res: Response<ApiResponse<{ token: string; empresa: any }>>): Promise<void> => {
+export const loginEmpresa = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, senha } = req.body;
 

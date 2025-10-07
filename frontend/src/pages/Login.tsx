@@ -86,8 +86,23 @@ const Login = () => {
     }
   };
 
-  const handleGestorLogin = () => {
+  const handleTeleUpGestorLogin = () => {
     setEmail('hyttalo@teleup.com');
+    setSenha('password');
+  };
+
+  const handleTeleUpEmpresaLogin = () => {
+    setEmail('contato@teleup.com');
+    setSenha('password');
+  };
+
+  const handleTechCorpEmpresaLogin = () => {
+    setEmail('admin@techcorp.com');
+    setSenha('password');
+  };
+
+  const handleTechCorpGestorLogin = () => {
+    setEmail('roberto.silva@techcorp.com');
     setSenha('password');
   };
 
@@ -165,20 +180,57 @@ const Login = () => {
           </CardContent>
         </Card>
 
-        {/* Quick Login Button for Gestor */}
-        <div className="space-y-3">
+        {/* Quick Login Buttons */}
+        <div className="space-y-4">
           <p className="text-center text-sm text-muted-foreground">
-            Acesso rápido para gestor:
+            Acesso rápido:
           </p>
           
-          <Button
-            variant="outline"
-            onClick={handleGestorLogin}
-            className="gaming-card hover:scale-105 transition-all duration-300 w-full"
-          >
-            <Users className="w-4 h-4 mr-2" />
-            Login como Gestor
-          </Button>
+          {/* TeleUp */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-primary">🏢 TeleUp</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                onClick={handleTeleUpEmpresaLogin}
+                className="gaming-card hover:scale-105 transition-all duration-300 text-xs"
+              >
+                <Users className="w-3 h-3 mr-1" />
+                Empresa
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleTeleUpGestorLogin}
+                className="gaming-card hover:scale-105 transition-all duration-300 text-xs"
+              >
+                <Users className="w-3 h-3 mr-1" />
+                Gestor
+              </Button>
+            </div>
+          </div>
+
+          {/* TechCorp */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-primary">🏢 TechCorp</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                onClick={handleTechCorpEmpresaLogin}
+                className="gaming-card hover:scale-105 transition-all duration-300 text-xs"
+              >
+                <Users className="w-3 h-3 mr-1" />
+                Empresa
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleTechCorpGestorLogin}
+                className="gaming-card hover:scale-105 transition-all duration-300 text-xs"
+              >
+                <Users className="w-3 h-3 mr-1" />
+                Gestor
+              </Button>
+            </div>
+          </div>
         </div>
 
       </div>

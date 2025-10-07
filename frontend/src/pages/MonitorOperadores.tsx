@@ -261,7 +261,7 @@ const MonitorOperadores = () => {
                 <CardContent className="p-6 text-center">
                   <Star className="w-8 h-8 text-warning mx-auto mb-3" />
                   <div className="text-3xl font-bold text-foreground mb-1">
-                    {metricas.satisfacao_media_geral.toFixed(1)}
+                    {metricas?.satisfacao_media_geral?.toFixed(1) || '0.0'}
                   </div>
                   <div className="text-sm text-muted-foreground">Satisfação Média</div>
                 </CardContent>
@@ -314,7 +314,7 @@ const MonitorOperadores = () => {
                       
                       <div className="flex justify-between text-sm">
                         <span>Satisfação:</span>
-                        <span className="font-semibold">{operador.satisfacao_media.toFixed(1)} ⭐</span>
+                        <span className="font-semibold">{operador.satisfacao_media?.toFixed(1) || '0.0'} ⭐</span>
                       </div>
                       
                       <div className="flex justify-between text-sm">

@@ -98,9 +98,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       }
 
-      // Para outros usuários, tentar login como operador
-      console.log('AuthContext - Tentando login como operador para:', email);
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      // Detectar tipo de usuário baseado no email
+      let endpoint = '/auth/login'; // padrão para operadores
+      let userType = 'operador';
+      
+      if (email.includes('@teleup.com') && email !== 'hyttalo@teleup.com') {
+        // Email da empresa TeleUp
+        endpoint = '/empresa-auth/login';
+        userType = 'empresa';
+        console.log('AuthContext - Tentando login como empresa para:', email);
+      } else if (email.includes('@techcorp.com') && email !== 'roberto.silva@techcorp.com' && email !== 'carla.mendes@techcorp.com') {
+        // Email da empresa TechCorp
+        endpoint = '/empresa-auth/login';
+        userType = 'empresa';
+        console.log('AuthContext - Tentando login como empresa para:', email);
+      } else {
+        // Gestores e operadores
+        console.log('AuthContext - Tentando login como operador/gestor para:', email);
+      }
+
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -111,17 +128,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const data = await response.json();
 
       if (data.success) {
-        const { token: newToken, operador } = data.data;
+        const { token: newToken } = data.data;
+        let userData;
         
-        console.log('AuthContext - Login operador successful, user:', operador);
-        console.log('AuthContext - User tipo:', operador.tipo);
+        if (userType === 'empresa') {
+          userData = data.data.empresa;
+          userData.tipo = 'empresa';
+          console.log('AuthContext - Login empresa successful, empresa:', userData);
+        } else {
+          userData = data.data.operador || data.data;
+          console.log('AuthContext - Login operador/gestor successful, user:', userData);
+        }
+        
+        console.log('AuthContext - User tipo:', userData.tipo);
         
         setToken(newToken);
-        setUser(operador);
+        setUser(userData);
         
         // Salvar no localStorage
         localStorage.setItem('teleup_token', newToken);
-        localStorage.setItem('teleup_user', JSON.stringify(operador));
+        localStorage.setItem('teleup_user', JSON.stringify(userData));
         
         return true;
       } else {

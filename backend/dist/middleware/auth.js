@@ -18,7 +18,15 @@ const authenticateToken = async (req, res, next) => {
             return;
         }
         const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET || 'seu_jwt_secret_super_seguro_aqui');
-        const [sessions] = await database_1.pool.execute('SELECT * FROM sessoes WHERE operador_id = ? AND token = ? AND ativo = TRUE AND expiracao > NOW()', [decoded.operadorId || decoded.gestorId, token]);
+        let sessions = [];
+        if (decoded.tipo === 'gestor') {
+            const [empresaSessions] = await database_1.pool.execute('SELECT * FROM sessoes_empresa WHERE empresa_id = (SELECT empresa_id FROM gestores WHERE id = ?) AND token = ? AND ativo = TRUE AND expiracao > NOW()', [decoded.gestorId, token]);
+            sessions = empresaSessions;
+        }
+        else {
+            const [operadorSessions] = await database_1.pool.execute('SELECT * FROM sessoes WHERE operador_id = ? AND token = ? AND ativo = TRUE AND expiracao > NOW()', [decoded.operadorId, token]);
+            sessions = operadorSessions;
+        }
         if (sessions.length === 0) {
             res.status(401).json({
                 success: false,

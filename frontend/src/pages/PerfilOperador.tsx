@@ -171,7 +171,7 @@ const PerfilOperador = () => {
                 <CardContent className="p-6 text-center">
                   <Star className="w-8 h-8 text-warning mx-auto mb-3" />
                   <div className="text-3xl font-bold text-foreground mb-1">
-                    {estatisticas.satisfacao_media.toFixed(1)}
+                    {estatisticas?.satisfacao_media?.toFixed(1) || '0.0'}
                   </div>
                   <div className="text-sm text-muted-foreground">Satisfação média</div>
                 </CardContent>
