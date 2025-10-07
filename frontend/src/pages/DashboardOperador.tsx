@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "../components/Header";
 import GridMetas from "../components/GridMetas";
-import FilaInteligente from "../components/FilaInteligente";
+import SistemaDiscagem from "../components/SistemaDiscagem";
 import PainelGamificacao from "../components/PainelGamificacao";
 import { toast } from "sonner";
 
@@ -134,8 +134,8 @@ const DashboardOperador = () => {
           {/* Grid de metas */}
           <GridMetas metas={metas} />
           
-          {/* Fila inteligente */}
-          <FilaInteligente status={user.status} />
+          {/* Sistema de discagem */}
+          <SistemaDiscagem />
         </div>
         
         {/* Painel lateral de gamificação */}

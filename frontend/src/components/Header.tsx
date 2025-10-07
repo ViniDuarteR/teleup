@@ -1,8 +1,8 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Home, ArrowLeft, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Phone, Store, User, Target, LogOut } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -22,6 +22,7 @@ interface HeaderProps {
 const Header = ({ operador }: HeaderProps) => {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const xpPercentage = (operador.xp_atual / operador.xp_proximo_nivel) * 100;
 
   const handleLogout = async () => {
@@ -40,18 +41,59 @@ const Header = ({ operador }: HeaderProps) => {
       <div className="flex items-center justify-between p-4">
         {/* Logo e Navegação */}
         <div className="flex items-center gap-4">
-          <Link to="/" className="flex items-center gap-3 hover:scale-105 transition-all duration-300">
+          <Link to="/dashboard" className="flex items-center gap-3 hover:scale-105 transition-all duration-300">
             <div className="text-2xl font-bold text-primary text-glow">
               TeleUp
             </div>
           </Link>
           <div className="h-6 w-px bg-border"></div>
-          <Link to="/">
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-              <Home className="w-4 h-4 mr-2" />
-              Início
-            </Button>
-          </Link>
+          
+          {/* Menu de Navegação */}
+          <nav className="flex items-center gap-2">
+            <Link to="/dashboard">
+              <Button 
+                variant={location.pathname === '/dashboard' ? "default" : "ghost"} 
+                size="sm" 
+                className={location.pathname === '/dashboard' ? "btn-gaming" : "text-muted-foreground hover:text-primary"}
+              >
+                <Phone className="w-4 h-4 mr-2" />
+                Discagem
+              </Button>
+            </Link>
+            
+            <Link to="/loja">
+              <Button 
+                variant={location.pathname === '/loja' ? "default" : "ghost"} 
+                size="sm" 
+                className={location.pathname === '/loja' ? "btn-gaming" : "text-muted-foreground hover:text-primary"}
+              >
+                <Store className="w-4 h-4 mr-2" />
+                Loja
+              </Button>
+            </Link>
+            
+            <Link to="/perfil">
+              <Button 
+                variant={location.pathname === '/perfil' ? "default" : "ghost"} 
+                size="sm" 
+                className={location.pathname === '/perfil' ? "btn-gaming" : "text-muted-foreground hover:text-primary"}
+              >
+                <User className="w-4 h-4 mr-2" />
+                Perfil
+              </Button>
+            </Link>
+            
+            <Link to="/metas">
+              <Button 
+                variant={location.pathname === '/metas' ? "default" : "ghost"} 
+                size="sm" 
+                className={location.pathname === '/metas' ? "btn-gaming" : "text-muted-foreground hover:text-primary"}
+              >
+                <Target className="w-4 h-4 mr-2" />
+                Metas
+              </Button>
+            </Link>
+          </nav>
         </div>
 
         {/* Informações do operador */}
@@ -101,7 +143,7 @@ const Header = ({ operador }: HeaderProps) => {
               variant="outline" 
               size="sm" 
               onClick={handleLogout}
-              className="text-muted-foreground hover:text-destructive hover:border-destructive transition-colors"
+              className="text-muted-foreground hover:text-destructive hover:border-destructive hover:scale-105 transition-all duration-300 hover:bg-destructive/10"
             >
               <LogOut className="w-4 h-4 mr-2" />
               Sair

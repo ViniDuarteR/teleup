@@ -20,6 +20,7 @@ interface AuthContextType {
   token: string | null;
   login: (email: string, senha: string) => Promise<boolean>;
   logout: () => void;
+  updateUser: (user: User) => void;
   isLoading: boolean;
   isAuthenticated: boolean;
 }
@@ -123,6 +124,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem('teleup_user', JSON.stringify(updatedUser));
+  };
+
   const isAuthenticated = !!token && !!user;
 
   return (
@@ -132,6 +138,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         token,
         login,
         logout,
+        updateUser,
         isLoading,
         isAuthenticated,
       }}
