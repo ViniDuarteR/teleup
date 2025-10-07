@@ -186,8 +186,11 @@ const startServer = async () => {
   }
 };
 
-// Iniciar servidor
-startServer();
+// Iniciar servidor apenas se não estiver no Vercel
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  startServer();
+}
 
-// Exportar para testes
+// Exportar para Vercel
+export default app;
 export { app, io };
