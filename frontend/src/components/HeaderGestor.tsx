@@ -108,13 +108,13 @@ const HeaderGestor = ({ gestor }: HeaderGestorProps) => {
           {/* Avatar e nome */}
           <div className="flex items-center gap-3">
             <Avatar className="w-12 h-12 border-2 border-primary/50">
-              <AvatarImage src={gestor.avatar} alt={gestor.nome} />
+              <AvatarImage src={gestor?.avatar} alt={gestor?.nome || 'Gestor'} />
               <AvatarFallback className="bg-primary text-primary-foreground">
-                {gestor.nome.split(' ').map(n => n[0]).join('')}
+                {gestor?.nome?.split(' ').map(n => n[0]).join('') || 'G'}
               </AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-semibold text-foreground">{gestor.nome}</h3>
+              <h3 className="font-semibold text-foreground">{gestor?.nome || 'Gestor'}</h3>
               <p className="text-sm text-muted-foreground">Gestor</p>
             </div>
           </div>

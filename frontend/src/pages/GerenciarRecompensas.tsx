@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import Header from "../components/Header";
+import HeaderGestor from "../components/HeaderGestor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -260,7 +260,7 @@ const GerenciarRecompensas = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header operador={user} />
+      <HeaderGestor />
       
       <div className="p-6 pt-24">
         <div className="max-w-7xl mx-auto space-y-6">
