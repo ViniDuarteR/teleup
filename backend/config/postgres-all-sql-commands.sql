@@ -10,7 +10,7 @@
 
 -- ==== Extensões úteis (opcional)
 CREATE EXTENSION IF NOT EXISTS pgcrypto;         -- para gen_random_uuid(), criptografia
-CREATE EXTENSION IF NOT EXISTS uuid-ossp;       -- para uuid_generate_v4()
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";       -- para uuid_generate_v4()
 
 -- ==== Tipos auxiliares
 DO $$
