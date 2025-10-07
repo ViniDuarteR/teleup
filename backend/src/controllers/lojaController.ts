@@ -1,71 +1,9 @@
 import { Response } from 'express';
 import { AuthRequest } from '../types';
 
-// Dados mockados para teste
-let recompensasMock = [
-  {
-    id: 1,
-    nome: "Café Premium",
-    descricao: "Um café especial para energizar seu dia de trabalho",
-    categoria: "Itens",
-    preco: 50,
-    tipo: "item",
-    raridade: "comum",
-    imagem: null,
-    disponivel: true,
-    quantidade_restante: 100
-  },
-  {
-    id: 2,
-    nome: "Almoço Grátis",
-    descricao: "Vale-refeição para o restaurante da empresa",
-    categoria: "Itens",
-    preco: 200,
-    tipo: "item",
-    raridade: "raro",
-    imagem: null,
-    disponivel: true,
-    quantidade_restante: 50
-  },
-  {
-    id: 3,
-    nome: "Pausa Extra",
-    descricao: "15 minutos de pausa adicional no dia",
-    categoria: "Benefícios",
-    preco: 100,
-    tipo: "beneficio",
-    raridade: "comum",
-    imagem: null,
-    disponivel: true,
-    quantidade_restante: null
-  },
-  {
-    id: 4,
-    nome: "Operador Estrela",
-    descricao: "Título exclusivo para operadores de destaque",
-    categoria: "Títulos",
-    preco: 1000,
-    tipo: "titulo",
-    raridade: "raro",
-    imagem: null,
-    disponivel: true,
-    quantidade_restante: null
-  },
-  {
-    id: 5,
-    nome: "Avatar Dourado",
-    descricao: "Avatar especial com efeito dourado",
-    categoria: "Avatares",
-    preco: 300,
-    tipo: "avatar",
-    raridade: "raro",
-    imagem: null,
-    disponivel: true,
-    quantidade_restante: null
-  }
-];
-
-let nextId = 6;
+// TODO: Implementar com banco de dados real
+let recompensasMock: any[] = [];
+let nextId = 1;
 
 // Buscar recompensas
 export const getRecompensas = async (req: AuthRequest, res: Response) => {

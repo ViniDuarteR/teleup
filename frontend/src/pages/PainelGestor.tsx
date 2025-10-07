@@ -395,7 +395,7 @@ const PainelGestor = () => {
                         <div>
                           <div className="font-semibold">{operador.nome}</div>
                           <div className="text-sm text-muted-foreground">
-                            Nv. {operador.nivel} • {operador.pontos_totais.toLocaleString()} pontos
+                            Nv. {operador.nivel} • {operador.pontos_totais?.toLocaleString() || '0'} pontos
                           </div>
                         </div>
                       </div>

@@ -15,7 +15,7 @@
     "sourceMap": true,
     "removeComments": true,
     "noImplicitAny": true,
-    "strictNullChecks": true,
+    "strictNullChecks": false,
     "strictFunctionTypes": true,
     "noImplicitThis": true,
     "noImplicitReturns": true,

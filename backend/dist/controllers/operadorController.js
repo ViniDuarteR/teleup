@@ -143,6 +143,7 @@ const getDashboard = async (req, res) => {
                     id: operador.id,
                     nome: operador.nome,
                     email: operador.email,
+                    tipo: 'operador',
                     avatar: operador.avatar,
                     nivel: operador.nivel,
                     xp_atual: operador.xp_atual,

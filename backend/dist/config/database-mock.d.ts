@@ -59,7 +59,7 @@ export declare const mockMissoes: ({
     pontos_recompensa: number;
     ativa: boolean;
     data_criacao: Date;
-    data_expiracao: null;
+    data_expiracao: any;
 } | {
     id: number;
     titulo: string;
@@ -69,7 +69,7 @@ export declare const mockMissoes: ({
     pontos_recompensa: number;
     ativa: boolean;
     data_criacao: Date;
-    data_expiracao: null;
+    data_expiracao: any;
 })[];
 export declare const mockConquistas: ({
     id: number;
@@ -124,7 +124,7 @@ export declare const pool: {
         pontos_recompensa: number;
         ativa: boolean;
         data_criacao: Date;
-        data_expiracao: null;
+        data_expiracao: any;
     } | {
         progresso_atual: number;
         concluida: boolean;
@@ -136,7 +136,7 @@ export declare const pool: {
         pontos_recompensa: number;
         ativa: boolean;
         data_criacao: Date;
-        data_expiracao: null;
+        data_expiracao: any;
     })[][] | ({
         data_desbloqueio: Date;
         desbloqueada: boolean;
@@ -187,7 +187,7 @@ export declare const pool: {
         tempo_online: string;
         data_criacao: Date;
         data_atualizacao: Date;
-    } | null)[][] | {
+    })[][] | {
         chamadas_hoje: number;
         tempo_total_segundos: number;
         satisfacao_media: number;

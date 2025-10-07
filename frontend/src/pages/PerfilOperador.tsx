@@ -125,7 +125,7 @@ const PerfilOperador = () => {
                     </Badge>
                     <Badge variant="outline" className="text-lg px-4 py-2">
                       <Star className="w-4 h-4 mr-2" />
-                      {user.pontos_totais.toLocaleString()} pontos
+                      {user.pontos_totais?.toLocaleString() || '0'} pontos
                     </Badge>
                   </div>
                 </div>

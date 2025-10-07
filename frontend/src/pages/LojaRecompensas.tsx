@@ -249,7 +249,7 @@ const LojaRecompensas = () => {
                 <div className="text-sm text-muted-foreground">Seus Pontos</div>
                 <div className="text-2xl font-bold text-primary flex items-center gap-2">
                   <Coins className="w-6 h-6" />
-                  {user.pontos_totais.toLocaleString()}
+                  {user.pontos_totais?.toLocaleString() || '0'}
                 </div>
               </div>
             </div>
@@ -353,7 +353,7 @@ const LojaRecompensas = () => {
                         <div className="flex items-center gap-2">
                           <Coins className="w-4 h-4 text-primary" />
                           <span className="font-bold text-primary">
-                            {recompensa.preco.toLocaleString()}
+                            {recompensa.preco?.toLocaleString() || '0'}
                           </span>
                         </div>
                         

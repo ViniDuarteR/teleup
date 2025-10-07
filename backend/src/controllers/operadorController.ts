@@ -204,6 +204,7 @@ export const getDashboard = async (req: AuthRequest, res: Response<ApiResponse<D
           id: operador.id,
           nome: operador.nome,
           email: operador.email,
+          tipo: 'operador',
           avatar: operador.avatar,
           nivel: operador.nivel,
           xp_atual: operador.xp_atual,

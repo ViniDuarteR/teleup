@@ -447,7 +447,7 @@ const GerenciarRecompensas = () => {
                     <div className="flex items-center gap-2">
                       <Coins className="w-4 h-4 text-primary" />
                       <span className="font-bold text-primary">
-                        {recompensa.preco.toLocaleString()}
+                        {recompensa.preco?.toLocaleString() || '0'}
                       </span>
                     </div>
                     

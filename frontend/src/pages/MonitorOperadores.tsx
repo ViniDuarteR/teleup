@@ -319,13 +319,13 @@ const MonitorOperadores = () => {
                       
                       <div className="flex justify-between text-sm">
                         <span>Pontos:</span>
-                        <span className="font-semibold text-primary">{operador.pontos_totais.toLocaleString()}</span>
+                        <span className="font-semibold text-primary">{operador.pontos_totais?.toLocaleString() || '0'}</span>
                       </div>
                     </div>
                     
                     <div className="pt-2 border-t">
                       <div className="text-xs text-muted-foreground mb-2">
-                        Última atividade: {new Date(operador.ultima_atividade).toLocaleString()}
+                        Última atividade: {operador.ultima_atividade ? new Date(operador.ultima_atividade).toLocaleString() : 'Nunca'}
                       </div>
                       
                       <div className="flex gap-2">

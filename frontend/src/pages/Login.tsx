@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Phone, Users } from 'lucide-react';
+import { Loader2, Users } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -86,14 +86,9 @@ const Login = () => {
     }
   };
 
-  const handleRoleLogin = (role: 'operador' | 'gestor') => {
-    if (role === 'operador') {
-      setEmail('mateus@teleup.com');
-      setSenha('password');
-    } else {
-      setEmail('hyttalo@teleup.com');
-      setSenha('password');
-    }
+  const handleGestorLogin = () => {
+    setEmail('hyttalo@teleup.com');
+    setSenha('password');
   };
 
   return (
@@ -170,43 +165,22 @@ const Login = () => {
           </CardContent>
         </Card>
 
-        {/* Quick Login Buttons */}
+        {/* Quick Login Button for Gestor */}
         <div className="space-y-3">
           <p className="text-center text-sm text-muted-foreground">
-            Ou use uma conta de demonstração:
+            Acesso rápido para gestor:
           </p>
           
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              onClick={() => handleRoleLogin('operador')}
-              className="gaming-card hover:scale-105 transition-all duration-300"
-            >
-              <Phone className="w-4 h-4 mr-2" />
-              Operador
-            </Button>
-            
-            <Button
-              variant="outline"
-              onClick={() => handleRoleLogin('gestor')}
-              className="gaming-card hover:scale-105 transition-all duration-300"
-            >
-              <Users className="w-4 h-4 mr-2" />
-              Gestor
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            onClick={handleGestorLogin}
+            className="gaming-card hover:scale-105 transition-all duration-300 w-full"
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Login como Gestor
+          </Button>
         </div>
 
-        {/* Demo Credentials */}
-        <div className="text-center space-y-2">
-          <p className="text-xs text-muted-foreground">
-            Credenciais de demonstração:
-          </p>
-          <div className="text-xs space-y-1">
-            <p><strong>Operador:</strong> mateus@teleup.com / password</p>
-            <p><strong>Gestor:</strong> hyttalo@teleup.com / password</p>
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -25,6 +25,8 @@ interface Usuario {
   tempo_online: number;
   data_criacao: string;
   data_atualizacao: string;
+  pa?: string;
+  carteira?: string;
 }
 
 const GerenciarUsuarios = () => {
@@ -40,7 +42,9 @@ const GerenciarUsuarios = () => {
     email: '',
     senha: '',
     nivel: 1,
-    status: 'Aguardando Chamada'
+    status: 'Aguardando Chamada',
+    pa: '',
+    carteira: ''
   });
 
   const API_BASE_URL = 'http://localhost:3001/api';
@@ -290,7 +294,7 @@ const GerenciarUsuarios = () => {
                 <div className="space-y-2">
                   <Label htmlFor="nivel">Nível</Label>
                   <Select
-                    value={formData.nivel.toString()}
+                    value={formData.nivel?.toString() || '1'}
                     onValueChange={(value) => setFormData({ ...formData, nivel: parseInt(value) })}
                   >
                     <SelectTrigger>
@@ -304,6 +308,24 @@ const GerenciarUsuarios = () => {
                       <SelectItem value="5">Nível 5 - Mestre</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pa">PA (Ponto de Acesso)</Label>
+                  <Input
+                    id="pa"
+                    value={formData.pa}
+                    onChange={(e) => setFormData({ ...formData, pa: e.target.value })}
+                    placeholder="Ex: PA001, PA002"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="carteira">Carteira</Label>
+                  <Input
+                    id="carteira"
+                    value={formData.carteira}
+                    onChange={(e) => setFormData({ ...formData, carteira: e.target.value })}
+                    placeholder="Ex: Carteira A, Carteira B"
+                  />
                 </div>
                 <Button type="submit" className="btn-gaming w-full">
                   Criar Usuário
@@ -328,6 +350,8 @@ const GerenciarUsuarios = () => {
                   <TableHead>Usuário</TableHead>
                   <TableHead>Nível</TableHead>
                   <TableHead>Pontos</TableHead>
+                  <TableHead>PA</TableHead>
+                  <TableHead>Carteira</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
@@ -356,11 +380,17 @@ const GerenciarUsuarios = () => {
                     </TableCell>
                     <TableCell>
                       <div className="text-right">
-                        <p className="font-medium">{usuario.pontos_totais.toLocaleString()}</p>
+                        <p className="font-medium">{usuario.pontos_totais?.toLocaleString() || '0'}</p>
                         <p className="text-sm text-muted-foreground">
                           {usuario.xp_atual}/{usuario.xp_proximo_nivel} XP
                         </p>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm font-medium">{usuario.pa || '-'}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm font-medium">{usuario.carteira || '-'}</span>
                     </TableCell>
                     <TableCell>
                       <Badge className={`${getStatusColor(usuario.status)} text-white`}>
@@ -432,7 +462,7 @@ const GerenciarUsuarios = () => {
               <div className="space-y-2">
                 <Label htmlFor="edit-nivel">Nível</Label>
                 <Select
-                  value={formData.nivel.toString()}
+                  value={formData.nivel?.toString() || '1'}
                   onValueChange={(value) => setFormData({ ...formData, nivel: parseInt(value) })}
                 >
                   <SelectTrigger>
@@ -450,7 +480,7 @@ const GerenciarUsuarios = () => {
               <div className="space-y-2">
                 <Label htmlFor="edit-status">Status</Label>
                 <Select
-                  value={formData.status}
+                  value={formData.status || 'Aguardando Chamada'}
                   onValueChange={(value) => setFormData({ ...formData, status: value })}
                 >
                   <SelectTrigger>
