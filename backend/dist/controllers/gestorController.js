@@ -37,7 +37,7 @@ const loginGestor = async (req, res) => {
         const token = jsonwebtoken_1.default.sign({ gestorId: gestor.id, email: gestor.email, tipo: 'gestor' }, process.env.JWT_SECRET || 'seu_jwt_secret_super_seguro_aqui', { expiresIn: process.env.JWT_EXPIRES_IN || '24h' });
         const dataExpiracao = new Date();
         dataExpiracao.setHours(dataExpiracao.getHours() + 24);
-        await database_1.pool.execute('INSERT INTO sessoes (operador_id, token, expiracao) VALUES (?, ?, ?)', [gestor.id, token, dataExpiracao]);
+        await database_1.pool.execute('INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES (?, ?, ?)', [gestor.empresa_id, token, dataExpiracao]);
         const gestorData = {
             id: gestor.id,
             nome: gestor.nome,

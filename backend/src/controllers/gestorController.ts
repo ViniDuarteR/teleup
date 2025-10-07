@@ -50,8 +50,8 @@ export const loginGestor = async (req: Request<{}, ApiResponse<LoginResponse>, L
     dataExpiracao.setHours(dataExpiracao.getHours() + 24);
 
     await pool.execute(
-      'INSERT INTO sessoes (operador_id, token, expiracao) VALUES (?, ?, ?)',
-      [gestor.id, token, dataExpiracao]
+      'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES (?, ?, ?)',
+      [gestor.empresa_id, token, dataExpiracao]
     );
 
     // Preparar dados do gestor (sem campos de gamificação)

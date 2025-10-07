@@ -9,10 +9,22 @@ const database_1 = require("../config/database");
 const listarUsuarios = async (req, res) => {
     try {
         if (req.operador.tipo === 'gestor') {
+            const gestorId = req.operador.id;
+            const [gestorEmpresa] = await database_1.pool.execute('SELECT empresa_id FROM gestores WHERE id = ?', [gestorId]);
+            const empresa = gestorEmpresa;
+            if (empresa.length === 0) {
+                res.status(404).json({
+                    success: false,
+                    message: 'Gestor não encontrado'
+                });
+                return;
+            }
+            const empresaId = empresa[0].empresa_id;
             const [operadores] = await database_1.pool.execute(`SELECT id, nome, email, nivel, xp_atual, xp_proximo_nivel, pontos_totais, 
                 status, avatar, tempo_online, data_criacao, data_atualizacao, pa, carteira
          FROM operadores 
-         ORDER BY pontos_totais DESC`);
+         WHERE empresa_id = ?
+         ORDER BY pontos_totais DESC`, [empresaId]);
             res.json({
                 success: true,
                 data: operadores

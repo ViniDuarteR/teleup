@@ -6,13 +6,35 @@ import { AuthRequest, ApiResponse, Operador } from '../types';
 // Listar todos os usuários da empresa
 export const listarUsuarios = async (req: AuthRequest, res: Response<ApiResponse<Operador[]>>): Promise<void> => {
   try {
-    // Se for gestor, buscar todos os operadores
+    // Se for gestor, buscar operadores da mesma empresa
     if (req.operador.tipo === 'gestor') {
+      const gestorId = req.operador.id;
+      
+      // Buscar empresa do gestor
+      const [gestorEmpresa] = await pool.execute(
+        'SELECT empresa_id FROM gestores WHERE id = ?',
+        [gestorId]
+      );
+      
+      const empresa = gestorEmpresa as any[];
+      if (empresa.length === 0) {
+        res.status(404).json({
+          success: false,
+          message: 'Gestor não encontrado'
+        });
+        return;
+      }
+
+      const empresaId = empresa[0].empresa_id;
+
+      // Buscar operadores da empresa do gestor
       const [operadores] = await pool.execute(
         `SELECT id, nome, email, nivel, xp_atual, xp_proximo_nivel, pontos_totais, 
                 status, avatar, tempo_online, data_criacao, data_atualizacao, pa, carteira
          FROM operadores 
-         ORDER BY pontos_totais DESC`
+         WHERE empresa_id = ?
+         ORDER BY pontos_totais DESC`,
+        [empresaId]
       );
 
       res.json({
