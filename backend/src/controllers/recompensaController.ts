@@ -83,10 +83,7 @@ export const getCompras = async (req: AuthRequest, res: Response) => {
 
 // Comprar recompensa
 export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
-  const connection = await pool.getConnection();
-  
   try {
-    await connection.beginTransaction();
     
     const operadorId = req.user?.id;
     const { recompensa_id } = req.body;
@@ -99,7 +96,7 @@ export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
     }
 
     // Buscar informações da recompensa
-    const [recompensaRows] = await connection.execute(
+    const [recompensaRows] = await pool.execute(
       'SELECT * FROM recompensas WHERE id = ? AND disponivel = true',
       [recompensa_id]
     );
@@ -114,7 +111,7 @@ export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
     const recompensa = recompensaRows[0] as any;
     
     // Verificar se já possui a recompensa
-    const [compraExistente] = await connection.execute(
+    const [compraExistente] = await pool.execute(
       'SELECT id FROM compras WHERE operador_id = ? AND recompensa_id = ?',
       [operadorId, recompensa_id]
     );
@@ -127,7 +124,7 @@ export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
     }
     
     // Buscar pontos do operador
-    const [operadorRows] = await connection.execute(
+    const [operadorRows] = await pool.execute(
       'SELECT pontos_totais FROM operadores WHERE id = ?',
       [operadorId]
     );
@@ -157,26 +154,24 @@ export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
     }
     
     // Realizar a compra
-    const [result] = await connection.execute(
+    const [result] = await pool.execute(
       'INSERT INTO compras (operador_id, recompensa_id, data_compra, status) VALUES (?, ?, NOW(), "aprovada")',
       [operadorId, recompensa_id]
     );
     
     // Deduzir pontos do operador
-    await connection.execute(
+    await pool.execute(
       'UPDATE operadores SET pontos_totais = pontos_totais - ? WHERE id = ?',
       [recompensa.preco, operadorId]
     );
     
     // Atualizar quantidade restante se aplicável
     if (recompensa.quantidade_restante !== null) {
-      await connection.execute(
+      await pool.execute(
         'UPDATE recompensas SET quantidade_restante = quantidade_restante - 1 WHERE id = ?',
         [recompensa_id]
       );
     }
-    
-    await connection.commit();
     
     return res.json({
       success: true,
@@ -189,14 +184,12 @@ export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
     });
     
   } catch (error) {
-    await connection.rollback();
     console.error('Erro ao comprar recompensa:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
     });
   } finally {
-    connection.release();
   }
 };
 

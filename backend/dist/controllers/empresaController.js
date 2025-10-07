@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDashboardEmpresa = exports.listarOperadoresEmpresa = exports.criarGestorEmpresa = exports.listarGestoresEmpresa = exports.loginEmpresa = void 0;
+exports.getDashboardEmpresa = exports.excluirGestorEmpresa = exports.atualizarGestorEmpresa = exports.listarOperadoresEmpresa = exports.criarGestorEmpresa = exports.listarGestoresEmpresa = exports.loginEmpresa = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const database_1 = require("../config/database");
@@ -161,6 +161,121 @@ const listarOperadoresEmpresa = async (req, res) => {
     }
 };
 exports.listarOperadoresEmpresa = listarOperadoresEmpresa;
+const atualizarGestorEmpresa = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nome, email, senha, status } = req.body;
+        const empresaId = req.empresa?.id;
+        if (!empresaId) {
+            res.status(401).json({
+                success: false,
+                message: 'Empresa não autenticada'
+            });
+            return;
+        }
+        const [gestorExists] = await database_1.pool.execute('SELECT id FROM gestores WHERE id = ? AND empresa_id = ?', [id, empresaId]);
+        if (gestorExists.length === 0) {
+            res.status(404).json({
+                success: false,
+                message: 'Gestor não encontrado ou não pertence à empresa'
+            });
+            return;
+        }
+        if (email) {
+            const [emailExists] = await database_1.pool.execute('SELECT id FROM gestores WHERE email = ? AND id != ?', [email, id]);
+            if (emailExists.length > 0) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Email já cadastrado por outro gestor'
+                });
+                return;
+            }
+        }
+        let updateFields = [];
+        let updateValues = [];
+        if (nome) {
+            updateFields.push('nome = ?');
+            updateValues.push(nome);
+        }
+        if (email) {
+            updateFields.push('email = ?');
+            updateValues.push(email);
+        }
+        if (senha) {
+            const senhaHash = await bcryptjs_1.default.hash(senha, 10);
+            updateFields.push('senha = ?');
+            updateValues.push(senhaHash);
+        }
+        if (status) {
+            updateFields.push('status = ?');
+            updateValues.push(status);
+        }
+        updateFields.push('data_atualizacao = NOW()');
+        updateValues.push(id);
+        if (updateFields.length === 1) {
+            res.status(400).json({
+                success: false,
+                message: 'Nenhum campo para atualizar'
+            });
+            return;
+        }
+        await database_1.pool.execute(`UPDATE gestores SET ${updateFields.join(', ')} WHERE id = ?`, updateValues);
+        res.json({
+            success: true,
+            message: 'Gestor atualizado com sucesso'
+        });
+    }
+    catch (error) {
+        console.error('Erro ao atualizar gestor:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erro interno do servidor'
+        });
+    }
+};
+exports.atualizarGestorEmpresa = atualizarGestorEmpresa;
+const excluirGestorEmpresa = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const empresaId = req.empresa?.id;
+        if (!empresaId) {
+            res.status(401).json({
+                success: false,
+                message: 'Empresa não autenticada'
+            });
+            return;
+        }
+        const [gestorExists] = await database_1.pool.execute('SELECT id FROM gestores WHERE id = ? AND empresa_id = ?', [id, empresaId]);
+        if (gestorExists.length === 0) {
+            res.status(404).json({
+                success: false,
+                message: 'Gestor não encontrado ou não pertence à empresa'
+            });
+            return;
+        }
+        const [operadoresAtribuidos] = await database_1.pool.execute('SELECT COUNT(*) as total FROM operador_gestor WHERE gestor_id = ?', [id]);
+        if (operadoresAtribuidos[0].total > 0) {
+            res.status(400).json({
+                success: false,
+                message: 'Não é possível excluir gestor que possui operadores atribuídos'
+            });
+            return;
+        }
+        await database_1.pool.execute('DELETE FROM gestores WHERE id = ? AND empresa_id = ?', [id, empresaId]);
+        res.json({
+            success: true,
+            message: 'Gestor excluído com sucesso'
+        });
+    }
+    catch (error) {
+        console.error('Erro ao excluir gestor:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erro interno do servidor'
+        });
+    }
+};
+exports.excluirGestorEmpresa = excluirGestorEmpresa;
 const getDashboardEmpresa = async (req, res) => {
     try {
         const empresaId = req.empresa?.id;

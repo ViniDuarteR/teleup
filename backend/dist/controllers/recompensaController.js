@@ -76,9 +76,7 @@ const getCompras = async (req, res) => {
 };
 exports.getCompras = getCompras;
 const comprarRecompensa = async (req, res) => {
-    const connection = await database_1.pool.getConnection();
     try {
-        await connection.beginTransaction();
         const operadorId = req.user?.id;
         const { recompensa_id } = req.body;
         if (!operadorId) {
@@ -87,7 +85,7 @@ const comprarRecompensa = async (req, res) => {
                 message: 'Usuário não autenticado'
             });
         }
-        const [recompensaRows] = await connection.execute('SELECT * FROM recompensas WHERE id = ? AND disponivel = true', [recompensa_id]);
+        const [recompensaRows] = await database_1.pool.execute('SELECT * FROM recompensas WHERE id = ? AND disponivel = true', [recompensa_id]);
         if (!Array.isArray(recompensaRows) || recompensaRows.length === 0) {
             return res.status(404).json({
                 success: false,
@@ -95,14 +93,14 @@ const comprarRecompensa = async (req, res) => {
             });
         }
         const recompensa = recompensaRows[0];
-        const [compraExistente] = await connection.execute('SELECT id FROM compras WHERE operador_id = ? AND recompensa_id = ?', [operadorId, recompensa_id]);
+        const [compraExistente] = await database_1.pool.execute('SELECT id FROM compras WHERE operador_id = ? AND recompensa_id = ?', [operadorId, recompensa_id]);
         if (Array.isArray(compraExistente) && compraExistente.length > 0) {
             return res.status(400).json({
                 success: false,
                 message: 'Você já possui esta recompensa'
             });
         }
-        const [operadorRows] = await connection.execute('SELECT pontos_totais FROM operadores WHERE id = ?', [operadorId]);
+        const [operadorRows] = await database_1.pool.execute('SELECT pontos_totais FROM operadores WHERE id = ?', [operadorId]);
         if (!Array.isArray(operadorRows) || operadorRows.length === 0) {
             return res.status(404).json({
                 success: false,
@@ -122,12 +120,11 @@ const comprarRecompensa = async (req, res) => {
                 message: 'Recompensa esgotada'
             });
         }
-        const [result] = await connection.execute('INSERT INTO compras (operador_id, recompensa_id, data_compra, status) VALUES (?, ?, NOW(), "aprovada")', [operadorId, recompensa_id]);
-        await connection.execute('UPDATE operadores SET pontos_totais = pontos_totais - ? WHERE id = ?', [recompensa.preco, operadorId]);
+        const [result] = await database_1.pool.execute('INSERT INTO compras (operador_id, recompensa_id, data_compra, status) VALUES (?, ?, NOW(), "aprovada")', [operadorId, recompensa_id]);
+        await database_1.pool.execute('UPDATE operadores SET pontos_totais = pontos_totais - ? WHERE id = ?', [recompensa.preco, operadorId]);
         if (recompensa.quantidade_restante !== null) {
-            await connection.execute('UPDATE recompensas SET quantidade_restante = quantidade_restante - 1 WHERE id = ?', [recompensa_id]);
+            await database_1.pool.execute('UPDATE recompensas SET quantidade_restante = quantidade_restante - 1 WHERE id = ?', [recompensa_id]);
         }
-        await connection.commit();
         return res.json({
             success: true,
             message: 'Compra realizada com sucesso!',
@@ -139,7 +136,6 @@ const comprarRecompensa = async (req, res) => {
         });
     }
     catch (error) {
-        await connection.rollback();
         console.error('Erro ao comprar recompensa:', error);
         return res.status(500).json({
             success: false,
@@ -147,7 +143,6 @@ const comprarRecompensa = async (req, res) => {
         });
     }
     finally {
-        connection.release();
     }
 };
 exports.comprarRecompensa = comprarRecompensa;
