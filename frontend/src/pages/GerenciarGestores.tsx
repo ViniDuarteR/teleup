@@ -100,7 +100,10 @@ const GerenciarGestores = () => {
     if (!selectedGestor) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/gestores/${selectedGestor.id}`, {
+      // Determinar a rota baseada no tipo de usuário
+      const endpoint = user?.tipo === 'empresa' ? '/empresas/gestores' : '/gestores';
+      
+      const response = await fetch(`${API_BASE_URL}${endpoint}/${selectedGestor.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -132,7 +135,10 @@ const GerenciarGestores = () => {
     if (!confirm('Tem certeza que deseja excluir este gestor?')) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/gestores/${id}`, {
+      // Determinar a rota baseada no tipo de usuário
+      const endpoint = user?.tipo === 'empresa' ? '/empresas/gestores' : '/gestores';
+      
+      const response = await fetch(`${API_BASE_URL}${endpoint}/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

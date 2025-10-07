@@ -213,6 +213,166 @@ export const listarOperadoresEmpresa = async (req: AuthRequest, res: Response<Ap
   }
 };
 
+// Atualizar gestor da empresa
+export const atualizarGestorEmpresa = async (req: AuthRequest, res: Response<ApiResponse<any>>): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { nome, email, senha, status } = req.body;
+    const empresaId = req.empresa?.id;
+
+    if (!empresaId) {
+      res.status(401).json({
+        success: false,
+        message: 'Empresa não autenticada'
+      });
+      return;
+    }
+
+    // Verificar se o gestor pertence à empresa
+    const [gestorExists] = await pool.execute(
+      'SELECT id FROM gestores WHERE id = ? AND empresa_id = ?',
+      [id, empresaId]
+    );
+
+    if ((gestorExists as any[]).length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Gestor não encontrado ou não pertence à empresa'
+      });
+      return;
+    }
+
+    // Verificar se email já existe em outro gestor
+    if (email) {
+      const [emailExists] = await pool.execute(
+        'SELECT id FROM gestores WHERE email = ? AND id != ?',
+        [email, id]
+      );
+
+      if ((emailExists as any[]).length > 0) {
+        res.status(400).json({
+          success: false,
+          message: 'Email já cadastrado por outro gestor'
+        });
+        return;
+      }
+    }
+
+    // Preparar dados para atualização
+    let updateFields = [];
+    let updateValues = [];
+
+    if (nome) {
+      updateFields.push('nome = ?');
+      updateValues.push(nome);
+    }
+
+    if (email) {
+      updateFields.push('email = ?');
+      updateValues.push(email);
+    }
+
+    if (senha) {
+      const senhaHash = await bcrypt.hash(senha, 10);
+      updateFields.push('senha = ?');
+      updateValues.push(senhaHash);
+    }
+
+    if (status) {
+      updateFields.push('status = ?');
+      updateValues.push(status);
+    }
+
+    updateFields.push('data_atualizacao = NOW()');
+    updateValues.push(id);
+
+    if (updateFields.length === 1) { // Apenas data_atualizacao
+      res.status(400).json({
+        success: false,
+        message: 'Nenhum campo para atualizar'
+      });
+      return;
+    }
+
+    await pool.execute(
+      `UPDATE gestores SET ${updateFields.join(', ')} WHERE id = ?`,
+      updateValues
+    );
+
+    res.json({
+      success: true,
+      message: 'Gestor atualizado com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar gestor:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Excluir gestor da empresa
+export const excluirGestorEmpresa = async (req: AuthRequest, res: Response<ApiResponse<any>>): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const empresaId = req.empresa?.id;
+
+    if (!empresaId) {
+      res.status(401).json({
+        success: false,
+        message: 'Empresa não autenticada'
+      });
+      return;
+    }
+
+    // Verificar se o gestor pertence à empresa
+    const [gestorExists] = await pool.execute(
+      'SELECT id FROM gestores WHERE id = ? AND empresa_id = ?',
+      [id, empresaId]
+    );
+
+    if ((gestorExists as any[]).length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Gestor não encontrado ou não pertence à empresa'
+      });
+      return;
+    }
+
+    // Verificar se o gestor tem operadores atribuídos
+    const [operadoresAtribuidos] = await pool.execute(
+      'SELECT COUNT(*) as total FROM operador_gestor WHERE gestor_id = ?',
+      [id]
+    );
+
+    if ((operadoresAtribuidos as any[])[0].total > 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Não é possível excluir gestor que possui operadores atribuídos'
+      });
+      return;
+    }
+
+    // Excluir gestor
+    await pool.execute(
+      'DELETE FROM gestores WHERE id = ? AND empresa_id = ?',
+      [id, empresaId]
+    );
+
+    res.json({
+      success: true,
+      message: 'Gestor excluído com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao excluir gestor:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
 // Dashboard da empresa
 export const getDashboardEmpresa = async (req: AuthRequest, res: Response<ApiResponse<any>>): Promise<void> => {
   try {
