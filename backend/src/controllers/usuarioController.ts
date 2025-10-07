@@ -6,6 +6,45 @@ import { AuthRequest, ApiResponse, Operador } from '../types';
 // Listar todos os usuários da empresa
 export const listarUsuarios = async (req: AuthRequest, res: Response<ApiResponse<Operador[]>>): Promise<void> => {
   try {
+    // Se for gestor, buscar operadores da mesma empresa
+    if (req.operador.tipo === 'gestor') {
+      const gestorId = req.operador.id;
+      
+      // Buscar empresa do gestor
+      const [gestorEmpresa] = await pool.execute(
+        'SELECT empresa_id FROM gestores WHERE id = ?',
+        [gestorId]
+      );
+      
+      const empresa = gestorEmpresa as any[];
+      if (empresa.length === 0) {
+        res.status(404).json({
+          success: false,
+          message: 'Gestor não encontrado'
+        });
+        return;
+      }
+
+      const empresaId = empresa[0].empresa_id;
+
+      // Buscar operadores da empresa do gestor
+      const [operadores] = await pool.execute(
+        `SELECT id, nome, email, nivel, xp_atual, xp_proximo_nivel, pontos_totais, 
+                status, avatar, tempo_online, data_criacao, data_atualizacao, pa, carteira
+         FROM operadores 
+         WHERE empresa_id = ?
+         ORDER BY pontos_totais DESC`,
+        [empresaId]
+      );
+
+      res.json({
+        success: true,
+        data: operadores as Operador[]
+      });
+      return;
+    }
+
+    // Se for operador, buscar operadores da mesma empresa
     const operadorId = req.operador.id;
     
     // Buscar empresa do operador logado
@@ -28,7 +67,7 @@ export const listarUsuarios = async (req: AuthRequest, res: Response<ApiResponse
     // Buscar todos os operadores da empresa
     const [operadores] = await pool.execute(
       `SELECT id, nome, email, nivel, xp_atual, xp_proximo_nivel, pontos_totais, 
-              status, avatar, tempo_online, data_criacao, data_atualizacao
+              status, avatar, tempo_online, data_criacao, data_atualizacao, pa, carteira
        FROM operadores 
        WHERE empresa_id = ? 
        ORDER BY pontos_totais DESC`,
@@ -51,25 +90,23 @@ export const listarUsuarios = async (req: AuthRequest, res: Response<ApiResponse
 // Criar novo usuário
 export const criarUsuario = async (req: AuthRequest, res: Response<ApiResponse<{ id: number }>>): Promise<void> => {
   try {
-    const { nome, email, senha, nivel = 1 } = req.body;
-    const operadorId = req.operador.id;
-
-    // Buscar empresa do operador logado
-    const [empresaResult] = await pool.execute(
-      'SELECT empresa_id FROM operadores WHERE id = ?',
-      [operadorId]
-    );
+    const { nome, email, senha, nivel = 1, pa = '', carteira = '' } = req.body;
     
-    const empresa = empresaResult as any[];
-    if (empresa.length === 0) {
-      res.status(404).json({
-        success: false,
-        message: 'Operador não encontrado'
-      });
-      return;
+    let empresaId = 1; // Default empresa ID
+    
+    // Se for operador, buscar empresa do operador logado
+    if (req.operador.tipo === 'operador') {
+      const operadorId = req.operador.id;
+      const [empresaResult] = await pool.execute(
+        'SELECT empresa_id FROM operadores WHERE id = ?',
+        [operadorId]
+      );
+      
+      const empresa = empresaResult as any[];
+      if (empresa.length > 0) {
+        empresaId = empresa[0].empresa_id;
+      }
     }
-
-    const empresaId = empresa[0].empresa_id;
 
     // Verificar se email já existe
     const [emailExists] = await pool.execute(
@@ -94,9 +131,9 @@ export const criarUsuario = async (req: AuthRequest, res: Response<ApiResponse<{
     // Inserir novo operador
     const [result] = await pool.execute(
       `INSERT INTO operadores (nome, email, senha, nivel, xp_atual, xp_proximo_nivel, 
-                              pontos_totais, status, avatar, tempo_online, empresa_id)
-       VALUES (?, ?, ?, ?, 0, ?, 0, 'Aguardando Chamada', 'avatar1.png', 0, ?)`,
-      [nome, email, senhaHash, nivel, xpProximoNivel, empresaId]
+                              pontos_totais, status, avatar, tempo_online, empresa_id, pa, carteira)
+       VALUES (?, ?, ?, ?, 0, ?, 0, 'Aguardando Chamada', 'avatar1.png', 0, ?, ?, ?)`,
+      [nome, email, senhaHash, nivel, xpProximoNivel, empresaId, pa, carteira]
     );
 
     const insertResult = result as any;

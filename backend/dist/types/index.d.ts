@@ -4,6 +4,7 @@ export interface Operador {
     nome: string;
     email: string;
     senha: string;
+    tipo: 'operador' | 'gestor';
     avatar?: string;
     nivel: number;
     xp_atual: number;
@@ -95,8 +96,14 @@ export interface Sessao {
     ativa: boolean;
 }
 export interface AuthRequest extends Request {
-    operador: Operador;
-    token: string;
+    user?: {
+        id: number;
+        email: string;
+        tipo: string;
+    };
+    operador?: Operador;
+    empresa?: Empresa;
+    token?: string;
 }
 export interface ApiResponse<T = any> {
     success: boolean;
@@ -176,5 +183,12 @@ export interface SocketData {
     chamada_id?: number;
     pontos_ganhos?: number;
     nova_conquista?: Conquista;
+}
+export interface Empresa {
+    id: number;
+    nome: string;
+    email: string;
+    status: string;
+    data_ultimo_login?: Date;
 }
 //# sourceMappingURL=index.d.ts.map

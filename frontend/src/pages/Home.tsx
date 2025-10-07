@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Phone, Users, ArrowRight } from "lucide-react";
 
 const Home = () => {
-  console.log('Home component rendering');
   
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">

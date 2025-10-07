@@ -39,25 +39,29 @@ const login = async (req, res) => {
         dataExpiracao.setHours(dataExpiracao.getHours() + 24);
         await database_1.pool.execute('INSERT INTO sessoes (operador_id, token, expiracao) VALUES (?, ?, ?)', [operador.id, token, dataExpiracao]);
         await database_1.pool.execute('UPDATE operadores SET status = ? WHERE id = ?', ['Aguardando Chamada', operador.id]);
+        let operadorData = {
+            id: operador.id,
+            nome: operador.nome,
+            email: operador.email,
+            tipo: operador.tipo,
+            status: 'Aguardando Chamada',
+            avatar: operador.avatar,
+            data_criacao: operador.data_criacao,
+            data_atualizacao: operador.data_atualizacao
+        };
+        if (operador.tipo === 'operador') {
+            operadorData.nivel = operador.nivel;
+            operadorData.xp_atual = operador.xp_atual;
+            operadorData.xp_proximo_nivel = operador.xp_proximo_nivel;
+            operadorData.pontos_totais = operador.pontos_totais;
+            operadorData.tempo_online = operador.tempo_online;
+        }
         res.json({
             success: true,
             message: 'Login realizado com sucesso',
             data: {
                 token,
-                operador: {
-                    id: operador.id,
-                    nome: operador.nome,
-                    email: operador.email,
-                    nivel: operador.nivel,
-                    xp_atual: operador.xp_atual,
-                    xp_proximo_nivel: operador.xp_proximo_nivel,
-                    pontos_totais: operador.pontos_totais,
-                    status: 'Aguardando Chamada',
-                    avatar: operador.avatar,
-                    tempo_online: operador.tempo_online,
-                    data_criacao: operador.data_criacao,
-                    data_atualizacao: operador.data_atualizacao
-                }
+                operador: operadorData
             }
         });
     }
@@ -108,11 +112,11 @@ const getDashboard = async (req, res) => {
       ORDER BY data_inicio DESC
     `, [operadorId]);
         const [missoes] = await database_1.pool.execute(`
-      SELECT m.*, om.progresso_atual, om.concluida
+      SELECT m.*, pm.progresso_atual, pm.concluida
       FROM missoes m
-      LEFT JOIN operador_missoes om ON m.id = om.missao_id AND om.operador_id = ?
-      WHERE m.ativa = TRUE AND (om.concluida = FALSE OR om.concluida IS NULL)
-      ORDER BY m.tipo, m.data_criacao
+      LEFT JOIN progresso_missoes pm ON m.id = pm.missao_id AND pm.operador_id = ?
+      WHERE m.ativa = TRUE AND (pm.concluida = FALSE OR pm.concluida IS NULL)
+      ORDER BY m.tipo, m.data_inicio
     `, [operadorId]);
         const [conquistas] = await database_1.pool.execute(`
       SELECT c.*, oc.data_desbloqueio
@@ -139,6 +143,7 @@ const getDashboard = async (req, res) => {
                     id: operador.id,
                     nome: operador.nome,
                     email: operador.email,
+                    tipo: 'operador',
                     avatar: operador.avatar,
                     nivel: operador.nivel,
                     xp_atual: operador.xp_atual,

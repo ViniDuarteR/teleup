@@ -4,13 +4,14 @@ interface User {
   id: number;
   nome: string;
   email: string;
-  nivel: number;
-  xp_atual: number;
-  xp_proximo_nivel: number;
-  pontos_totais: number;
+  tipo: 'operador' | 'gestor';
+  nivel?: number;
+  xp_atual?: number;
+  xp_proximo_nivel?: number;
+  pontos_totais?: number;
   status: string;
   avatar: string;
-  tempo_online: number;
+  tempo_online?: number;
   data_criacao: string;
   data_atualizacao: string;
 }
@@ -20,6 +21,7 @@ interface AuthContextType {
   token: string | null;
   login: (email: string, senha: string) => Promise<boolean>;
   logout: () => void;
+  updateUser: (user: User) => void;
   isLoading: boolean;
   isAuthenticated: boolean;
 }
@@ -66,7 +68,56 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      // Para o Hyttalo Costa, tentar login como gestor primeiro
+      if (email === 'hyttalo@teleup.com') {
+        console.log('AuthContext - Tentando login como gestor para:', email);
+        const response = await fetch(`${API_BASE_URL}/gestor-auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, senha }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          const { token: newToken, operador } = data.data;
+          
+          console.log('AuthContext - Login gestor successful, user:', operador);
+          console.log('AuthContext - User tipo:', operador.tipo);
+          
+          setToken(newToken);
+          setUser(operador);
+          
+          // Salvar no localStorage
+          localStorage.setItem('teleup_token', newToken);
+          localStorage.setItem('teleup_user', JSON.stringify(operador));
+          
+          return true;
+        }
+      }
+
+      // Detectar tipo de usuário baseado no email
+      let endpoint = '/auth/login'; // padrão para operadores
+      let userType = 'operador';
+      
+      if (email.includes('@teleup.com') && email !== 'hyttalo@teleup.com') {
+        // Email da empresa TeleUp
+        endpoint = '/empresa-auth/login';
+        userType = 'empresa';
+        console.log('AuthContext - Tentando login como empresa para:', email);
+      } else if (email.includes('@techcorp.com') && email !== 'roberto.silva@techcorp.com' && email !== 'carla.mendes@techcorp.com') {
+        // Email da empresa TechCorp
+        endpoint = '/empresa-auth/login';
+        userType = 'empresa';
+        console.log('AuthContext - Tentando login como empresa para:', email);
+      } else {
+        // Gestores e operadores
+        console.log('AuthContext - Tentando login como operador/gestor para:', email);
+      }
+
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,14 +128,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const data = await response.json();
 
       if (data.success) {
-        const { token: newToken, operador } = data.data;
+        const { token: newToken } = data.data;
+        let userData;
+        
+        if (userType === 'empresa') {
+          userData = data.data.empresa;
+          userData.tipo = 'empresa';
+          console.log('AuthContext - Login empresa successful, empresa:', userData);
+        } else {
+          userData = data.data.operador || data.data;
+          console.log('AuthContext - Login operador/gestor successful, user:', userData);
+        }
+        
+        console.log('AuthContext - User tipo:', userData.tipo);
         
         setToken(newToken);
-        setUser(operador);
+        setUser(userData);
         
         // Salvar no localStorage
         localStorage.setItem('teleup_token', newToken);
-        localStorage.setItem('teleup_user', JSON.stringify(operador));
+        localStorage.setItem('teleup_user', JSON.stringify(userData));
         
         return true;
       } else {
@@ -99,11 +162,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('teleup_token');
-    localStorage.removeItem('teleup_user');
+  const logout = async () => {
+    try {
+      // Chamar API de logout para invalidar sessão no backend
+      if (token) {
+        await fetch('http://localhost:3001/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao fazer logout no backend:', error);
+      // Continuar com logout local mesmo se der erro no backend
+    } finally {
+      // Limpar dados locais
+      setToken(null);
+      setUser(null);
+      localStorage.removeItem('teleup_token');
+      localStorage.removeItem('teleup_user');
+    }
+  };
+
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem('teleup_user', JSON.stringify(updatedUser));
   };
 
   const isAuthenticated = !!token && !!user;
@@ -115,6 +200,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         token,
         login,
         logout,
+        updateUser,
         isLoading,
         isAuthenticated,
       }}

@@ -65,25 +65,34 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
       ['Aguardando Chamada', operador.id]
     );
 
+    // Preparar dados do operador baseado no tipo
+    let operadorData: any = {
+      id: operador.id,
+      nome: operador.nome,
+      email: operador.email,
+      tipo: operador.tipo,
+      status: 'Aguardando Chamada' as const,
+      avatar: operador.avatar,
+      data_criacao: operador.data_criacao,
+      data_atualizacao: operador.data_atualizacao
+    };
+
+    // Adicionar campos de gamificação apenas para operadores
+    if (operador.tipo === 'operador') {
+      operadorData.nivel = operador.nivel;
+      operadorData.xp_atual = operador.xp_atual;
+      operadorData.xp_proximo_nivel = operador.xp_proximo_nivel;
+      operadorData.pontos_totais = operador.pontos_totais;
+      operadorData.tempo_online = operador.tempo_online;
+    }
+    // Para gestores, não incluir nenhum campo de gamificação
+
     res.json({
       success: true,
       message: 'Login realizado com sucesso',
       data: {
         token,
-        operador: {
-          id: operador.id,
-          nome: operador.nome,
-          email: operador.email,
-          nivel: operador.nivel,
-          xp_atual: operador.xp_atual,
-          xp_proximo_nivel: operador.xp_proximo_nivel,
-          pontos_totais: operador.pontos_totais,
-          status: 'Aguardando Chamada' as const,
-          avatar: operador.avatar,
-          tempo_online: operador.tempo_online,
-          data_criacao: operador.data_criacao,
-          data_atualizacao: operador.data_atualizacao
-        }
+        operador: operadorData
       }
     });
 
@@ -158,11 +167,11 @@ export const getDashboard = async (req: AuthRequest, res: Response<ApiResponse<D
 
     // Buscar missões ativas
     const [missoes] = await pool.execute(`
-      SELECT m.*, om.progresso_atual, om.concluida
+      SELECT m.*, pm.progresso_atual, pm.concluida
       FROM missoes m
-      LEFT JOIN operador_missoes om ON m.id = om.missao_id AND om.operador_id = ?
-      WHERE m.ativa = TRUE AND (om.concluida = FALSE OR om.concluida IS NULL)
-      ORDER BY m.tipo, m.data_criacao
+      LEFT JOIN progresso_missoes pm ON m.id = pm.missao_id AND pm.operador_id = ?
+      WHERE m.ativa = TRUE AND (pm.concluida = FALSE OR pm.concluida IS NULL)
+      ORDER BY m.tipo, m.data_inicio
     `, [operadorId]);
 
     // Buscar conquistas desbloqueadas
@@ -195,6 +204,7 @@ export const getDashboard = async (req: AuthRequest, res: Response<ApiResponse<D
           id: operador.id,
           nome: operador.nome,
           email: operador.email,
+          tipo: 'operador',
           avatar: operador.avatar,
           nivel: operador.nivel,
           xp_atual: operador.xp_atual,

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "../components/Header";
 import GridMetas from "../components/GridMetas";
-import FilaInteligente from "../components/FilaInteligente";
+import SistemaDiscagem from "../components/SistemaDiscagem";
 import PainelGamificacao from "../components/PainelGamificacao";
 import { toast } from "sonner";
 
@@ -48,49 +48,69 @@ const DashboardOperador = () => {
 
   // Buscar dados do dashboard
   const buscarDadosDashboard = async () => {
-    if (!token) return;
+    if (!token) {
+      console.log('DashboardOperador - No token available');
+      setIsLoading(false);
+      return;
+    }
 
     try {
       setIsLoading(true);
+      console.log('DashboardOperador - Fetching dashboard data...');
 
       // Buscar metas
-      const metasResponse = await fetch(`${API_BASE_URL}/gamificacao/metas`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      try {
+        const metasResponse = await fetch(`${API_BASE_URL}/gamificacao/metas`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const metasData = await metasResponse.json();
+        console.log('DashboardOperador - Metas response:', metasData);
+        if (metasData.success) {
+          setMetas(metasData.data);
         }
-      });
-      const metasData = await metasResponse.json();
-      if (metasData.success) {
-        setMetas(metasData.data);
+      } catch (error) {
+        console.error('DashboardOperador - Error fetching metas:', error);
       }
 
       // Buscar missões
-      const missoesResponse = await fetch(`${API_BASE_URL}/gamificacao/missoes`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      try {
+        const missoesResponse = await fetch(`${API_BASE_URL}/gamificacao/missoes`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const missoesData = await missoesResponse.json();
+        console.log('DashboardOperador - Missoes response:', missoesData);
+        if (missoesData.success) {
+          setMissoes(missoesData.data);
         }
-      });
-      const missoesData = await missoesResponse.json();
-      if (missoesData.success) {
-        setMissoes(missoesData.data);
+      } catch (error) {
+        console.error('DashboardOperador - Error fetching missoes:', error);
       }
 
       // Buscar conquistas
-      const conquistasResponse = await fetch(`${API_BASE_URL}/gamificacao/conquistas`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      try {
+        const conquistasResponse = await fetch(`${API_BASE_URL}/gamificacao/conquistas`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const conquistasData = await conquistasResponse.json();
+        console.log('DashboardOperador - Conquistas response:', conquistasData);
+        if (conquistasData.success) {
+          setConquistas(conquistasData.data.slice(0, 3));
         }
-      });
-      const conquistasData = await conquistasResponse.json();
-      if (conquistasData.success) {
-        setConquistas(conquistasData.data.slice(0, 3));
+      } catch (error) {
+        console.error('DashboardOperador - Error fetching conquistas:', error);
       }
 
     } catch (error) {
-      console.error('Erro ao buscar dados do dashboard:', error);
+      console.error('DashboardOperador - General error:', error);
       toast.error('Erro ao carregar dados do dashboard');
     } finally {
       setIsLoading(false);
@@ -134,8 +154,8 @@ const DashboardOperador = () => {
           {/* Grid de metas */}
           <GridMetas metas={metas} />
           
-          {/* Fila inteligente */}
-          <FilaInteligente status={user.status} />
+          {/* Sistema de discagem */}
+          <SistemaDiscagem />
         </div>
         
         {/* Painel lateral de gamificação */}

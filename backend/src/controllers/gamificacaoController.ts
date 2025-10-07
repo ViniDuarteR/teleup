@@ -9,12 +9,12 @@ export const getMissoes = async (req: AuthRequest, res: Response<ApiResponse<any
 
     const [missoes] = await pool.execute(`
       SELECT 
-        m.id, m.titulo, m.descricao, m.tipo, m.meta_valor, m.pontos_recompensa,
-        COALESCE(om.progresso_atual, 0) as progresso_atual,
-        COALESCE(om.concluida, FALSE) as concluida,
-        om.data_inicio, om.data_conclusao
+        m.id, m.titulo, m.descricao, m.tipo, m.objetivo as meta_valor, m.recompensa_pontos as pontos_recompensa,
+        COALESCE(pm.progresso_atual, 0) as progresso_atual,
+        COALESCE(pm.concluida, FALSE) as concluida,
+        pm.data_inicio, pm.data_conclusao
       FROM missoes m
-      LEFT JOIN operador_missoes om ON m.id = om.missao_id AND om.operador_id = ?
+      LEFT JOIN progresso_missoes pm ON m.id = pm.missao_id AND pm.operador_id = ?
       WHERE m.ativa = TRUE
       ORDER BY m.tipo, m.data_criacao
     `, [operadorId]);
@@ -40,13 +40,13 @@ export const getConquistas = async (req: AuthRequest, res: Response<ApiResponse<
 
     const [conquistas] = await pool.execute(`
       SELECT 
-        c.id, c.titulo, c.descricao, c.icone, c.pontos_recompensa,
+        c.id, c.nome as titulo, c.descricao, c.icone, c.pontos_recompensa,
         COALESCE(oc.data_desbloqueio, NULL) as data_desbloqueio,
         CASE WHEN oc.operador_id IS NOT NULL THEN TRUE ELSE FALSE END as desbloqueada
       FROM conquistas c
       LEFT JOIN operador_conquistas oc ON c.id = oc.conquista_id AND oc.operador_id = ?
       WHERE c.ativa = TRUE
-      ORDER BY oc.data_desbloqueio DESC, c.titulo
+      ORDER BY oc.data_desbloqueio DESC, c.nome
     `, [operadorId]);
 
     res.json({
@@ -227,7 +227,7 @@ export const getEstatisticasGamificacao = async (req: AuthRequest, res: Response
 
     // Buscar missões concluídas
     const [missoesConcluidas] = await pool.execute(`
-      SELECT COUNT(*) as total FROM operador_missoes 
+      SELECT COUNT(*) as total FROM progresso_missoes 
       WHERE operador_id = ? AND concluida = TRUE
     `, [operadorId]);
 

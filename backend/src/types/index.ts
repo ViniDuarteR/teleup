@@ -6,6 +6,7 @@ export interface Operador {
   nome: string;
   email: string;
   senha: string;
+  tipo: 'operador' | 'gestor';
   avatar?: string;
   nivel: number;
   xp_atual: number;
@@ -107,8 +108,14 @@ export interface Sessao {
 
 // Tipos de requisição
 export interface AuthRequest extends Request {
-  operador: Operador;
-  token: string;
+  user?: {
+    id: number;
+    email: string;
+    tipo: string;
+  };
+  operador?: Operador;
+  empresa?: Empresa;
+  token?: string;
 }
 
 // Tipos de resposta da API
@@ -199,4 +206,13 @@ export interface SocketData {
   chamada_id?: number;
   pontos_ganhos?: number;
   nova_conquista?: Conquista;
+}
+
+// Tipos para empresa
+export interface Empresa {
+  id: number;
+  nome: string;
+  email: string;
+  status: string;
+  data_ultimo_login?: Date;
 }

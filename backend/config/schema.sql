@@ -40,8 +40,9 @@ CREATE TABLE IF NOT EXISTS chamadas (
     resolvida BOOLEAN DEFAULT FALSE,
     satisfacao_cliente INT CHECK (satisfacao_cliente >= 1 AND satisfacao_cliente <= 5),
     observacoes TEXT,
-    data_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    data_fim TIMESTAMP NULL,
+    pontos_ganhos INT DEFAULT 0,
+    inicio_chamada TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fim_chamada TIMESTAMP NULL,
     FOREIGN KEY (operador_id) REFERENCES operadores(id) ON DELETE CASCADE
 );
 
@@ -151,18 +152,18 @@ INSERT INTO conquistas (nome, descricao, icone, categoria, criterio, pontos_reco
 ('Mestre da Satisfação', 'Mantenha 4.8+ de satisfação em 20 chamadas', 'crown', 'Satisfação', 20, 800, TRUE),
 ('Maratonista', 'Fique online por 12 horas em um dia', 'clock', 'Tempo', 12, 600, TRUE);
 
--- Metas de exemplo para Hyttalo
+-- Metas de exemplo
 INSERT INTO metas (operador_id, tipo_meta, valor_meta, valor_atual, periodo, data_inicio, data_fim, pontos_recompensa) VALUES
 (1, 'Chamadas', 20, 15, 'Diário', CURDATE(), CURDATE(), 100),
 (1, 'Satisfação', 4.5, 4.2, 'Semanal', DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY), DATE_ADD(DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY), INTERVAL 6 DAY), 200);
 
--- Progresso de missões para Hyttalo
+-- Progresso de missões
 INSERT INTO progresso_missoes (operador_id, missao_id, progresso_atual, concluida) VALUES
 (1, 1, 1, TRUE),
 (1, 2, 7, FALSE),
 (1, 3, 3, FALSE);
 
--- Conquistas de Hyttalo
+-- Conquistas
 INSERT INTO operador_conquistas (operador_id, conquista_id, data_conquista) VALUES
 (1, 1, DATE_SUB(NOW(), INTERVAL 5 DAY)),
 (1, 2, DATE_SUB(NOW(), INTERVAL 2 DAY));

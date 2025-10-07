@@ -15,7 +15,12 @@ import operadorRoutes from './routes/operador';
 import chamadasRoutes from './routes/chamadas';
 import gamificacaoRoutes from './routes/gamificacao';
 import gestorRoutes from './routes/gestor';
+import gestorAuthRoutes from './routes/gestorAuth';
+import gestoresRoutes from './routes/gestores';
 import usuariosRoutes from './routes/usuarios';
+import recompensasRoutes from './routes/recompensas';
+import empresaAuthRoutes from './routes/empresaAuth';
+import empresasRoutes from './routes/empresas';
 
 // Importar tipos
 import { SocketData } from './types';
@@ -40,7 +45,7 @@ app.use(helmet());
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // máximo 100 requests por IP
+  max: 1000, // máximo 1000 requests por IP (aumentado para desenvolvimento)
   message: {
     success: false,
     message: 'Muitas tentativas. Tente novamente em 15 minutos.'
@@ -71,7 +76,12 @@ app.use('/api/operador', operadorRoutes);
 app.use('/api/chamadas', chamadasRoutes);
 app.use('/api/gamificacao', gamificacaoRoutes);
 app.use('/api/gestor', gestorRoutes);
+app.use('/api/gestor-auth', gestorAuthRoutes);
+app.use('/api/gestores', gestoresRoutes);
 app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/recompensas', recompensasRoutes);
+app.use('/api/empresa-auth', empresaAuthRoutes);
+app.use('/api/empresas', empresasRoutes);
 
 // Rota de health check
 app.get('/api/health', (req, res) => {

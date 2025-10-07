@@ -1,17 +1,12 @@
-import { Response } from 'express';
-import { AuthRequest, ApiResponse, MetricasEquipe, OperadorDesempenho } from '../types';
-export declare const getMetricasEquipe: (req: AuthRequest, res: Response<ApiResponse<MetricasEquipe>>) => Promise<void>;
-export declare const getRankingOperadores: (req: AuthRequest, res: Response<ApiResponse<{
-    ranking: any[];
-    periodo: string;
-}>>) => Promise<void>;
-export declare const getDesempenhoDetalhado: (req: AuthRequest, res: Response<ApiResponse<{
-    operadores: OperadorDesempenho[];
-    periodo: string;
-}>>) => Promise<void>;
-export declare const criarMissao: (req: AuthRequest, res: Response<ApiResponse<{
-    missao_id: number;
-}>>) => Promise<void>;
-export declare const atribuirMissao: (req: AuthRequest, res: Response<ApiResponse>) => Promise<void>;
-export declare const getOperadores: (req: AuthRequest, res: Response<ApiResponse<any[]>>) => Promise<void>;
+import { Request, Response } from 'express';
+import { ApiResponse, LoginRequest, LoginResponse } from '../types';
+export declare const loginGestor: (req: Request<{}, ApiResponse<LoginResponse>, LoginRequest>, res: Response<ApiResponse<LoginResponse>>) => Promise<void>;
+export declare const listarGestores: (req: any, res: Response) => Promise<void>;
+export declare const criarGestor: (req: any, res: Response) => Promise<void>;
+export declare const atualizarGestor: (req: any, res: Response) => Promise<void>;
+export declare const excluirGestor: (req: any, res: Response) => Promise<void>;
+export declare const logoutGestor: (req: any, res: Response) => Promise<void>;
+export declare const getOperadoresGerenciados: (req: any, res: Response) => Promise<void>;
+export declare const atribuirOperador: (req: any, res: Response) => Promise<void>;
+export declare const removerOperador: (req: any, res: Response) => Promise<void>;
 //# sourceMappingURL=gestorController.d.ts.map

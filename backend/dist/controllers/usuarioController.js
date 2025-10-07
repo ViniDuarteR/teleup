@@ -8,6 +8,29 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const database_1 = require("../config/database");
 const listarUsuarios = async (req, res) => {
     try {
+        if (req.operador.tipo === 'gestor') {
+            const gestorId = req.operador.id;
+            const [gestorEmpresa] = await database_1.pool.execute('SELECT empresa_id FROM gestores WHERE id = ?', [gestorId]);
+            const empresa = gestorEmpresa;
+            if (empresa.length === 0) {
+                res.status(404).json({
+                    success: false,
+                    message: 'Gestor não encontrado'
+                });
+                return;
+            }
+            const empresaId = empresa[0].empresa_id;
+            const [operadores] = await database_1.pool.execute(`SELECT id, nome, email, nivel, xp_atual, xp_proximo_nivel, pontos_totais, 
+                status, avatar, tempo_online, data_criacao, data_atualizacao, pa, carteira
+         FROM operadores 
+         WHERE empresa_id = ?
+         ORDER BY pontos_totais DESC`, [empresaId]);
+            res.json({
+                success: true,
+                data: operadores
+            });
+            return;
+        }
         const operadorId = req.operador.id;
         const [empresaResult] = await database_1.pool.execute('SELECT empresa_id FROM operadores WHERE id = ?', [operadorId]);
         const empresa = empresaResult;
@@ -20,7 +43,7 @@ const listarUsuarios = async (req, res) => {
         }
         const empresaId = empresa[0].empresa_id;
         const [operadores] = await database_1.pool.execute(`SELECT id, nome, email, nivel, xp_atual, xp_proximo_nivel, pontos_totais, 
-              status, avatar, tempo_online, data_criacao, data_atualizacao
+              status, avatar, tempo_online, data_criacao, data_atualizacao, pa, carteira
        FROM operadores 
        WHERE empresa_id = ? 
        ORDER BY pontos_totais DESC`, [empresaId]);
@@ -40,18 +63,16 @@ const listarUsuarios = async (req, res) => {
 exports.listarUsuarios = listarUsuarios;
 const criarUsuario = async (req, res) => {
     try {
-        const { nome, email, senha, nivel = 1 } = req.body;
-        const operadorId = req.operador.id;
-        const [empresaResult] = await database_1.pool.execute('SELECT empresa_id FROM operadores WHERE id = ?', [operadorId]);
-        const empresa = empresaResult;
-        if (empresa.length === 0) {
-            res.status(404).json({
-                success: false,
-                message: 'Operador não encontrado'
-            });
-            return;
+        const { nome, email, senha, nivel = 1, pa = '', carteira = '' } = req.body;
+        let empresaId = 1;
+        if (req.operador.tipo === 'operador') {
+            const operadorId = req.operador.id;
+            const [empresaResult] = await database_1.pool.execute('SELECT empresa_id FROM operadores WHERE id = ?', [operadorId]);
+            const empresa = empresaResult;
+            if (empresa.length > 0) {
+                empresaId = empresa[0].empresa_id;
+            }
         }
-        const empresaId = empresa[0].empresa_id;
         const [emailExists] = await database_1.pool.execute('SELECT id FROM operadores WHERE email = ? AND empresa_id = ?', [email, empresaId]);
         if (emailExists.length > 0) {
             res.status(400).json({
@@ -63,8 +84,8 @@ const criarUsuario = async (req, res) => {
         const senhaHash = await bcryptjs_1.default.hash(senha, 10);
         const xpProximoNivel = nivel * 100;
         const [result] = await database_1.pool.execute(`INSERT INTO operadores (nome, email, senha, nivel, xp_atual, xp_proximo_nivel, 
-                              pontos_totais, status, avatar, tempo_online, empresa_id)
-       VALUES (?, ?, ?, ?, 0, ?, 0, 'Aguardando Chamada', 'avatar1.png', 0, ?)`, [nome, email, senhaHash, nivel, xpProximoNivel, empresaId]);
+                              pontos_totais, status, avatar, tempo_online, empresa_id, pa, carteira)
+       VALUES (?, ?, ?, ?, 0, ?, 0, 'Aguardando Chamada', 'avatar1.png', 0, ?, ?, ?)`, [nome, email, senhaHash, nivel, xpProximoNivel, empresaId, pa, carteira]);
         const insertResult = result;
         res.status(201).json({
             success: true,

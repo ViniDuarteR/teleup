@@ -17,7 +17,12 @@ const operador_1 = __importDefault(require("./routes/operador"));
 const chamadas_1 = __importDefault(require("./routes/chamadas"));
 const gamificacao_1 = __importDefault(require("./routes/gamificacao"));
 const gestor_1 = __importDefault(require("./routes/gestor"));
+const gestorAuth_1 = __importDefault(require("./routes/gestorAuth"));
+const gestores_1 = __importDefault(require("./routes/gestores"));
 const usuarios_1 = __importDefault(require("./routes/usuarios"));
+const recompensas_1 = __importDefault(require("./routes/recompensas"));
+const empresaAuth_1 = __importDefault(require("./routes/empresaAuth"));
+const empresas_1 = __importDefault(require("./routes/empresas"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 exports.app = app;
@@ -33,7 +38,7 @@ const PORT = process.env.PORT || 3001;
 app.use((0, helmet_1.default)());
 const limiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 1000,
     message: {
         success: false,
         message: 'Muitas tentativas. Tente novamente em 15 minutos.'
@@ -55,7 +60,12 @@ app.use('/api/operador', operador_1.default);
 app.use('/api/chamadas', chamadas_1.default);
 app.use('/api/gamificacao', gamificacao_1.default);
 app.use('/api/gestor', gestor_1.default);
+app.use('/api/gestor-auth', gestorAuth_1.default);
+app.use('/api/gestores', gestores_1.default);
 app.use('/api/usuarios', usuarios_1.default);
+app.use('/api/recompensas', recompensas_1.default);
+app.use('/api/empresa-auth', empresaAuth_1.default);
+app.use('/api/empresas', empresas_1.default);
 app.get('/api/health', (req, res) => {
     res.json({
         success: true,

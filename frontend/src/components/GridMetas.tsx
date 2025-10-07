@@ -94,7 +94,7 @@ const GridMetas = ({ metas }: GridMetasProps) => {
                   />
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>{percentage.toFixed(0)}% completo</span>
+                  <span>{percentage?.toFixed(0) || '0'}% completo</span>
                   <span className={isCompleted ? 'text-success font-semibold' : ''}>
                     {isCompleted ? 'META ATINGIDA!' : `Faltam ${meta.meta - meta.atual}`}
                   </span>

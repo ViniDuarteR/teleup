@@ -12,10 +12,18 @@ import Login from "./pages/Login";
 import Teste from "./pages/Teste";
 import Debug from "./pages/Debug";
 import DashboardOperador from "./pages/DashboardOperador";
+import PerfilOperador from "./pages/PerfilOperador";
+import MetasPessoais from "./pages/MetasPessoais";
 import PainelGestor from "./pages/PainelGestor";
+import MonitorOperadores from "./pages/MonitorOperadores";
+import GerenciarRecompensas from "./pages/GerenciarRecompensas";
 import GerenciarUsuarios from "./pages/GerenciarUsuarios";
+import GerenciarGestores from "./pages/GerenciarGestores";
 import LojaRecompensas from "./pages/LojaRecompensas";
 import GaleriaConquistas from "./pages/GaleriaConquistas";
+import DashboardEmpresa from "./pages/DashboardEmpresa";
+import RelatoriosEmpresa from "./pages/RelatoriosEmpresa";
+import GerenciarGestoresEmpresa from "./pages/GerenciarGestoresEmpresa";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +51,22 @@ const App = () => (
               } 
             />
             <Route 
+              path="/perfil" 
+              element={
+                <ProtectedRoute requiredRole="operador">
+                  <PerfilOperador />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/metas" 
+              element={
+                <ProtectedRoute requiredRole="operador">
+                  <MetasPessoais />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/gestor" 
               element={
                 <ProtectedRoute requiredRole="gestor">
@@ -51,10 +75,34 @@ const App = () => (
               } 
             />
             <Route 
+              path="/gestor/operadores" 
+              element={
+                <ProtectedRoute requiredRole="gestor">
+                  <MonitorOperadores />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/gestor/recompensas" 
+              element={
+                <ProtectedRoute requiredRole="gestor">
+                  <GerenciarRecompensas />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/usuarios" 
               element={
                 <ProtectedRoute requiredRole="gestor">
                   <GerenciarUsuarios />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/gestores" 
+              element={
+                <ProtectedRoute requiredRole="gestor">
+                  <GerenciarGestores />
                 </ProtectedRoute>
               } 
             />
@@ -71,6 +119,31 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <GaleriaConquistas />
+                </ProtectedRoute>
+              } 
+            />
+            {/* Rotas da Empresa */}
+            <Route 
+              path="/dashboard-empresa" 
+              element={
+                <ProtectedRoute requiredRole="empresa">
+                  <DashboardEmpresa />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/relatorios-empresa" 
+              element={
+                <ProtectedRoute requiredRole="empresa">
+                  <RelatoriosEmpresa />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/gestores-empresa" 
+              element={
+                <ProtectedRoute requiredRole="empresa">
+                  <GerenciarGestoresEmpresa />
                 </ProtectedRoute>
               } 
             />
