@@ -21,6 +21,9 @@ import GerenciarUsuarios from "./pages/GerenciarUsuarios";
 import GerenciarGestores from "./pages/GerenciarGestores";
 import LojaRecompensas from "./pages/LojaRecompensas";
 import GaleriaConquistas from "./pages/GaleriaConquistas";
+import DashboardEmpresa from "./pages/DashboardEmpresa";
+import RelatoriosEmpresa from "./pages/RelatoriosEmpresa";
+import GerenciarGestoresEmpresa from "./pages/GerenciarGestoresEmpresa";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -116,6 +119,31 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <GaleriaConquistas />
+                </ProtectedRoute>
+              } 
+            />
+            {/* Rotas da Empresa */}
+            <Route 
+              path="/dashboard-empresa" 
+              element={
+                <ProtectedRoute requiredRole="empresa">
+                  <DashboardEmpresa />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/relatorios-empresa" 
+              element={
+                <ProtectedRoute requiredRole="empresa">
+                  <RelatoriosEmpresa />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/gestores-empresa" 
+              element={
+                <ProtectedRoute requiredRole="empresa">
+                  <GerenciarGestoresEmpresa />
                 </ProtectedRoute>
               } 
             />

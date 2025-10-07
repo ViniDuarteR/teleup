@@ -58,6 +58,9 @@ const Login = () => {
               if (userData.tipo === 'gestor') {
                 console.log('Login - User is gestor, redirecting to /gestor');
                 navigate('/gestor');
+              } else if (userData.tipo === 'empresa') {
+                console.log('Login - User is empresa, redirecting to /dashboard-empresa');
+                navigate('/dashboard-empresa');
               } else if (userData.tipo === 'operador') {
                 console.log('Login - User is operador, redirecting to /dashboard');
                 navigate('/dashboard');
