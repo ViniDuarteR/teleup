@@ -23,7 +23,7 @@ interface Gestor {
 }
 
 const GerenciarGestores = () => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [gestores, setGestores] = useState<Gestor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -43,7 +43,10 @@ const GerenciarGestores = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/gestores`, {
+      // Determinar a rota baseada no tipo de usuário
+      const endpoint = user?.tipo === 'empresa' ? '/empresas/gestores' : '/gestores';
+      
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -65,7 +68,10 @@ const GerenciarGestores = () => {
   const criarGestor = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${API_BASE_URL}/gestores`, {
+      // Determinar a rota baseada no tipo de usuário
+      const endpoint = user?.tipo === 'empresa' ? '/empresas/gestores' : '/gestores';
+      
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
