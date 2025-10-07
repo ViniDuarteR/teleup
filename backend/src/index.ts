@@ -15,6 +15,7 @@ import operadorRoutes from './routes/operador';
 import chamadasRoutes from './routes/chamadas';
 import gamificacaoRoutes from './routes/gamificacao';
 import gestorRoutes from './routes/gestor';
+import gestorAuthRoutes from './routes/gestorAuth';
 import usuariosRoutes from './routes/usuarios';
 import recompensasRoutes from './routes/recompensas';
 
@@ -72,6 +73,7 @@ app.use('/api/operador', operadorRoutes);
 app.use('/api/chamadas', chamadasRoutes);
 app.use('/api/gamificacao', gamificacaoRoutes);
 app.use('/api/gestor', gestorRoutes);
+app.use('/api/gestor-auth', gestorAuthRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/recompensas', recompensasRoutes);
 

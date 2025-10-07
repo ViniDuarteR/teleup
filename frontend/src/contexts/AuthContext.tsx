@@ -4,13 +4,14 @@ interface User {
   id: number;
   nome: string;
   email: string;
-  nivel: number;
-  xp_atual: number;
-  xp_proximo_nivel: number;
-  pontos_totais: number;
+  tipo: 'operador' | 'gestor';
+  nivel?: number;
+  xp_atual?: number;
+  xp_proximo_nivel?: number;
+  pontos_totais?: number;
   status: string;
   avatar: string;
-  tempo_online: number;
+  tempo_online?: number;
   data_criacao: string;
   data_atualizacao: string;
 }
@@ -67,6 +68,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       
+      // Para o Hyttalo Costa, tentar login como gestor primeiro
+      if (email === 'hyttalo@teleup.com') {
+        console.log('AuthContext - Tentando login como gestor para:', email);
+        const response = await fetch(`${API_BASE_URL}/gestor-auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, senha }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          const { token: newToken, operador } = data.data;
+          
+          console.log('AuthContext - Login gestor successful, user:', operador);
+          console.log('AuthContext - User tipo:', operador.tipo);
+          
+          setToken(newToken);
+          setUser(operador);
+          
+          // Salvar no localStorage
+          localStorage.setItem('teleup_token', newToken);
+          localStorage.setItem('teleup_user', JSON.stringify(operador));
+          
+          return true;
+        }
+      }
+
+      // Para outros usuários, tentar login como operador
+      console.log('AuthContext - Tentando login como operador para:', email);
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -79,6 +112,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (data.success) {
         const { token: newToken, operador } = data.data;
+        
+        console.log('AuthContext - Login operador successful, user:', operador);
+        console.log('AuthContext - User tipo:', operador.tipo);
         
         setToken(newToken);
         setUser(operador);

@@ -4,6 +4,7 @@ export interface Operador {
     nome: string;
     email: string;
     senha: string;
+    tipo: 'operador' | 'gestor';
     avatar?: string;
     nivel: number;
     xp_atual: number;

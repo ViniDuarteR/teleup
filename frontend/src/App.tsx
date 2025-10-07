@@ -15,6 +15,8 @@ import DashboardOperador from "./pages/DashboardOperador";
 import PerfilOperador from "./pages/PerfilOperador";
 import MetasPessoais from "./pages/MetasPessoais";
 import PainelGestor from "./pages/PainelGestor";
+import MonitorOperadores from "./pages/MonitorOperadores";
+import GerenciarRecompensas from "./pages/GerenciarRecompensas";
 import GerenciarUsuarios from "./pages/GerenciarUsuarios";
 import LojaRecompensas from "./pages/LojaRecompensas";
 import GaleriaConquistas from "./pages/GaleriaConquistas";
@@ -65,6 +67,22 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="gestor">
                   <PainelGestor />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/gestor/operadores" 
+              element={
+                <ProtectedRoute requiredRole="gestor">
+                  <MonitorOperadores />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/gestor/recompensas" 
+              element={
+                <ProtectedRoute requiredRole="gestor">
+                  <GerenciarRecompensas />
                 </ProtectedRoute>
               } 
             />

@@ -16,17 +16,21 @@ const Login = () => {
   const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
-  // Redirecionar se já estiver logado
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      // Redirecionar baseado no nível do usuário (nivel >= 10 = gestor)
-      if (user.nivel >= 10) {
-        navigate('/gestor');
-      } else {
-        navigate('/dashboard');
-      }
-    }
-  }, [isAuthenticated, user, navigate]);
+  // Redirecionar se já estiver logado (apenas para usuários já autenticados)
+  // useEffect(() => {
+  //   if (isAuthenticated && user) {
+  //     console.log('Login - User already authenticated:', user);
+  //     console.log('Login - User tipo:', user.tipo);
+  //     // Redirecionar baseado no tipo do usuário
+  //     if (user.tipo === 'gestor') {
+  //       console.log('Login - Redirecting to /gestor');
+  //       navigate('/gestor');
+  //     } else {
+  //       console.log('Login - Redirecting to /dashboard');
+  //       navigate('/dashboard');
+  //     }
+  //   }
+  // }, [isAuthenticated, user, navigate]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,12 +42,44 @@ const Login = () => {
       const success = await login(email, senha);
       
       if (success) {
-        // O redirecionamento será feito pelo useEffect acima
-        // baseado no tipo de usuário
+        console.log('Login - Login successful, checking user type');
+        // Aguardar um momento para o estado ser atualizado
+        setTimeout(() => {
+          // Verificar o usuário do localStorage para garantir que temos os dados mais recentes
+          const savedUser = localStorage.getItem('teleup_user');
+          console.log('Login - Saved user from localStorage:', savedUser);
+          
+          if (savedUser) {
+            try {
+              const userData = JSON.parse(savedUser);
+              console.log('Login - Parsed user data:', userData);
+              console.log('Login - User tipo:', userData.tipo);
+              
+              if (userData.tipo === 'gestor') {
+                console.log('Login - User is gestor, redirecting to /gestor');
+                navigate('/gestor');
+              } else if (userData.tipo === 'operador') {
+                console.log('Login - User is operador, redirecting to /dashboard');
+                navigate('/dashboard');
+              } else {
+                console.log('Login - Unknown user type, redirecting to dashboard');
+                navigate('/dashboard');
+              }
+            } catch (parseError) {
+              console.error('Login - Error parsing user data:', parseError);
+              navigate('/dashboard');
+            }
+          } else {
+            console.log('Login - No user data in localStorage, redirecting to dashboard');
+            navigate('/dashboard');
+          }
+        }, 500);
       } else {
+        console.log('Login - Login failed');
         setError('Credenciais inválidas. Tente novamente.');
       }
     } catch (err) {
+      console.log('Login - Login error:', err);
       setError('Erro ao fazer login. Tente novamente.');
     } finally {
       setIsLoading(false);

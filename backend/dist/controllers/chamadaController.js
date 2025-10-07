@@ -191,10 +191,10 @@ exports.getEstatisticas = getEstatisticas;
 const verificarMissoes = async (operadorId, tipo, valor) => {
     try {
         const [missoes] = await database_1.pool.execute(`
-      SELECT m.*, om.progresso_atual, om.concluida
+      SELECT m.*, pm.progresso_atual, pm.concluida
       FROM missoes m
-      LEFT JOIN operador_missoes om ON m.id = om.missao_id AND om.operador_id = ?
-      WHERE m.ativa = TRUE AND (om.concluida = FALSE OR om.concluida IS NULL)
+      LEFT JOIN progresso_missoes pm ON m.id = pm.missao_id AND pm.operador_id = ?
+      WHERE m.ativa = TRUE AND (pm.concluida = FALSE OR pm.concluida IS NULL)
     `, [operadorId]);
         for (const missao of missoes) {
             let novoProgresso = missao.progresso_atual || 0;
@@ -203,11 +203,11 @@ const verificarMissoes = async (operadorId, tipo, valor) => {
             }
             if (novoProgresso >= missao.meta_valor) {
                 if (missao.concluida) {
-                    await database_1.pool.execute('UPDATE operador_missoes SET progresso_atual = ? WHERE operador_id = ? AND missao_id = ?', [novoProgresso, operadorId, missao.id]);
+                    await database_1.pool.execute('UPDATE progresso_missoes SET progresso_atual = ? WHERE operador_id = ? AND missao_id = ?', [novoProgresso, operadorId, missao.id]);
                 }
                 else {
                     await database_1.pool.execute(`
-            INSERT INTO operador_missoes (operador_id, missao_id, progresso_atual, concluida, data_conclusao)
+            INSERT INTO progresso_missoes (operador_id, missao_id, progresso_atual, concluida, data_conclusao)
             VALUES (?, ?, ?, TRUE, NOW())
             ON DUPLICATE KEY UPDATE progresso_atual = ?, concluida = TRUE, data_conclusao = NOW()
           `, [operadorId, missao.id, novoProgresso, novoProgresso]);
@@ -216,7 +216,7 @@ const verificarMissoes = async (operadorId, tipo, valor) => {
             }
             else {
                 await database_1.pool.execute(`
-          INSERT INTO operador_missoes (operador_id, missao_id, progresso_atual, concluida)
+          INSERT INTO progresso_missoes (operador_id, missao_id, progresso_atual, concluida)
           VALUES (?, ?, ?, FALSE)
           ON DUPLICATE KEY UPDATE progresso_atual = ?
         `, [operadorId, missao.id, novoProgresso, novoProgresso]);

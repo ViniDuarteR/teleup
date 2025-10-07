@@ -249,10 +249,10 @@ const verificarMissoes = async (operadorId: number, tipo: string, valor: number)
   try {
     // Buscar missões ativas do operador
     const [missoes] = await pool.execute(`
-      SELECT m.*, om.progresso_atual, om.concluida
+      SELECT m.*, pm.progresso_atual, pm.concluida
       FROM missoes m
-      LEFT JOIN operador_missoes om ON m.id = om.missao_id AND om.operador_id = ?
-      WHERE m.ativa = TRUE AND (om.concluida = FALSE OR om.concluida IS NULL)
+      LEFT JOIN progresso_missoes pm ON m.id = pm.missao_id AND pm.operador_id = ?
+      WHERE m.ativa = TRUE AND (pm.concluida = FALSE OR pm.concluida IS NULL)
     `, [operadorId]);
 
     for (const missao of (missoes as any[])) {
@@ -268,13 +268,13 @@ const verificarMissoes = async (operadorId: number, tipo: string, valor: number)
         if (missao.concluida) {
           // Atualizar progresso
           await pool.execute(
-            'UPDATE operador_missoes SET progresso_atual = ? WHERE operador_id = ? AND missao_id = ?',
+            'UPDATE progresso_missoes SET progresso_atual = ? WHERE operador_id = ? AND missao_id = ?',
             [novoProgresso, operadorId, missao.id]
           );
         } else {
           // Criar ou atualizar registro
           await pool.execute(`
-            INSERT INTO operador_missoes (operador_id, missao_id, progresso_atual, concluida, data_conclusao)
+            INSERT INTO progresso_missoes (operador_id, missao_id, progresso_atual, concluida, data_conclusao)
             VALUES (?, ?, ?, TRUE, NOW())
             ON DUPLICATE KEY UPDATE progresso_atual = ?, concluida = TRUE, data_conclusao = NOW()
           `, [operadorId, missao.id, novoProgresso, novoProgresso]);
@@ -288,7 +288,7 @@ const verificarMissoes = async (operadorId: number, tipo: string, valor: number)
       } else {
         // Atualizar progresso
         await pool.execute(`
-          INSERT INTO operador_missoes (operador_id, missao_id, progresso_atual, concluida)
+          INSERT INTO progresso_missoes (operador_id, missao_id, progresso_atual, concluida)
           VALUES (?, ?, ?, FALSE)
           ON DUPLICATE KEY UPDATE progresso_atual = ?
         `, [operadorId, missao.id, novoProgresso, novoProgresso]);

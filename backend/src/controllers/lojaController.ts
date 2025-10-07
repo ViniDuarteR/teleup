@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../types';
 
 // Dados mockados para teste
-const recompensasMock = [
+let recompensasMock = [
   {
     id: 1,
     nome: "Café Premium",
@@ -64,6 +64,8 @@ const recompensasMock = [
     quantidade_restante: null
   }
 ];
+
+let nextId = 6;
 
 // Buscar recompensas
 export const getRecompensas = async (req: AuthRequest, res: Response) => {
@@ -134,6 +136,162 @@ export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
     
   } catch (error) {
     console.error('Erro ao comprar recompensa:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Criar nova recompensa
+export const criarRecompensa = async (req: AuthRequest, res: Response) => {
+  try {
+    const {
+      nome,
+      descricao,
+      categoria,
+      preco,
+      tipo,
+      raridade,
+      imagem,
+      disponivel,
+      quantidade_restante
+    } = req.body;
+
+    const novaRecompensa = {
+      id: nextId++,
+      nome,
+      descricao,
+      categoria,
+      preco: parseInt(preco),
+      tipo,
+      raridade,
+      imagem: imagem || null,
+      disponivel: disponivel !== false,
+      quantidade_restante: quantidade_restante ? parseInt(quantidade_restante) : null
+    };
+
+    recompensasMock.push(novaRecompensa);
+
+    return res.json({
+      success: true,
+      message: 'Recompensa criada com sucesso!',
+      data: novaRecompensa
+    });
+  } catch (error) {
+    console.error('Erro ao criar recompensa:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Atualizar recompensa
+export const atualizarRecompensa = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const {
+      nome,
+      descricao,
+      categoria,
+      preco,
+      tipo,
+      raridade,
+      imagem,
+      disponivel,
+      quantidade_restante
+    } = req.body;
+
+    const index = recompensasMock.findIndex(r => r.id === parseInt(id));
+    
+    if (index === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Recompensa não encontrada'
+      });
+    }
+
+    recompensasMock[index] = {
+      ...recompensasMock[index],
+      nome,
+      descricao,
+      categoria,
+      preco: parseInt(preco),
+      tipo,
+      raridade,
+      imagem: imagem || null,
+      disponivel: disponivel !== false,
+      quantidade_restante: quantidade_restante ? parseInt(quantidade_restante) : null
+    };
+
+    return res.json({
+      success: true,
+      message: 'Recompensa atualizada com sucesso!',
+      data: recompensasMock[index]
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar recompensa:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Excluir recompensa
+export const excluirRecompensa = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    const index = recompensasMock.findIndex(r => r.id === parseInt(id));
+    
+    if (index === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Recompensa não encontrada'
+      });
+    }
+
+    recompensasMock.splice(index, 1);
+
+    return res.json({
+      success: true,
+      message: 'Recompensa excluída com sucesso!'
+    });
+  } catch (error) {
+    console.error('Erro ao excluir recompensa:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Toggle disponibilidade
+export const toggleDisponibilidade = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { disponivel } = req.body;
+    
+    const index = recompensasMock.findIndex(r => r.id === parseInt(id));
+    
+    if (index === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Recompensa não encontrada'
+      });
+    }
+
+    recompensasMock[index].disponivel = disponivel;
+
+    return res.json({
+      success: true,
+      message: `Recompensa ${disponivel ? 'habilitada' : 'desabilitada'} com sucesso!`,
+      data: recompensasMock[index]
+    });
+  } catch (error) {
+    console.error('Erro ao alterar disponibilidade:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
