@@ -208,6 +208,13 @@ const PainelGestor = () => {
                   </Button>
                 </Link>
                 
+                <Link to="/gestores">
+                  <Button variant="outline" className="w-full h-20 flex flex-col items-center gap-2">
+                    <Settings className="w-6 h-6 text-primary" />
+                    <span>Gerenciar Gestores</span>
+                  </Button>
+                </Link>
+                
                 <Link to="/gestor/relatorios">
                   <Button variant="outline" className="w-full h-20 flex flex-col items-center gap-2">
                     <TrendingUp className="w-6 h-6 text-primary" />

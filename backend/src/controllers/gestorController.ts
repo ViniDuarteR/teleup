@@ -2,9 +2,8 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { pool } from '../config/database';
-import { AuthRequest, LoginRequest, LoginResponse, ApiResponse } from '../types';
+import { ApiResponse, LoginRequest, LoginResponse } from '../types';
 
-// Login do gestor
 export const loginGestor = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRequest>, res: Response<ApiResponse<LoginResponse>>): Promise<void> => {
   try {
     const { email, senha } = req.body;
@@ -17,7 +16,6 @@ export const loginGestor = async (req: Request<{}, ApiResponse<LoginResponse>, L
       return;
     }
 
-    // Buscar gestor por email
     const [gestores] = await pool.execute(
       'SELECT * FROM gestores WHERE email = ? AND status = "Ativo"',
       [email]
@@ -33,7 +31,6 @@ export const loginGestor = async (req: Request<{}, ApiResponse<LoginResponse>, L
 
     const gestor = (gestores as any[])[0];
 
-    // Verificar senha
     const senhaValida = await bcrypt.compare(senha, gestor.senha);
     if (!senhaValida) {
       res.status(401).json({
@@ -43,14 +40,12 @@ export const loginGestor = async (req: Request<{}, ApiResponse<LoginResponse>, L
       return;
     }
 
-    // Gerar token JWT
     const token = jwt.sign(
       { gestorId: gestor.id, email: gestor.email, tipo: 'gestor' },
       process.env.JWT_SECRET || 'seu_jwt_secret_super_seguro_aqui',
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' } as jwt.SignOptions
     );
 
-    // Salvar sessão no banco (usando a tabela sessoes existente)
     const dataExpiracao = new Date();
     dataExpiracao.setHours(dataExpiracao.getHours() + 24);
 
@@ -89,13 +84,238 @@ export const loginGestor = async (req: Request<{}, ApiResponse<LoginResponse>, L
   }
 };
 
-// Logout do gestor
-export const logoutGestor = async (req: AuthRequest, res: Response<ApiResponse>): Promise<void> => {
+// Listar gestores da empresa
+export const listarGestores = async (req: any, res: Response): Promise<void> => {
   try {
-    const token = req.token;
+    const gestorId = req.operador.id;
+    
+    // Buscar empresa do gestor logado
+    const [empresaResult] = await pool.execute(
+      'SELECT empresa_id FROM gestores WHERE id = ?',
+      [gestorId]
+    );
+    
+    const empresa = empresaResult as any[];
+    if (empresa.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Gestor não encontrado'
+      });
+      return;
+    }
 
+    const empresaId = empresa[0].empresa_id;
+
+    // Buscar todos os gestores da empresa
+    const [gestores] = await pool.execute(
+      `SELECT id, nome, email, status, avatar, data_criacao, data_atualizacao
+       FROM gestores 
+       WHERE empresa_id = ? 
+       ORDER BY nome`,
+      [empresaId]
+    );
+
+    res.json({
+      success: true,
+      data: gestores
+    });
+  } catch (error) {
+    console.error('Erro ao listar gestores:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Criar novo gestor
+export const criarGestor = async (req: any, res: Response): Promise<void> => {
+  try {
+    const { nome, email, senha } = req.body;
+    const gestorId = req.operador.id;
+
+    // Buscar empresa do gestor logado
+    const [empresaResult] = await pool.execute(
+      'SELECT empresa_id FROM gestores WHERE id = ?',
+      [gestorId]
+    );
+    
+    const empresa = empresaResult as any[];
+    if (empresa.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Gestor não encontrado'
+      });
+      return;
+    }
+
+    const empresaId = empresa[0].empresa_id;
+
+    // Verificar se email já existe
+    const [emailExists] = await pool.execute(
+      'SELECT id FROM gestores WHERE email = ? AND empresa_id = ?',
+      [email, empresaId]
+    );
+
+    if ((emailExists as any[]).length > 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Email já cadastrado nesta empresa'
+      });
+      return;
+    }
+
+    // Hash da senha
+    const senhaHash = await bcrypt.hash(senha, 10);
+
+    // Inserir novo gestor
+    const [result] = await pool.execute(
+      `INSERT INTO gestores (nome, email, senha, status, avatar, empresa_id)
+       VALUES (?, ?, ?, 'Ativo', 'avatar1.png', ?)`,
+      [nome, email, senhaHash, empresaId]
+    );
+
+    const insertResult = result as any;
+    res.status(201).json({
+      success: true,
+      message: 'Gestor criado com sucesso',
+      data: { id: insertResult.insertId }
+    });
+
+  } catch (error) {
+    console.error('Erro ao criar gestor:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Atualizar gestor
+export const atualizarGestor = async (req: any, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { nome, email, status } = req.body;
+    const gestorId = req.operador.id;
+
+    // Verificar se o gestor pertence à mesma empresa
+    const [gestorResult] = await pool.execute(
+      'SELECT empresa_id FROM gestores WHERE id = ?',
+      [id]
+    );
+    
+    const [currentGestorResult] = await pool.execute(
+      'SELECT empresa_id FROM gestores WHERE id = ?',
+      [gestorId]
+    );
+
+    const gestor = gestorResult as any[];
+    const currentGestor = currentGestorResult as any[];
+
+    if (gestor.length === 0 || currentGestor.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Gestor não encontrado'
+      });
+      return;
+    }
+
+    if (gestor[0].empresa_id !== currentGestor[0].empresa_id) {
+      res.status(403).json({
+        success: false,
+        message: 'Acesso negado'
+      });
+      return;
+    }
+
+    // Atualizar gestor
+    await pool.execute(
+      'UPDATE gestores SET nome = ?, email = ?, status = ? WHERE id = ?',
+      [nome, email, status, id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Gestor atualizado com sucesso'
+    });
+
+  } catch (error) {
+    console.error('Erro ao atualizar gestor:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Excluir gestor
+export const excluirGestor = async (req: any, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const gestorId = req.operador.id;
+
+    // Não permitir excluir a si mesmo
+    if (parseInt(id) === gestorId) {
+      res.status(400).json({
+        success: false,
+        message: 'Não é possível excluir seu próprio usuário'
+      });
+      return;
+    }
+
+    // Verificar se o gestor pertence à mesma empresa
+    const [gestorResult] = await pool.execute(
+      'SELECT empresa_id FROM gestores WHERE id = ?',
+      [id]
+    );
+    
+    const [currentGestorResult] = await pool.execute(
+      'SELECT empresa_id FROM gestores WHERE id = ?',
+      [gestorId]
+    );
+
+    const gestor = gestorResult as any[];
+    const currentGestor = currentGestorResult as any[];
+
+    if (gestor.length === 0 || currentGestor.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Gestor não encontrado'
+      });
+      return;
+    }
+
+    if (gestor[0].empresa_id !== currentGestor[0].empresa_id) {
+      res.status(403).json({
+        success: false,
+        message: 'Acesso negado'
+      });
+      return;
+    }
+
+    // Excluir gestor
+    await pool.execute('DELETE FROM gestores WHERE id = ?', [id]);
+
+    res.json({
+      success: true,
+      message: 'Gestor excluído com sucesso'
+    });
+
+  } catch (error) {
+    console.error('Erro ao excluir gestor:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Logout do gestor
+export const logoutGestor = async (req: any, res: Response): Promise<void> => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
     if (token) {
-      // Invalidar sessão no banco
       await pool.execute(
         'UPDATE sessoes SET ativo = FALSE WHERE token = ?',
         [token]
@@ -106,7 +326,6 @@ export const logoutGestor = async (req: AuthRequest, res: Response<ApiResponse>)
       success: true,
       message: 'Logout realizado com sucesso'
     });
-
   } catch (error) {
     console.error('Erro no logout do gestor:', error);
     res.status(500).json({
@@ -117,26 +336,26 @@ export const logoutGestor = async (req: AuthRequest, res: Response<ApiResponse>)
 };
 
 // Obter operadores gerenciados pelo gestor
-export const getOperadoresGerenciados = async (req: AuthRequest, res: Response<ApiResponse<any[]>>): Promise<void> => {
+export const getOperadoresGerenciados = async (req: any, res: Response): Promise<void> => {
   try {
-    const gestorId = req.user?.id;
-
-    const [operadores] = await pool.execute(`
-      SELECT 
-        o.id, o.nome, o.email, o.nivel, o.xp_atual, o.xp_proximo_nivel, 
-        o.pontos_totais, o.status, o.avatar, o.tempo_online,
-        og.data_atribuicao
-      FROM operadores o
-      INNER JOIN operador_gestor og ON o.id = og.operador_id
-      WHERE og.gestor_id = ? AND og.ativo = TRUE
-      ORDER BY o.nome
-    `, [gestorId]);
+    const gestorId = req.operador.id;
+    
+    // Buscar operadores atribuídos ao gestor
+    const [operadores] = await pool.execute(
+      `SELECT o.id, o.nome, o.email, o.nivel, o.xp_atual, o.xp_proximo_nivel, 
+              o.pontos_totais, o.status, o.avatar, o.tempo_online, o.pa, o.carteira,
+              o.data_criacao, o.data_atualizacao
+       FROM operadores o
+       INNER JOIN operador_gestor og ON o.id = og.operador_id
+       WHERE og.gestor_id = ? AND og.ativo = TRUE
+       ORDER BY o.pontos_totais DESC`,
+      [gestorId]
+    );
 
     res.json({
       success: true,
-      data: operadores as any[]
+      data: operadores
     });
-
   } catch (error) {
     console.error('Erro ao buscar operadores gerenciados:', error);
     res.status(500).json({
@@ -146,27 +365,19 @@ export const getOperadoresGerenciados = async (req: AuthRequest, res: Response<A
   }
 };
 
-// Atribuir operador a um gestor
-export const atribuirOperador = async (req: AuthRequest, res: Response<ApiResponse>): Promise<void> => {
+// Atribuir operador ao gestor
+export const atribuirOperador = async (req: any, res: Response): Promise<void> => {
   try {
-    const { operador_id } = req.body;
-    const gestorId = req.user?.id;
-
-    if (!operador_id) {
-      res.status(400).json({
-        success: false,
-        message: 'ID do operador é obrigatório'
-      });
-      return;
-    }
+    const { operadorId } = req.body;
+    const gestorId = req.operador.id;
 
     // Verificar se o operador existe
-    const [operadores] = await pool.execute(
+    const [operadorResult] = await pool.execute(
       'SELECT id FROM operadores WHERE id = ?',
-      [operador_id]
+      [operadorId]
     );
 
-    if ((operadores as any[]).length === 0) {
+    if ((operadorResult as any[]).length === 0) {
       res.status(404).json({
         success: false,
         message: 'Operador não encontrado'
@@ -174,12 +385,25 @@ export const atribuirOperador = async (req: AuthRequest, res: Response<ApiRespon
       return;
     }
 
+    // Verificar se já está atribuído
+    const [atribuicaoResult] = await pool.execute(
+      'SELECT id FROM operador_gestor WHERE operador_id = ? AND gestor_id = ? AND ativo = TRUE',
+      [operadorId, gestorId]
+    );
+
+    if ((atribuicaoResult as any[]).length > 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Operador já está atribuído a este gestor'
+      });
+      return;
+    }
+
     // Atribuir operador ao gestor
-    await pool.execute(`
-      INSERT INTO operador_gestor (operador_id, gestor_id, ativo)
-      VALUES (?, ?, TRUE)
-      ON DUPLICATE KEY UPDATE ativo = TRUE, data_atribuicao = CURRENT_TIMESTAMP
-    `, [operador_id, gestorId]);
+    await pool.execute(
+      'INSERT INTO operador_gestor (operador_id, gestor_id, data_atribuicao, ativo) VALUES (?, ?, NOW(), TRUE)',
+      [operadorId, gestorId]
+    );
 
     res.json({
       success: true,
@@ -195,24 +419,16 @@ export const atribuirOperador = async (req: AuthRequest, res: Response<ApiRespon
   }
 };
 
-// Remover operador de um gestor
-export const removerOperador = async (req: AuthRequest, res: Response<ApiResponse>): Promise<void> => {
+// Remover operador do gestor
+export const removerOperador = async (req: any, res: Response): Promise<void> => {
   try {
-    const { operador_id } = req.body;
-    const gestorId = req.user?.id;
-
-    if (!operador_id) {
-      res.status(400).json({
-        success: false,
-        message: 'ID do operador é obrigatório'
-      });
-      return;
-    }
+    const { operadorId } = req.body;
+    const gestorId = req.operador.id;
 
     // Remover atribuição
     await pool.execute(
       'UPDATE operador_gestor SET ativo = FALSE WHERE operador_id = ? AND gestor_id = ?',
-      [operador_id, gestorId]
+      [operadorId, gestorId]
     );
 
     res.json({

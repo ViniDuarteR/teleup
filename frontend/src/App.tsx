@@ -18,6 +18,7 @@ import PainelGestor from "./pages/PainelGestor";
 import MonitorOperadores from "./pages/MonitorOperadores";
 import GerenciarRecompensas from "./pages/GerenciarRecompensas";
 import GerenciarUsuarios from "./pages/GerenciarUsuarios";
+import GerenciarGestores from "./pages/GerenciarGestores";
 import LojaRecompensas from "./pages/LojaRecompensas";
 import GaleriaConquistas from "./pages/GaleriaConquistas";
 import NotFound from "./pages/NotFound";
@@ -91,6 +92,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="gestor">
                   <GerenciarUsuarios />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/gestores" 
+              element={
+                <ProtectedRoute requiredRole="gestor">
+                  <GerenciarGestores />
                 </ProtectedRoute>
               } 
             />
