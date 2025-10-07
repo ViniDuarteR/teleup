@@ -107,8 +107,13 @@ export interface Sessao {
 
 // Tipos de requisição
 export interface AuthRequest extends Request {
-  operador: Operador;
-  token: string;
+  user?: {
+    id: number;
+    email: string;
+    tipo: string;
+  };
+  operador?: Operador;
+  token?: string;
 }
 
 // Tipos de resposta da API

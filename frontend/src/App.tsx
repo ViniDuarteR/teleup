@@ -12,6 +12,8 @@ import Login from "./pages/Login";
 import Teste from "./pages/Teste";
 import Debug from "./pages/Debug";
 import DashboardOperador from "./pages/DashboardOperador";
+import PerfilOperador from "./pages/PerfilOperador";
+import MetasPessoais from "./pages/MetasPessoais";
 import PainelGestor from "./pages/PainelGestor";
 import GerenciarUsuarios from "./pages/GerenciarUsuarios";
 import LojaRecompensas from "./pages/LojaRecompensas";
@@ -39,6 +41,22 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="operador">
                   <DashboardOperador />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/perfil" 
+              element={
+                <ProtectedRoute requiredRole="operador">
+                  <PerfilOperador />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/metas" 
+              element={
+                <ProtectedRoute requiredRole="operador">
+                  <MetasPessoais />
                 </ProtectedRoute>
               } 
             />

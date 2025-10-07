@@ -95,8 +95,13 @@ export interface Sessao {
     ativa: boolean;
 }
 export interface AuthRequest extends Request {
-    operador: Operador;
-    token: string;
+    user?: {
+        id: number;
+        email: string;
+        tipo: string;
+    };
+    operador?: Operador;
+    token?: string;
 }
 export interface ApiResponse<T = any> {
     success: boolean;
