@@ -39,20 +39,26 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3001;
 
+// Configurar trust proxy para Vercel
+if (process.env.VERCEL) {
+  app.set('trust proxy', 1);
+}
+
 // Middleware de segurança
 app.use(helmet());
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 1000, // máximo 1000 requests por IP (aumentado para desenvolvimento)
-  message: {
-    success: false,
-    message: 'Muitas tentativas. Tente novamente em 15 minutos.'
-  }
-});
-
-app.use(limiter);
+// Rate limiting (desabilitado no Vercel para evitar problemas)
+if (!process.env.VERCEL) {
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 1000, // máximo 1000 requests por IP (aumentado para desenvolvimento)
+    message: {
+      success: false,
+      message: 'Muitas tentativas. Tente novamente em 15 minutos.'
+    }
+  });
+  app.use(limiter);
+}
 
 // Middleware de CORS
 app.use(cors({

@@ -35,16 +35,21 @@ const io = new socket_io_1.Server(server, {
 });
 exports.io = io;
 const PORT = process.env.PORT || 3001;
+if (process.env.VERCEL) {
+    app.set('trust proxy', 1);
+}
 app.use((0, helmet_1.default)());
-const limiter = (0, express_rate_limit_1.default)({
-    windowMs: 15 * 60 * 1000,
-    max: 1000,
-    message: {
-        success: false,
-        message: 'Muitas tentativas. Tente novamente em 15 minutos.'
-    }
-});
-app.use(limiter);
+if (!process.env.VERCEL) {
+    const limiter = (0, express_rate_limit_1.default)({
+        windowMs: 15 * 60 * 1000,
+        max: 1000,
+        message: {
+            success: false,
+            message: 'Muitas tentativas. Tente novamente em 15 minutos.'
+        }
+    });
+    app.use(limiter);
+}
 app.use((0, cors_1.default)({
     origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
     credentials: true
