@@ -191,6 +191,17 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   startServer();
 }
 
+// Para Vercel, testar conexão com banco na inicialização
+if (process.env.VERCEL) {
+  testConnection().then(connected => {
+    if (connected) {
+      console.log('✅ Conexão com banco verificada no Vercel');
+    } else {
+      console.error('❌ Falha na conexão com banco no Vercel');
+    }
+  });
+}
+
 // Exportar para Vercel
 export default app;
 export { app, io };

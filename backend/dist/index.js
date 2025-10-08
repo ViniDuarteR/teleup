@@ -147,5 +147,15 @@ const startServer = async () => {
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
     startServer();
 }
+if (process.env.VERCEL) {
+    (0, database_1.testConnection)().then(connected => {
+        if (connected) {
+            console.log('✅ Conexão com banco verificada no Vercel');
+        }
+        else {
+            console.error('❌ Falha na conexão com banco no Vercel');
+        }
+    });
+}
 exports.default = app;
 //# sourceMappingURL=index.js.map

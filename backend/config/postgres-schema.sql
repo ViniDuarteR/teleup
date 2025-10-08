@@ -112,3 +112,4 @@ CREATE TRIGGER update_usuarios_updated_at BEFORE UPDATE ON usuarios
 
 CREATE TRIGGER update_operadores_updated_at BEFORE UPDATE ON operadores
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
