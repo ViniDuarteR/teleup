@@ -1,0 +1,8 @@
+backend/
+*.sql
+docker-compose*
+Dockerfile
+nginx.conf
+DEPLOY.md
+DEVELOPMENT.md
+VERCEL-DEPLOY.md
