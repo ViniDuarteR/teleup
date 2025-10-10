@@ -108,8 +108,35 @@ export const authenticateToken = async (
     
     req.token = token;
     next();
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro na autenticação:', error);
+    
+    // Verificar se é erro de conexão com banco
+    if (error?.code === 'ECONNREFUSED' || error?.code === 'ENOTFOUND') {
+      res.status(500).json({
+        success: false,
+        message: 'Erro de conexão com banco de dados'
+      });
+      return;
+    }
+    
+    // Verificar se é erro de JWT
+    if (error?.name === 'JsonWebTokenError') {
+      res.status(403).json({ 
+        success: false, 
+        message: 'Token inválido' 
+      });
+      return;
+    }
+    
+    if (error?.name === 'TokenExpiredError') {
+      res.status(401).json({ 
+        success: false, 
+        message: 'Token expirado' 
+      });
+      return;
+    }
+    
     res.status(403).json({ 
       success: false, 
       message: 'Token inválido' 

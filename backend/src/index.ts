@@ -7,7 +7,7 @@ import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 
 // Importar configurações
-import { testConnection } from './config/database';
+import { testConnection, pool } from './config/database';
 
 // Importar rotas
 import authRoutes from './routes/auth';
@@ -90,13 +90,49 @@ app.use('/api/empresa-auth', empresaAuthRoutes);
 app.use('/api/empresas', empresasRoutes);
 
 // Rota de health check
-app.get('/api/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'API TeleUp funcionando',
-    timestamp: new Date().toISOString(),
-    version: '1.0.0'
-  });
+app.get('/api/health', async (req, res) => {
+  try {
+    // Testar conexão com banco
+    const dbConnected = await testConnection();
+    
+    // Verificar tabelas essenciais
+    let tablesStatus: any = {};
+    if (dbConnected) {
+      try {
+        const tables = ['empresas', 'operadores', 'gestores', 'sessoes', 'sessoes_empresa'];
+        for (const table of tables) {
+          const result = await pool.execute(`SELECT COUNT(*) as count FROM ${table}`);
+          tablesStatus[table] = parseInt((result[0] as any)[0].count);
+        }
+      } catch (error: any) {
+        tablesStatus = { error: error.message };
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: 'API TeleUp funcionando',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      environment: process.env.NODE_ENV || 'development',
+      database: {
+        connected: dbConnected,
+        tables: tablesStatus
+      },
+      variables: {
+        hasJwtSecret: !!process.env.JWT_SECRET,
+        hasDatabaseUrl: !!process.env.DATABASE_URL,
+        corsOrigin: process.env.CORS_ORIGIN
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: 'Erro no health check',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // Rota raiz

@@ -85,8 +85,27 @@ export const loginEmpresa = async (req: Request, res: Response): Promise<void> =
         empresa: empresaData
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro no login da empresa:', error);
+    
+    // Verificar se é erro de conexão com banco
+    if (error?.code === 'ECONNREFUSED' || error?.code === 'ENOTFOUND') {
+      res.status(500).json({
+        success: false,
+        message: 'Erro de conexão com banco de dados'
+      });
+      return;
+    }
+    
+    // Verificar se é erro de query
+    if (error?.code && error.code.startsWith('23')) {
+      res.status(400).json({
+        success: false,
+        message: 'Dados inválidos fornecidos'
+      });
+      return;
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
