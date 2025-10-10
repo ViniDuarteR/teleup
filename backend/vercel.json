@@ -13,7 +13,13 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "VERCEL": "1"
+  },
+  "functions": {
+    "dist/index.js": {
+      "maxDuration": 30
+    }
   },
   "buildCommand": "npm run build"
 }
