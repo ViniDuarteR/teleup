@@ -20,7 +20,8 @@ const dbConfig: DatabaseConfig = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  ssl: process.env.PGSSL === 'true' || !!process.env.DATABASE_URL,
+  // Railway usa SSL por padrão, mas aceita rejectUnauthorized: false
+  ssl: process.env.NODE_ENV === 'production' || !!process.env.DATABASE_URL,
 };
 
 // Criar pool de conexões Postgres
@@ -28,7 +29,8 @@ const pgPool = new Pool(
   dbConfig.connectionString
     ? {
         connectionString: dbConfig.connectionString,
-        ssl: dbConfig.ssl ? { rejectUnauthorized: false } : undefined,
+        // Railway PostgreSQL requer rejectUnauthorized: false
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
       }
     : {
         host: dbConfig.host || 'localhost',

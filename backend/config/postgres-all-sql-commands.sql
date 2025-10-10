@@ -1,16 +1,13 @@
 -- ==================================================
--- TeleUp - PostgreSQL Schema (Neon)
+-- TeleUp - PostgreSQL Schema (Railway)
 -- Ambiente: PostgreSQL 15+
--- Observações:
--- - Booleans usam TRUE/FALSE
--- - Timestamps usam TIME ZONE
--- - IDs usam GENERATED ALWAYS AS IDENTITY
--- - Use sempre SSL no Neon: ?sslmode=require
 -- ==================================================
 
 -- ==== Extensões úteis (opcional)
-CREATE EXTENSION IF NOT EXISTS pgcrypto;         -- para gen_random_uuid(), criptografia
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";       -- para uuid_generate_v4()
+-- Nota: Comentadas porque podem não estar disponíveis no Railway (plano gratuito)
+-- Descomente se tiver acesso às extensões no seu plano
+-- CREATE EXTENSION IF NOT EXISTS pgcrypto;         -- para gen_random_uuid(), criptografia
+-- CREATE EXTENSION IF NOT EXISTS "uuid-ossp";       -- para uuid_generate_v4()
 
 -- ==== Tipos auxiliares
 DO $$
@@ -203,16 +200,27 @@ BEGIN
 END$$;
 
 -- ==================================================
--- Usuários iniciais (exemplo) - substitua por seus inserts
--- ATENÇÃO: use senhas já hashadas com bcrypt
+-- Usuários padrão do sistema
 -- ==================================================
--- INSERT INTO empresas (nome, email, senha)
--- VALUES ('TeleUp', 'contato@teleup.com', '<bcrypt_hash>'),
---        ('TechCorp', 'contato@techcorp.com', '<bcrypt_hash>');
 
--- Após criar empresas, crie gestores vinculados via empresa_id
--- INSERT INTO gestores (empresa_id, nome, email, senha)
--- VALUES (1, 'Hyttalo Costa', 'hyttalo@teleup.com', '<bcrypt_hash>');
+-- Empresa padrão (TeleUp)
+INSERT INTO empresas (nome, email, senha) VALUES 
+('TeleUp', 'admin@teleup.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'); -- senha: password
+
+-- Gestor padrão
+INSERT INTO gestores (empresa_id, nome, email, senha) VALUES 
+(1, 'Administrador', 'admin@teleup.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'); -- senha: password
+
+-- Operador de teste
+INSERT INTO operadores (empresa_id, gestor_id, nome, email, senha, pa, carteira, nivel, xp, pontos_totais) VALUES 
+(1, 1, 'Operador Teste', 'operador@teleup.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'PA001', 'C001', 1, 0, 0); -- senha: password
+
+-- Recompensas padrão
+INSERT INTO recompensas (titulo, descricao, categoria, preco, disponivel) VALUES 
+('Vale Presente R$ 10', 'Vale presente de R$ 10 para uso em lojas parceiras', 'Vouchers', 100, TRUE),
+('Vale Presente R$ 25', 'Vale presente de R$ 25 para uso em lojas parceiras', 'Vouchers', 250, TRUE),
+('Vale Presente R$ 50', 'Vale presente de R$ 50 para uso em lojas parceiras', 'Vouchers', 500, TRUE),
+('Dia de Folga', 'Um dia de folga adicional', 'Outros', 1000, TRUE);
 
 -- ==================================================
 -- Views úteis (opcional)

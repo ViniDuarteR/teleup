@@ -3,8 +3,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.3.1-blue.svg)](https://reactjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/)
-[![MySQL](https://img.shields.io/badge/MySQL-8.0-orange.svg)](https://www.mysql.com/)
-[![Docker](https://img.shields.io/badge/Docker-Enabled-blue.svg)](https://www.docker.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)](https://www.postgresql.org/)
+[![Railway](https://img.shields.io/badge/Deploy-Railway-00D9FF.svg)](https://railway.app/)
 
 ## 📋 Sobre o Projeto
 
@@ -26,7 +26,7 @@ O **TeleUp** é uma plataforma de gamificação completa para call centers de te
 - **Node.js** 18.x
 - **TypeScript** 5.3.3
 - **Express.js** 4.18.2
-- **MySQL** 8.0
+- **PostgreSQL** 15+
 - **Socket.io** 4.7.4 (WebSocket)
 - **JWT** para autenticação
 - **bcryptjs** para hash de senhas
@@ -41,10 +41,8 @@ O **TeleUp** é uma plataforma de gamificação completa para call centers de te
 - **React Query** 5.83.0
 - **Recharts** 2.15.4 (Gráficos)
 
-### DevOps
-- **Docker** & **Docker Compose**
-- **MySQL** 8.0 (Container)
-- **Nginx** (Proxy reverso)
+### Deploy
+- **Railway** (Backend + Frontend + PostgreSQL)
 
 ## 📁 Estrutura do Projeto
 
@@ -58,30 +56,96 @@ teleup/
 │   │   ├── routes/         # Rotas da API
 │   │   ├── types/          # Definições TypeScript
 │   │   └── index.ts        # Servidor principal
+│   ├── config/
+│   │   └── postgres-all-sql-commands.sql  # Schema do banco
 │   ├── dist/               # Código compilado (JS)
 │   ├── package.json
 │   ├── tsconfig.json
-│   └── Dockerfile
+│   └── railway.json
 ├── frontend/               # Interface React
 │   ├── src/
 │   │   ├── components/     # Componentes React
 │   │   ├── pages/          # Páginas da aplicação
-│   │   ├── data/           # Dados mock
+│   │   ├── contexts/       # Contextos React
 │   │   ├── hooks/          # Custom hooks
-│   │   └── lib/            # Utilitários
+│   │   └── lib/            # Utilitários e API
 │   ├── public/
 │   ├── package.json
-│   └── Dockerfile
-├── docker-compose.yml      # Orquestração dos containers
+│   └── railway.json
+├── deploy-railway.ps1      # Script de deploy automatizado
+├── configure-railway-env.ps1  # Script de configuração
 └── README.md
 ```
 
-## 🚀 Como Executar o Projeto
+## 🚀 Deploy no Railway
+
+### Deploy Automatizado (Recomendado)
+
+```powershell
+# 1. Execute o script de deploy completo
+.\deploy-railway.ps1
+
+# 2. Configure as variáveis de ambiente
+.\configure-railway-env.ps1
+```
+
+### Deploy Manual
+
+1. **Instalar Railway CLI**
+   ```bash
+   npm install -g @railway/cli
+   ```
+
+2. **Login no Railway**
+   ```bash
+   railway login
+   ```
+
+3. **Linkar projeto**
+   ```bash
+   railway link
+   ```
+
+4. **Adicionar PostgreSQL**
+   ```bash
+   railway add postgresql
+   ```
+
+5. **Deploy Backend**
+   ```bash
+   cd backend
+   railway up --service backend
+   ```
+
+6. **Deploy Frontend**
+   ```bash
+   cd frontend
+   railway up --service frontend
+   ```
+
+## 🗄️ Banco de Dados
+
+O projeto usa PostgreSQL com schema otimizado para Railway:
+
+```sql
+-- Executar schema
+railway run psql < backend/config/postgres-all-sql-commands.sql
+```
+
+### Usuários Padrão
+
+```
+Empresa: admin@teleup.com / password
+Gestor:  admin@teleup.com / password  
+Operador: operador@teleup.com / password
+```
+
+## 🔧 Desenvolvimento Local
 
 ### Pré-requisitos
 
 - **Node.js** 18.x ou superior
-- **Docker** e **Docker Compose**
+- **PostgreSQL** 15+ (ou Docker)
 - **Git**
 
 ### 1. Clone o Repositório
@@ -94,44 +158,19 @@ cd teleup
 ### 2. Configuração do Backend
 
 ```bash
-# Navegar para o diretório do backend
 cd backend
-
-# Instalar dependências
 npm install
-
-# Compilar TypeScript
 npm run build
-
-# Configurar variáveis de ambiente
-cp .env.example .env
-# Editar o arquivo .env com suas configurações
 ```
 
 ### 3. Configuração do Frontend
 
 ```bash
-# Navegar para o diretório do frontend
 cd frontend
-
-# Instalar dependências
 npm install
 ```
 
-### 4. Executar com Docker (Recomendado)
-
-```bash
-# Voltar para o diretório raiz
-cd ..
-
-# Subir todos os serviços
-docker-compose up --build -d
-
-# Verificar status dos containers
-docker-compose ps
-```
-
-### 5. Executar em Desenvolvimento Local
+### 4. Executar em Desenvolvimento
 
 #### Backend (Terminal 1)
 ```bash
@@ -145,106 +184,42 @@ cd frontend
 npm run dev
 ```
 
-#### MySQL (Terminal 3)
-```bash
-# Usar Docker para MySQL
-docker run -d --name teleup-mysql \
-  -e MYSQL_ROOT_PASSWORD=root_password \
-  -e MYSQL_DATABASE=teleup_db \
-  -e MYSQL_USER=teleup_user \
-  -e MYSQL_PASSWORD=teleup_pass \
-  -p 3307:3306 \
-  mysql:8.0
-```
-
 ## 🌐 Acessos
 
-Após executar o projeto, acesse:
+### Produção (Railway)
+- **Frontend**: `https://seu-frontend.railway.app`
+- **Backend API**: `https://seu-backend.railway.app`
 
+### Desenvolvimento Local
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:3001
-- **MySQL**: localhost:3307
-
-### Credenciais de Teste
-
-```
-Gestor: hyttalo@teleup.com / password
-Operador: mateus@teleup.com / password
-Operador: guilherme@teleup.com / password
-Operador: vinicius@teleup.com / password
-```
 
 ## 📚 Documentação da API
 
 ### Endpoints Principais
 
 #### Autenticação
-- `POST /api/auth/login` - Login do operador
-- `POST /api/auth/logout` - Logout do operador
+- `POST /api/auth/login` - Login do usuário
+- `POST /api/auth/logout` - Logout do usuário
 
 #### Operador
-- `GET /api/operador/dashboard` - Dashboard do operador
-- `PUT /api/operador/status` - Atualizar status
-- `GET /api/operador/ranking` - Ranking de operadores
-
-#### Chamadas
-- `POST /api/chamadas/iniciar` - Iniciar chamada
-- `POST /api/chamadas/finalizar` - Finalizar chamada
-- `GET /api/chamadas/historico` - Histórico de chamadas
-- `GET /api/chamadas/estatisticas` - Estatísticas
-
-#### Gamificação
-- `GET /api/gamificacao/missoes` - Missões do operador
-- `GET /api/gamificacao/conquistas` - Conquistas
-- `POST /api/gamificacao/verificar-conquistas` - Verificar conquistas
-- `GET /api/gamificacao/ranking` - Ranking geral
+- `GET /api/operadores/dashboard` - Dashboard do operador
+- `GET /api/operadores/stats` - Estatísticas do operador
+- `GET /api/operadores/metas` - Metas do operador
 
 #### Gestor
-- `GET /api/gestor/metricas-equipe` - Métricas da equipe
-- `GET /api/gestor/ranking-operadores` - Ranking de operadores
-- `GET /api/gestor/desempenho-detalhado` - Desempenho detalhado
-- `POST /api/gestor/missoes` - Criar missão
-- `POST /api/gestor/atribuir-missao` - Atribuir missão
+- `GET /api/gestores/dashboard` - Dashboard do gestor
+- `GET /api/gestores/operadores` - Lista de operadores
 
-## 🔧 Scripts Disponíveis
+#### Empresa
+- `GET /api/empresas/dashboard` - Dashboard da empresa
+- `GET /api/empresas/gestores` - Lista de gestores
+- `POST /api/empresas/gestores` - Criar gestor
 
-### Backend
-```bash
-npm run dev          # Desenvolvimento com hot reload
-npm run build        # Compilar TypeScript
-npm run start        # Executar versão compilada
-npm run build:watch  # Compilar em modo watch
-```
-
-### Frontend
-```bash
-npm run dev          # Servidor de desenvolvimento
-npm run build        # Build para produção
-npm run preview      # Preview do build
-npm run lint         # Linter
-```
-
-## 🗄️ Banco de Dados
-
-### Schema Principal
-
-- **operadores**: Dados dos operadores
-- **chamadas**: Histórico de chamadas
-- **metas**: Metas dos operadores
-- **missoes**: Missões disponíveis
-- **conquistas**: Sistema de conquistas
-- **ranking**: Rankings e posições
-- **sessoes**: Controle de sessões JWT
-
-### Configuração
-
-```sql
--- Criar banco de dados
-CREATE DATABASE teleup_db;
-
--- Executar schema
-mysql -u root -p teleup_db < backend/config/schema.sql
-```
+#### Recompensas
+- `GET /api/recompensas` - Lista de recompensas
+- `POST /api/recompensas` - Criar recompensa
+- `POST /api/compras` - Comprar recompensa
 
 ## 🔐 Segurança
 
@@ -257,41 +232,27 @@ mysql -u root -p teleup_db < backend/config/schema.sql
 
 ## 📊 Monitoramento
 
-- **Health Check**: `GET /api/health`
-- **Logs** estruturados
-- **WebSocket** para tempo real
-- **Métricas** de performance
-
-## 🚀 Deploy
-
-### Docker
+### Railway CLI
 ```bash
-# Build das imagens
-docker-compose build
-
-# Deploy
-docker-compose up -d
+railway logs --service backend    # Logs do backend
+railway logs --service frontend   # Logs do frontend
+railway status                    # Status geral
+railway variables                 # Variáveis de ambiente
 ```
 
-### Variáveis de Ambiente
+## 💰 Custos Railway
 
-```env
-# Database
-DB_HOST=localhost
-DB_PORT=3307
-DB_USER=teleup_user
-DB_PASSWORD=teleup_pass
-DB_NAME=teleup_db
+### Plano Gratuito
+- $5 de crédito/mês
+- 512MB RAM por serviço
+- 1GB storage
+- Domínio .railway.app
 
-# JWT
-JWT_SECRET=seu_jwt_secret_super_seguro
-JWT_EXPIRES_IN=24h
-
-# Server
-PORT=3001
-NODE_ENV=development
-CORS_ORIGIN=http://localhost:5173
-```
+### Plano Pro ($5/mês)
+- $20 de crédito/mês
+- 1GB RAM por serviço
+- 10GB storage
+- Domínio customizado
 
 ## 🤝 Contribuição
 
@@ -309,13 +270,11 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 - **Desenvolvimento**: Equipe TeleUp
 - **Design**: UI/UX Team
-- **DevOps**: Infrastructure Team
 
 ## 📞 Suporte
 
 Para suporte, entre em contato:
 - **Email**: suporte@teleup.com
-- **Slack**: #teleup-support
 - **Issues**: [GitHub Issues](https://github.com/teleup/issues)
 
 ---
