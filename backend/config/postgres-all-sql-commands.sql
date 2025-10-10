@@ -200,20 +200,24 @@ BEGIN
 END$$;
 
 -- ==================================================
--- Usuários padrão do sistema
+-- Usuários padrão do sistema (mesmas credenciais do frontend)
 -- ==================================================
 
--- Empresa padrão (TeleUp)
+-- Empresas
 INSERT INTO empresas (nome, email, senha) VALUES 
-('TeleUp', 'admin@teleup.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'); -- senha: password
+('TeleUp', 'contato@teleup.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'), -- senha: password
+('TechCorp', 'admin@techcorp.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'); -- senha: password
 
--- Gestor padrão
+-- Gestores
 INSERT INTO gestores (empresa_id, nome, email, senha) VALUES 
-(1, 'Administrador', 'admin@teleup.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'); -- senha: password
+(1, 'Hyttalo Costa', 'hyttalo@teleup.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'), -- senha: password
+(2, 'Roberto Silva', 'roberto.silva@techcorp.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'); -- senha: password
 
--- Operador de teste
+-- Operadores de teste
 INSERT INTO operadores (empresa_id, gestor_id, nome, email, senha, pa, carteira, nivel, xp, pontos_totais) VALUES 
-(1, 1, 'Operador Teste', 'operador@teleup.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'PA001', 'C001', 1, 0, 0); -- senha: password
+(1, 1, 'Mateus Silva', 'mateus@teleup.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'PA001', 'C001', 1, 0, 0), -- senha: password
+(1, 1, 'Guilherme Santos', 'guilherme@teleup.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'PA002', 'C002', 1, 0, 0), -- senha: password
+(1, 1, 'Vinicius Oliveira', 'vinicius@teleup.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'PA003', 'C003', 1, 0, 0); -- senha: password
 
 -- Recompensas padrão
 INSERT INTO recompensas (titulo, descricao, categoria, preco, disponivel) VALUES 
