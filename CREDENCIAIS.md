@@ -4,24 +4,64 @@
 
 Após executar o schema do banco de dados, os seguintes usuários estarão disponíveis:
 
-### 🏢 Empresa
+### 🏢 Empresas
+
+#### TeleUp
 ```
-Email: admin@teleup.com
+Email: contato@teleup.com
 Senha: password
 ```
 
-### 👨‍💼 Gestor/Administrador
+#### TechCorp
 ```
-Email: admin@teleup.com
+Email: admin@techcorp.com
 Senha: password
 ```
 
-### 👨‍💻 Operador de Teste
+### 👨‍💼 Gestores
+
+#### TeleUp - Hyttalo Costa
 ```
-Email: operador@teleup.com
+Email: hyttalo@teleup.com
+Senha: password
+```
+
+#### TechCorp - Roberto Silva
+```
+Email: roberto.silva@techcorp.com
+Senha: password
+```
+
+### 👨‍💻 Operadores de Teste
+
+#### Mateus Silva
+```
+Email: mateus@teleup.com
 Senha: password
 PA: PA001
 Carteira: C001
+Nível: 1
+XP: 0
+Pontos: 0
+```
+
+#### Guilherme Santos
+```
+Email: guilherme@teleup.com
+Senha: password
+PA: PA002
+Carteira: C002
+Nível: 1
+XP: 0
+Pontos: 0
+```
+
+#### Vinicius Oliveira
+```
+Email: vinicius@teleup.com
+Senha: password
+PA: PA003
+Carteira: C003
 Nível: 1
 XP: 0
 Pontos: 0

@@ -135,9 +135,18 @@ railway run psql < backend/config/postgres-all-sql-commands.sql
 ### Usuários Padrão
 
 ```
-Empresa: admin@teleup.com / password
-Gestor:  admin@teleup.com / password  
-Operador: operador@teleup.com / password
+Empresas:
+- TeleUp: contato@teleup.com / password
+- TechCorp: admin@techcorp.com / password
+
+Gestores:
+- TeleUp: hyttalo@teleup.com / password
+- TechCorp: roberto.silva@techcorp.com / password
+
+Operadores:
+- Mateus: mateus@teleup.com / password
+- Guilherme: guilherme@teleup.com / password
+- Vinicius: vinicius@teleup.com / password
 ```
 
 ## 🔧 Desenvolvimento Local
