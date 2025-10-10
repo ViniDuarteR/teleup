@@ -3,7 +3,10 @@
   "builds": [
     {
       "src": "dist/index.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "maxDuration": 30
+      }
     }
   ],
   "routes": [
@@ -15,11 +18,6 @@
   "env": {
     "NODE_ENV": "production",
     "VERCEL": "1"
-  },
-  "functions": {
-    "dist/index.js": {
-      "maxDuration": 30
-    }
   },
   "buildCommand": "npm run build"
 }
