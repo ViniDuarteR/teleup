@@ -61,23 +61,46 @@ if (!process.env.VERCEL) {
   app.use(limiter);
 }
 
-// Middleware de CORS - COMPLETAMENTE DESATIVADO
-app.use(cors({
-  origin: '*', // Permite todas as origens
-  credentials: false, // Desativado para evitar problemas
+// Middleware de CORS - Configuração específica para produção
+const corsOptions = {
+  origin: [
+    'https://teleupvercelapp.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000'
+  ],
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
-  allowedHeaders: ['*'], // Permite todos os headers
-  exposedHeaders: ['*'],
+  allowedHeaders: [
+    'Origin',
+    'X-Requested-With',
+    'Content-Type',
+    'Accept',
+    'Authorization',
+    'Cache-Control',
+    'Pragma'
+  ],
+  exposedHeaders: ['Authorization'],
   optionsSuccessStatus: 200,
   preflightContinue: false
-}));
+};
+
+app.use(cors(corsOptions));
 
 // Headers manuais para garantir CORS
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  const allowedOrigins = corsOptions.origin;
+  
+  if (allowedOrigins.includes(origin as string)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, HEAD');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'false');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400'); // 24 horas
   
   if (req.method === 'OPTIONS') {
     res.status(200).end();

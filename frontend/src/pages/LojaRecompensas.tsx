@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { API_BASE_URL } from "../lib/api";
 import { 
   Store, 
   Gift, 
@@ -54,7 +55,6 @@ const LojaRecompensas = () => {
   const [busca, setBusca] = useState<string>('');
   const [ordenacao, setOrdenacao] = useState<string>('preco');
 
-  const API_BASE_URL = 'http://localhost:3001/api';
 
   // Buscar recompensas disponíveis
   const buscarRecompensas = async () => {

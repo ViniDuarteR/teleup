@@ -36,7 +36,7 @@ const GerenciarGestores = () => {
     status: 'Ativo'
   });
 
-  const API_BASE_URL = 'http://localhost:3001/api';
+  
 
   // Buscar gestores
   const buscarGestores = async () => {

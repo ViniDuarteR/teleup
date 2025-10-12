@@ -33,7 +33,7 @@ const PerfilOperador = () => {
   const [estatisticas, setEstatisticas] = useState<Estatisticas | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_BASE_URL = 'http://localhost:3001/api';
+  
 
   // Buscar estatísticas do operador
   const buscarEstatisticas = async () => {

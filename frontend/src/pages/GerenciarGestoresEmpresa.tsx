@@ -61,7 +61,7 @@ const GerenciarGestoresEmpresa: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('teleup_token');
-      const response = await fetch('http://localhost:3001/api/empresas/gestores', {
+      const response = await fetch(`${API_BASE_URL}/empresas/gestores`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -107,7 +107,7 @@ const GerenciarGestoresEmpresa: React.FC = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('teleup_token');
-      const response = await fetch('http://localhost:3001/api/empresas/gestores', {
+      const response = await fetch(`${API_BASE_URL}/empresas/gestores`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -130,7 +130,7 @@ const GerenciarGestoresEmpresa: React.FC = () => {
     if (confirm('Tem certeza que deseja excluir este gestor?')) {
       try {
         const token = localStorage.getItem('teleup_token');
-        const response = await fetch(`http://localhost:3001/api/empresas/gestores/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/empresas/gestores/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,

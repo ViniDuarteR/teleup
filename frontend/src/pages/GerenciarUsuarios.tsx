@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { API_BASE_URL } from '../lib/api';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Edit, Trash2, Key, Users, Crown, Star, Zap } from 'lucide-react';
 import { toast } from 'sonner';
@@ -47,7 +48,7 @@ const GerenciarUsuarios = () => {
     carteira: ''
   });
 
-  const API_BASE_URL = 'http://localhost:3001/api';
+  
 
   // Buscar usuários
   const buscarUsuarios = async () => {

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import DialpadDiscagem from "./DialpadDiscagem";
 import ModalChamadaAtiva from "./ModalChamadaAtiva";
 import FormFinalizarChamada, { DadosFinalizacao } from "./FormFinalizarChamada";
+import { API_BASE_URL } from "../lib/api";
 
 interface ChamadaAtiva {
   id: number;
@@ -20,7 +21,7 @@ const SistemaDiscagem = () => {
   const [mostrarFormFinalizar, setMostrarFormFinalizar] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
 
-  const API_BASE_URL = 'http://localhost:3001/api';
+  
   const emChamada = chamadaAtiva !== null;
 
   // Timer da chamada

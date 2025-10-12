@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Link } from "react-router-dom";
+import { API_BASE_URL } from "../lib/api";
 import { 
   BarChart3, 
   Users, 
@@ -58,7 +59,6 @@ const PainelGestor = () => {
   const [operadores, setOperadores] = useState<OperadorResumo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_BASE_URL = 'http://localhost:3001/api';
 
   // Buscar dados do painel gestor
   const buscarDadosGestor = async () => {

@@ -5,6 +5,7 @@ import GridMetas from "../components/GridMetas";
 import SistemaDiscagem from "../components/SistemaDiscagem";
 import PainelGamificacao from "../components/PainelGamificacao";
 import { toast } from "sonner";
+import { API_BASE_URL } from "../lib/api";
 
 interface Meta {
   id: number;
@@ -44,7 +45,6 @@ const DashboardOperador = () => {
   const [conquistas, setConquistas] = useState<Conquista[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_BASE_URL = 'http://localhost:3001/api';
 
   // Buscar dados do dashboard
   const buscarDadosDashboard = async () => {

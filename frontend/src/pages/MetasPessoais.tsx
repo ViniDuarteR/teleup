@@ -34,7 +34,7 @@ const MetasPessoais = () => {
   const [metas, setMetas] = useState<Meta[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_BASE_URL = 'http://localhost:3001/api';
+  
 
   // Buscar metas do operador
   const buscarMetas = async () => {

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { API_BASE_URL } from "../lib/api";
 import { 
   Users, 
   Phone, 
@@ -54,7 +55,6 @@ const MonitorOperadores = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [filtroStatus, setFiltroStatus] = useState<string>('todos');
 
-  const API_BASE_URL = 'http://localhost:3001/api';
 
   // Buscar operadores e métricas
   const buscarDados = async () => {

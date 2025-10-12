@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { API_BASE_URL } from "../lib/api";
 import { 
   Plus, 
   Edit, 
@@ -54,7 +55,6 @@ const GerenciarRecompensas = () => {
     quantidade_restante: null as number | null
   });
 
-  const API_BASE_URL = 'http://localhost:3001/api';
 
   // Buscar recompensas
   const buscarRecompensas = async () => {

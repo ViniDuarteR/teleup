@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import HeaderEmpresa from '@/components/HeaderEmpresa';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { API_BASE_URL } from '../lib/api';
 import { 
   Building2, 
   Users, 
@@ -52,7 +53,7 @@ const DashboardEmpresa: React.FC = () => {
   const fetchMetricas = async () => {
     try {
       const token = localStorage.getItem('teleup_token');
-      const response = await fetch('http://localhost:3001/api/empresas/dashboard', {
+      const response = await fetch(`${API_BASE_URL}/empresas/dashboard`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
