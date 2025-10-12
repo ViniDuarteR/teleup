@@ -61,15 +61,9 @@ if (!process.env.VERCEL) {
   app.use(limiter);
 }
 
-// Middleware de CORS - Configuração específica para produção
+// Middleware de CORS - Configuração permissiva para resolver problemas
 const corsOptions = {
-  origin: [
-    'https://teleupvercelapp.vercel.app',
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:3000'
-  ],
+  origin: true, // Permite todas as origens temporariamente
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
   allowedHeaders: [
@@ -91,10 +85,12 @@ app.use(cors(corsOptions));
 // Headers manuais para garantir CORS
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  const allowedOrigins = corsOptions.origin;
   
-  if (allowedOrigins.includes(origin as string)) {
+  // Permitir qualquer origem temporariamente
+  if (origin) {
     res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    res.header('Access-Control-Allow-Origin', '*');
   }
   
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, HEAD');
