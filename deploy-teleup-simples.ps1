@@ -151,3 +151,4 @@ Write-Host "🔗 Dashboard Railway: https://railway.com/project/84f332cf-e01d-43
 Write-Host ""
 Write-Host "✅ Script concluído!" -ForegroundColor Green
 
+

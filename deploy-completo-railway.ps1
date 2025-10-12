@@ -32,8 +32,8 @@ Write-Host "  📝 Linkando ao serviço backend..." -ForegroundColor Yellow
 railway link --project teleup --environment production --service backend
 
 Write-Host ""
-Write-Host "  🚀 Fazendo upload do backend..." -ForegroundColor Yellow
-railway up --detach
+Write-Host "  🚀 Fazendo upload do backend (com build limpo)..." -ForegroundColor Yellow
+railway up --detach --no-cache
 
 Write-Host ""
 Write-Host "  🔑 Gerando JWT Secret..." -ForegroundColor Yellow
@@ -126,8 +126,8 @@ railway variables set CORS_ORIGIN $frontendUrl --yes
 Write-Host "    ✅ CORS configurado: $frontendUrl" -ForegroundColor Green
 
 Write-Host ""
-Write-Host "  🔄 Redesployando backend..." -ForegroundColor Yellow
-railway up --detach
+Write-Host "  🔄 Redesployando backend (com build limpo)..." -ForegroundColor Yellow
+railway up --detach --no-cache
 Write-Host "    ✅ Redeploy iniciado" -ForegroundColor Green
 
 Set-Location ..
@@ -182,4 +182,5 @@ Write-Host ""
 
 Write-Host "🎉 TeleUp está no ar! Parabéns! 🚀" -ForegroundColor Green
 Write-Host ""
+
 
