@@ -32,11 +32,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: [
-      process.env.CORS_ORIGIN || 'http://localhost:5173',
-      'https://teleupvercelapp.vercel.app',
-      'https://teleup-frontend.vercel.app'
-    ],
+    origin: true, // Permite todas as origens
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -65,15 +61,9 @@ if (!process.env.VERCEL) {
   app.use(limiter);
 }
 
-// Middleware de CORS
+// Middleware de CORS - DESATIVADO
 app.use(cors({
-  origin: [
-    process.env.CORS_ORIGIN || 'http://localhost:5173',
-    'https://teleupvercelapp.vercel.app',
-    'https://teleup-frontend.vercel.app',
-    'https://teleupvercelapp.vercel.app',
-    'https://teleup-frontend.vercel.app'
-  ],
+  origin: true, // Permite todas as origens
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with', 'Accept', 'Origin'],

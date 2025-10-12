@@ -1,7 +1,7 @@
 // Configuração centralizada da API
 const API_BASE_URL = import.meta.env.VITE_API_URL 
   ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api` 
-  : 'http://localhost:3001/api';
+  : 'https://backend-85w3d1ux6-euhttls-projects.vercel.app/api';
 
 export { API_BASE_URL };
 
