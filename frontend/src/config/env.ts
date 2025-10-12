@@ -1,7 +1,7 @@
 // Configuração de ambiente da aplicação
 export const ENV_CONFIG = {
   // URL da API - será usada por padrão se não houver variável de ambiente
-  API_URL: import.meta.env.VITE_API_URL || 'https://backend-exbh1czcm-euhttls-projects.vercel.app',
+  API_URL: import.meta.env.VITE_API_URL || 'https://teleup-backend.vercel.app',
   
   // Configurações da aplicação
   APP_NAME: import.meta.env.VITE_APP_NAME || 'TeleUp',

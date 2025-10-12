@@ -31,9 +31,23 @@ export const apiRequest = async (
 
 // Funções específicas da API
 export const api = {
-  // Auth
+  // Auth - Operadores
   login: (email: string, senha: string) => 
     apiRequest('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, senha }),
+    }),
+
+  // Auth - Gestores
+  loginGestor: (email: string, senha: string) => 
+    apiRequest('/gestor-auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, senha }),
+    }),
+
+  // Auth - Empresas
+  loginEmpresa: (email: string, senha: string) => 
+    apiRequest('/empresa-auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, senha }),
     }),
