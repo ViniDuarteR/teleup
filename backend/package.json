@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node scripts/init-database.js && node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc",
+    "build": "npx tsc",
     "build:watch": "tsc --watch",
     "init-db": "node scripts/init-database.js"
   },
