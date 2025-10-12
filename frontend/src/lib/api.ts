@@ -1,7 +1,7 @@
-import { ENV_CONFIG } from '../config/env';
+import { API_CONFIG } from '../config/api';
 
 // Configuração centralizada da API
-const API_BASE_URL = `${ENV_CONFIG.API_URL.replace(/\/$/, '')}/api`;
+const API_BASE_URL = API_CONFIG.BASE_URL;
 
 export { API_BASE_URL };
 
