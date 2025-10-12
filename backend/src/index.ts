@@ -61,11 +61,14 @@ if (!process.env.VERCEL) {
   app.use(limiter);
 }
 
-// Middleware de CORS - Configuração permissiva para resolver problemas
+// Middleware de CORS - Configuração mais robusta
 const corsOptions = {
-  origin: true, // Permite todas as origens temporariamente
+  origin: function (origin: string | undefined, callback: Function) {
+    // Permitir todas as origens temporariamente
+    callback(null, true);
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD', 'PATCH'],
   allowedHeaders: [
     'Origin',
     'X-Requested-With',
@@ -73,7 +76,8 @@ const corsOptions = {
     'Accept',
     'Authorization',
     'Cache-Control',
-    'Pragma'
+    'Pragma',
+    'X-HTTP-Method-Override'
   ],
   exposedHeaders: ['Authorization'],
   optionsSuccessStatus: 200,
@@ -82,23 +86,30 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Headers manuais para garantir CORS
+// Headers manuais mais explícitos para garantir CORS
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
-  // Permitir qualquer origem temporariamente
+  console.log('CORS - Origin recebida:', origin);
+  console.log('CORS - Método:', req.method);
+  console.log('CORS - Headers:', req.headers);
+  
+  // Sempre permitir a origem da requisição
   if (origin) {
     res.header('Access-Control-Allow-Origin', origin);
   } else {
     res.header('Access-Control-Allow-Origin', '*');
   }
   
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, HEAD');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma, X-HTTP-Method-Override');
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Max-Age', '86400'); // 24 horas
+  res.header('Access-Control-Expose-Headers', 'Authorization');
   
+  // Responder imediatamente para requisições OPTIONS
   if (req.method === 'OPTIONS') {
+    console.log('CORS - Respondendo OPTIONS');
     res.status(200).end();
     return;
   }
