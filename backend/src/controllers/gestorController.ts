@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { pool } from '../config/database';
 import { ApiResponse, LoginRequest, LoginResponse } from '../types';
 
-export const loginGestor = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRequest>, res: Response<ApiResponse<LoginResponse>>): Promise<void> => {
+export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Response): Promise<void> => {
   try {
     const { email, senha } = req.body;
 
@@ -84,7 +84,7 @@ export const loginGestor = async (req: Request<{}, ApiResponse<LoginResponse>, L
     console.error('Erro no login do gestor:', error);
     
     // Verificar se é erro de conexão com banco
-    if (error?.code === 'ECONNREFUSED' || error?.code === 'ENOTFOUND') {
+    if (error?.code === 'ECONNREFUSED' || error?.code === 'ENOTFOUND' || error?.message?.includes('connect')) {
       res.status(500).json({
         success: false,
         message: 'Erro de conexão com banco de dados'
@@ -103,7 +103,8 @@ export const loginGestor = async (req: Request<{}, ApiResponse<LoginResponse>, L
     
     res.status(500).json({
       success: false,
-      message: 'Erro interno do servidor'
+      message: 'Erro interno do servidor',
+      debug: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
