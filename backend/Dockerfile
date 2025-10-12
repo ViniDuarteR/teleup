@@ -1,4 +1,4 @@
-# Dockerfile simplificado para o TeleUp Backend
+# Dockerfile para executar arquivos JavaScript pré-compilados
 FROM node:18
 
 WORKDIR /usr/src/app
@@ -6,20 +6,12 @@ WORKDIR /usr/src/app
 # Copiar package.json e package-lock.json
 COPY package*.json ./
 
-# Instalar todas as dependências (incluindo devDependencies)
-RUN npm install
+# Instalar apenas dependências de produção
+RUN npm ci --only=production
 
-# Verificar se TypeScript foi instalado
-RUN ls -la node_modules/.bin/ | grep tsc
-
-# Copiar código fonte
-COPY . .
-
-# Verificar se o arquivo tsconfig.json existe
-RUN ls -la tsconfig.json
-
-# Build do TypeScript com debug
-RUN echo "Iniciando build..." && npm run build && echo "Build concluído!"
+# Copiar arquivos compilados e scripts
+COPY dist/ ./dist/
+COPY scripts/ ./scripts/
 
 # Expor porta
 EXPOSE 3000
