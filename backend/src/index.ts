@@ -61,31 +61,39 @@ if (!process.env.VERCEL) {
   app.use(limiter);
 }
 
-// Configuração de CORS completamente desabilitado para produção
-app.use(cors({
-  origin: true, // Permite todas as origens
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD', 'PATCH'],
-  allowedHeaders: '*',
-  exposedHeaders: ['Authorization'],
-  optionsSuccessStatus: 200
-}));
-
-// Headers CORS adicionais para garantir funcionamento
+// CORS COMPLETAMENTE DESABILITADO - MÁXIMA PERMISSIVIDADE
 app.use((req, res, next) => {
+  // Headers mais agressivos possíveis
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', '*');
   res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400');
+  res.header('Access-Control-Expose-Headers', '*');
   
-  // Responder imediatamente para requisições OPTIONS
+  // Headers extras para garantir
+  res.header('Vary', 'Origin');
+  res.header('X-Requested-With', '*');
+  
+  // Preflight sempre OK
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
+    res.status(200).send('OK');
     return;
   }
   
   next();
 });
+
+// Usar CORS do express também por garantia
+app.use(cors({
+  origin: '*',
+  credentials: true,
+  methods: '*',
+  allowedHeaders: '*',
+  exposedHeaders: '*',
+  optionsSuccessStatus: 200,
+  preflightContinue: false
+}));
 
 // Middleware para parsing JSON
 app.use(express.json({ limit: '10mb' }));
