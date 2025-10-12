@@ -7,8 +7,14 @@ WORKDIR /usr/src/app
 # Copiar package.json e package-lock.json primeiro
 COPY package*.json ./
 
+# Instalar TypeScript globalmente para garantir disponibilidade
+RUN npm install -g typescript
+
 # Instalar TODAS as dependências (incluindo devDependencies) - FORÇA INSTALAÇÃO COMPLETA
 RUN npm install
+
+# Verificar se TypeScript está disponível
+RUN which tsc && tsc --version
 
 # Copiar todo o código fonte
 COPY . .
