@@ -45,8 +45,8 @@ if (process.env.VERCEL) {
   app.set('trust proxy', 1);
 }
 
-// Middleware de segurança
-app.use(helmet());
+// Middleware de segurança - DESATIVADO
+// app.use(helmet());
 
 // Rate limiting (desabilitado no Vercel para evitar problemas)
 if (!process.env.VERCEL) {
@@ -61,15 +61,31 @@ if (!process.env.VERCEL) {
   app.use(limiter);
 }
 
-// Middleware de CORS - DESATIVADO
+// Middleware de CORS - COMPLETAMENTE DESATIVADO
 app.use(cors({
-  origin: true, // Permite todas as origens
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with', 'Accept', 'Origin'],
+  origin: '*', // Permite todas as origens
+  credentials: false, // Desativado para evitar problemas
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
+  allowedHeaders: ['*'], // Permite todos os headers
+  exposedHeaders: ['*'],
   optionsSuccessStatus: 200,
   preflightContinue: false
 }));
+
+// Headers manuais para garantir CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, HEAD');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'false');
+  
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  
+  next();
+});
 
 // Middleware para parsing JSON
 app.use(express.json({ limit: '10mb' }));
