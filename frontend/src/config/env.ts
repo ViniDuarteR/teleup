@@ -14,3 +14,5 @@ export const ENV_CONFIG = {
 
 // Log da configuração para debug
 console.log('ENV_CONFIG:', ENV_CONFIG);
+console.log('🚀 API URL configurada:', ENV_CONFIG.API_URL);
+console.log('📅 Build timestamp:', new Date().toISOString());
