@@ -4,11 +4,11 @@ FROM node:18-slim
 # Definir diretório de trabalho
 WORKDIR /usr/src/app
 
-# Copiar package.json e package-lock.json
+# Copiar package.json e package-lock.json primeiro
 COPY package*.json ./
 
-# Instalar TODAS as dependências (incluindo devDependencies)
-RUN npm ci
+# Instalar TODAS as dependências (incluindo devDependencies) - FORÇA INSTALAÇÃO COMPLETA
+RUN npm install
 
 # Copiar todo o código fonte
 COPY . .
@@ -16,7 +16,7 @@ COPY . .
 # Build do TypeScript
 RUN npm run build
 
-# Remover dependências de desenvolvimento para reduzir tamanho
+# Remover dependências de desenvolvimento para reduzir tamanho da imagem final
 RUN npm prune --production
 
 # Expor porta
