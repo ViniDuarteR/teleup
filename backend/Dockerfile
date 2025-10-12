@@ -1,23 +1,37 @@
-# Dockerfile customizado para o TeleUp Backend
-FROM node:18
+# Multi-stage build para o TeleUp Backend
+# Stage 1: Build
+FROM node:18 AS builder
 
-# Definir diretório de trabalho
 WORKDIR /usr/src/app
 
-# Copiar package.json e package-lock.json primeiro
+# Copiar package.json e package-lock.json
 COPY package*.json ./
 
 # Instalar todas as dependências (incluindo devDependencies)
-RUN npm install
+RUN npm ci
 
-# Copiar todo o código fonte
+# Copiar código fonte
 COPY . .
 
 # Build do TypeScript
 RUN npm run build
 
-# Remover dependências de desenvolvimento para reduzir tamanho da imagem final
-RUN npm prune --production
+# Stage 2: Production
+FROM node:18 AS production
+
+WORKDIR /usr/src/app
+
+# Copiar package.json e package-lock.json
+COPY package*.json ./
+
+# Instalar apenas dependências de produção
+RUN npm ci --only=production
+
+# Copiar arquivos compilados do stage anterior
+COPY --from=builder /usr/src/app/dist ./dist
+
+# Copiar scripts necessários
+COPY --from=builder /usr/src/app/scripts ./scripts
 
 # Expor porta
 EXPOSE 3000
