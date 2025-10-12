@@ -1,6 +1,6 @@
-// Configuração direta da API - SEM variáveis de ambiente
+// Configuração da API baseada no ambiente
 export const API_CONFIG = {
-  BASE_URL: 'https://teleup-back.vercel.app/api',
+  BASE_URL: 'https://teleup-back.vercel.app/api', // Usar produção para teste
   VERSION: '2.0.0-' + Date.now() // Cache bust
 };
 
