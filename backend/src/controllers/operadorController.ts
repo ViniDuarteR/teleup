@@ -19,7 +19,7 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
 
     // Buscar operador por email
     const [operadores] = await pool.execute(
-      'SELECT * FROM operadores WHERE email = ?',
+      'SELECT * FROM operadores WHERE email = $1',
       [email]
     );
 
@@ -45,7 +45,7 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
 
     // Gerar token JWT
     const token = jwt.sign(
-      { operadorId: operador.id, email: operador.email },
+      { operadorId: operador.id, email: operador.email, tipo: 'operador' },
       process.env.JWT_SECRET || 'seu_jwt_secret_super_seguro_aqui',
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' } as jwt.SignOptions
     );
@@ -54,38 +54,48 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
     const dataExpiracao = new Date();
     dataExpiracao.setHours(dataExpiracao.getHours() + 24);
 
-    await pool.execute(
-      'INSERT INTO sessoes (operador_id, token, expiracao) VALUES (?, ?, ?)',
-      [operador.id, token, dataExpiracao]
-    );
+    // Verificar se a tabela sessoes existe, se não, usar sessoes_empresa
+    try {
+      await pool.execute(
+        'INSERT INTO sessoes (operador_id, token, expiracao) VALUES ($1, $2, $3)',
+        [operador.id, token, dataExpiracao]
+      );
+    } catch (error: any) {
+      // Se a tabela sessoes não existir, usar sessoes_empresa
+      if (error.code === '42P01') { // Tabela não existe
+        await pool.execute(
+          'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES ($1, $2, $3)',
+          [operador.empresa_id, token, dataExpiracao]
+        );
+      } else {
+        throw error;
+      }
+    }
 
     // Atualizar status para online
     await pool.execute(
-      'UPDATE operadores SET status = ? WHERE id = ?',
+      'UPDATE operadores SET status = $1 WHERE id = $2',
       ['Aguardando Chamada', operador.id]
     );
 
-    // Preparar dados do operador baseado no tipo
+    // Preparar dados do operador
     let operadorData: any = {
       id: operador.id,
       nome: operador.nome,
       email: operador.email,
-      tipo: operador.tipo,
+      tipo: 'operador', // Todos os usuários da tabela operadores são operadores
       status: 'Aguardando Chamada' as const,
       avatar: operador.avatar,
       data_criacao: operador.data_criacao,
       data_atualizacao: operador.data_atualizacao
     };
 
-    // Adicionar campos de gamificação apenas para operadores
-    if (operador.tipo === 'operador') {
-      operadorData.nivel = operador.nivel;
-      operadorData.xp_atual = operador.xp_atual;
-      operadorData.xp_proximo_nivel = operador.xp_proximo_nivel;
-      operadorData.pontos_totais = operador.pontos_totais;
-      operadorData.tempo_online = operador.tempo_online;
-    }
-    // Para gestores, não incluir nenhum campo de gamificação
+    // Adicionar campos de gamificação para operadores
+    operadorData.nivel = operador.nivel;
+    operadorData.xp_atual = operador.xp;
+    operadorData.xp_proximo_nivel = operador.nivel * 100; // Calcular baseado no nível
+    operadorData.pontos_totais = operador.pontos_totais;
+    operadorData.tempo_online = operador.tempo_online;
 
     res.json({
       success: true,

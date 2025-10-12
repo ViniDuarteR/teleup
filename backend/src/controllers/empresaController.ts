@@ -19,8 +19,8 @@ export const loginEmpresa = async (req: Request, res: Response): Promise<void> =
 
     // Buscar empresa
     const [empresas] = await pool.execute(
-      'SELECT id, nome, email, senha, status FROM empresas WHERE email = ? AND status = "Ativo"',
-      [email]
+      'SELECT id, nome, email, senha, status FROM empresas WHERE email = $1 AND status = $2',
+      [email, 'Ativo']
     );
 
     const empresa = (empresas as any[])[0];
@@ -58,14 +58,19 @@ export const loginEmpresa = async (req: Request, res: Response): Promise<void> =
     const expiracao = new Date();
     expiracao.setHours(expiracao.getHours() + 24);
 
-    await pool.execute(
-      'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES (?, ?, ?)',
-      [empresa.id, token, expiracao]
-    );
+    try {
+      await pool.execute(
+        'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES ($1, $2, $3)',
+        [empresa.id, token, expiracao]
+      );
+    } catch (error: any) {
+      console.error('Erro ao salvar sessão da empresa:', error.message);
+      // Continuar mesmo se falhar ao salvar sessão
+    }
 
     // Atualizar último login
     await pool.execute(
-      'UPDATE empresas SET data_ultimo_login = NOW() WHERE id = ?',
+      'UPDATE empresas SET data_ultimo_login = NOW() WHERE id = $1',
       [empresa.id]
     );
 

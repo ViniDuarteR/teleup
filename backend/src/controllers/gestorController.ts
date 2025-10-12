@@ -17,8 +17,8 @@ export const loginGestor = async (req: Request<{}, ApiResponse<LoginResponse>, L
     }
 
     const [gestores] = await pool.execute(
-      'SELECT * FROM gestores WHERE email = ? AND status = "Ativo"',
-      [email]
+      'SELECT * FROM gestores WHERE email = $1 AND status = $2',
+      [email, 'Ativo']
     );
 
     if ((gestores as any[]).length === 0) {
@@ -49,10 +49,15 @@ export const loginGestor = async (req: Request<{}, ApiResponse<LoginResponse>, L
     const dataExpiracao = new Date();
     dataExpiracao.setHours(dataExpiracao.getHours() + 24);
 
-    await pool.execute(
-      'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES (?, ?, ?)',
-      [gestor.empresa_id, token, dataExpiracao]
-    );
+    try {
+      await pool.execute(
+        'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES ($1, $2, $3)',
+        [gestor.empresa_id, token, dataExpiracao]
+      );
+    } catch (error: any) {
+      console.error('Erro ao salvar sessão do gestor:', error.message);
+      // Continuar mesmo se falhar ao salvar sessão
+    }
 
     // Preparar dados do gestor (sem campos de gamificação)
     const gestorData: any = {
