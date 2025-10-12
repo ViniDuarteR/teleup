@@ -17,7 +17,7 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
     }
 
     const [gestores] = await pool.execute(
-      'SELECT * FROM gestores WHERE email = $1 AND status = $2',
+      'SELECT * FROM gestores WHERE email = ? AND status = ?',
       [email, 'Ativo']
     );
 
@@ -51,7 +51,7 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
 
     try {
       await pool.execute(
-        'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES ($1, $2, $3)',
+        'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES (?, ?, ?)',
         [gestor.empresa_id, token, dataExpiracao]
       );
     } catch (error: any) {
