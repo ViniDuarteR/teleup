@@ -98,7 +98,7 @@ const Homepage = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
@@ -305,13 +305,14 @@ const Homepage = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/cadastro-empresa">
               <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-8 py-4 text-lg">
-                Começar Agora - É Grátis
+                Começar Agora
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
             <Link to="/login">
-              <Button size="lg" variant="outline" className="px-8 py-4 text-lg">
+              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-8 py-4 text-lg">
                 Fazer Login
+                <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
           </div>
@@ -352,15 +353,16 @@ const Homepage = () => {
             <div>
               <h3 className="font-semibold mb-4">Suporte</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white">Central de Ajuda</a></li>
+                <li><a href="https://docs.teleup.com.br" target="_blank" rel="noopener noreferrer" className="hover:text-white">Central de Ajuda</a></li>
                 <li><a href="https://wa.me/5511942579879" target="_blank" rel="noopener noreferrer" className="hover:text-white">Contato</a></li>
                 <li><a href="#" className="hover:text-white">Status</a></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 TeleUp. Todos os direitos reservados.</p>
+            <p>&copy; 2025 TeleUp. Todos os direitos reservados.</p>
           </div>
+          Desenvolvido por <a href="https://www.linkedin.com/in/hyttalo-costa-1991841b2/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-900">Hyttalo Costa</a>
         </div>
       </footer>
     </div>
