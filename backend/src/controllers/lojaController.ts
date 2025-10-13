@@ -7,7 +7,7 @@ import { createUploadDir } from '../middleware/upload';
 export const getRecompensas = async (req: AuthRequest, res: Response) => {
   try {
     const [recompensas] = await pool.execute(
-      'SELECT id, titulo as nome, descricao, categoria, preco, tipo, raridade, imagem, disponivel, quantidade_restante, criado_em as data_criacao FROM recompensas WHERE disponivel = 1 ORDER BY categoria, preco'
+      'SELECT id, titulo as nome, descricao, categoria, preco, disponivel FROM recompensas WHERE disponivel = 1 ORDER BY categoria, preco'
     );
 
     return res.json({
