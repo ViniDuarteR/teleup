@@ -110,7 +110,7 @@ const Homepage = () => {
             </div>
             <div className="flex items-center space-x-4">
               <Link to="/login">
-                <Button variant="ghost">Entrar</Button>
+                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">Entrar</Button>
               </Link>
               <Link to="/cadastro-empresa">
                 <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
@@ -182,7 +182,7 @@ const Homepage = () => {
               </Button>
             </Link>
             <Link to="/login">
-              <Button size="lg" variant="outline" className="px-8 py-4 text-lg">
+              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-8 py-4 text-lg">
                 Já tenho conta
               </Button>
             </Link>
@@ -213,7 +213,7 @@ const Homepage = () => {
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
               Por que escolher o TeleUp?
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl font-bold text-gray-900 max-w-3xl mx-auto">
               Nossa plataforma foi desenvolvida especificamente para call centers, 
               com foco em resultados mensuráveis e experiência do usuário.
             </p>
@@ -229,7 +229,7 @@ const Homepage = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-gray-600">
+                  <CardDescription className="text-white-600">
                     {feature.description}
                   </CardDescription>
                 </CardContent>
