@@ -36,9 +36,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Lista de endpoints para tentar (em ordem de prioridade)
       const endpoints = [
-        { path: '/empresa-auth/login', type: 'empresa' },
-        { path: '/gestor-auth/login', type: 'gestor' },
-        { path: '/auth/login', type: 'operador' }
+        { path: '/api/empresa-auth/login', type: 'empresa' },
+        { path: '/api/gestor-auth/login', type: 'gestor' },
+        { path: '/api/auth/login', type: 'operador' }
       ];
 
       console.log(`🔍 [FRONTEND LOGIN] Tentando login para: ${email}`);
