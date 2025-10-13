@@ -215,5 +215,6 @@ export interface Empresa {
   nome: string;
   email: string;
   status: string;
+  avatar?: string;
   data_ultimo_login?: Date;
 }

@@ -43,7 +43,7 @@ export const authenticateEmpresa = async (req: AuthRequest, res: Response, next:
 
     // Buscar dados da empresa
     const [empresas] = await pool.execute(
-      'SELECT id, nome, email, status, data_ultimo_login FROM empresas WHERE id = $1 AND status = $2',
+      'SELECT id, nome, email, status, avatar, data_ultimo_login FROM empresas WHERE id = $1 AND status = $2',
       [decoded.empresaId, 'Ativo']
     );
 

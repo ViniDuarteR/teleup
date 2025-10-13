@@ -5,7 +5,8 @@ import {
   atualizarGestorEmpresa,
   excluirGestorEmpresa,
   listarOperadoresEmpresa, 
-  getDashboardEmpresa 
+  getDashboardEmpresa,
+  atualizarAvatarEmpresa
 } from '../controllers/empresaController';
 import { authenticateEmpresa, requireEmpresa } from '../middleware/empresaAuth';
 
@@ -17,6 +18,9 @@ router.use(requireEmpresa as any);
 
 // Dashboard da empresa
 router.get('/dashboard', getDashboardEmpresa as any);
+
+// Avatar da empresa
+router.put('/avatar', atualizarAvatarEmpresa as any);
 
 // Gerenciar gestores
 router.get('/gestores', listarGestoresEmpresa as any);
