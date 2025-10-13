@@ -69,11 +69,11 @@ app.use('/uploads', express.static('uploads'));
 app.use((req, res, next) => {
   // Permitir apenas domínios específicos (não usar *)
   const allowedOrigins = [
-    'https://teleupvercel.vercel.app',
-    'https://teleupvercel-hwe0q2t4f-euhttls-projects.vercel.app',
-    'https://teleupvercel-2t1rut8dl-euhttls-projects.vercel.app',
-    'https://teleupvercel-7fvxvisk1-euhttls-projects.vercel.app',
-    'https://teleupvercel-f2qck1yrp-euhttls-projects.vercel.app',
+    'https://teleupvercelapp.vercel.app',
+    'https://teleupvercelapp-hwe0q2t4f-euhttls-projects.vercel.app',
+    'https://teleupvercelapp-2t1rut8dl-euhttls-projects.vercel.app',
+    'https://teleupvercelapp-7fvxvisk1-euhttls-projects.vercel.app',
+    'https://teleupvercelapp-f2qck1yrp-euhttls-projects.vercel.app',
     'http://localhost:3000',
     'http://localhost:5173'
   ];
