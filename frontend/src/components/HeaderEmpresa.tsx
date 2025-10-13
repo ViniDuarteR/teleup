@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { 
   Building2, 
   BarChart3, 
@@ -18,6 +19,7 @@ interface HeaderEmpresaProps {
     nome: string;
     email: string;
     status: string;
+    avatar?: string;
   };
 }
 
@@ -75,10 +77,19 @@ const HeaderEmpresa: React.FC<HeaderEmpresaProps> = ({ empresa }) => {
           </nav>
 
           {/* Menu de Usuário */}
-          <div className="hidden md:flex items-center space-x-2">
+          <div className="hidden md:flex items-center space-x-3">
+            <Avatar className="w-10 h-10 border-2 border-blue-400/50">
+              <AvatarImage 
+                src={empresa?.avatar || '/placeholder.svg'} 
+                alt={empresa?.nome || 'Empresa'} 
+              />
+              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold">
+                {empresa?.nome?.split(' ').map(n => n[0]).join('').toUpperCase() || 'E'}
+              </AvatarFallback>
+            </Avatar>
             <div className="text-right">
-              <p className="text-sm text-white">{empresa?.email}</p>
-              <p className="text-xs text-gray-400">Empresa</p>
+              <p className="text-sm text-white">{empresa?.nome || 'Empresa'}</p>
+              <p className="text-xs text-gray-400">{empresa?.email}</p>
             </div>
             <Button
               variant="outline"

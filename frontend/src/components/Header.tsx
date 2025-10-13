@@ -101,14 +101,17 @@ const Header = ({ operador }: HeaderProps) => {
           {/* Avatar e nome */}
           <div className="flex items-center gap-3">
             <Avatar className="w-12 h-12 border-2 border-primary/50">
-              <AvatarImage src={operador.avatar} alt={operador.nome} />
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {operador.nome.split(' ').map(n => n[0]).join('')}
+              <AvatarImage 
+                src={operador.avatar || '/placeholder.svg'} 
+                alt={operador.nome || 'Usuário'} 
+              />
+              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold">
+                {operador.nome?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-semibold text-foreground">{operador.nome}</h3>
-              <p className="text-sm text-muted-foreground">Online: {operador.tempo_online}</p>
+              <h3 className="font-semibold text-foreground">{operador.nome || 'Usuário'}</h3>
+              <p className="text-sm text-muted-foreground">Online: {operador.tempo_online || '0 min'}</p>
             </div>
           </div>
 
