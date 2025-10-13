@@ -110,19 +110,6 @@ async function createUserHandler() {
       }
     }
     
-    console.log('\n🎉 Todos os usuários configurados com sucesso!');
-    console.log('📋 Credenciais disponíveis:');
-    console.log('   Gestor: hyttalo@teleup.com / password');
-    console.log('   Empresa: contato@teleup.com / password');
-    console.log('   Operador 1: hyttalo@teleup.com / password');
-    console.log('   Operador 2: mateus@teleup.com / password');
-    console.log('   Operador 3: guilherme@teleup.com / password');
-    console.log('   Operador 4: vinicius@teleup.com / password');
-    console.log('\n🔗 URLs de login:');
-    console.log('   Gestor: /api/gestor-auth/login');
-    console.log('   Operador: /api/auth/login');
-    console.log('   Empresa: /api/empresa-auth/login');
-    
     return {
       success: true,
       message: 'Todos os usuários criados com sucesso',
