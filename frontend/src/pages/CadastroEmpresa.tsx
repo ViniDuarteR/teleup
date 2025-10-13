@@ -72,7 +72,7 @@ const CadastroEmpresa = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/empresas/cadastro`, {
+      const response = await fetch(`https://teleup-backend.vercel.app/api/empresas/cadastro`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
