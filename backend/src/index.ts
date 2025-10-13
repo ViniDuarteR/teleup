@@ -20,6 +20,7 @@ import usuariosRoutes from './routes/usuarios';
 import recompensasRoutes from './routes/recompensas';
 import empresaAuthRoutes from './routes/empresaAuth';
 import empresasRoutes from './routes/empresas';
+import cadastroEmpresaRoutes from './routes/cadastroEmpresa';
 import setupRoutes from './routes/setup';
 
 // Importar tipos
@@ -79,6 +80,7 @@ app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/recompensas', recompensasRoutes);
 app.use('/api/empresa-auth', empresaAuthRoutes);
 app.use('/api/empresas', empresasRoutes);
+app.use('/api/empresas/cadastro', cadastroEmpresaRoutes);
 app.use('/api/setup', setupRoutes);
 
 // Rota de health check

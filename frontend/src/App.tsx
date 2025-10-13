@@ -8,7 +8,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
 import SimpleHome from "./pages/SimpleHome";
+import Homepage from "./pages/Homepage";
 import Login from "./pages/Login";
+import CadastroEmpresa from "./pages/CadastroEmpresa";
 import Teste from "./pages/Teste";
 import Debug from "./pages/Debug";
 import DashboardOperador from "./pages/DashboardOperador";
@@ -36,10 +38,11 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/" element={<Homepage />} />
             <Route path="/home" element={<SimpleHome />} />
             <Route path="/index" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/cadastro-empresa" element={<CadastroEmpresa />} />
             <Route path="/teste" element={<Teste />} />
             <Route path="/debug" element={<Debug />} />
             <Route 
