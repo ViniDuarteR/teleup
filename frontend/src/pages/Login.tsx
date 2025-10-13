@@ -102,9 +102,6 @@ const Login = () => {
           <p className="text-muted-foreground">
             Faça login para acessar sua conta
           </p>
-          <Link to="/" className="text-sm text-primary hover:underline">
-            ← Voltar para a página inicial
-          </Link>
         </div>
 
         {/* Login Form */}
@@ -170,12 +167,17 @@ const Login = () => {
         {/* Quick Login Buttons */}
         <div className="space-y-4">
           <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-4">
-              Não tem uma conta?{' '}
-              <Link to="/cadastro-empresa" className="text-primary hover:underline">
-                Cadastre sua empresa
+            <div className="text-center space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Não tem uma conta?{' '}
+                <Link to="/cadastro-empresa" className="text-primary hover:underline">
+                  Cadastre sua empresa
+                </Link>
+              </p>
+              <Link to="/" className="text-sm text-primary hover:underline">
+                ← Voltar para a página inicial
               </Link>
-            </p>
+            </div>
           </div>
         </div>
 
