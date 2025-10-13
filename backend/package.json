@@ -22,7 +22,8 @@
     "jsonwebtoken": "^9.0.2",
     "moment": "^2.29.4",
     "pg": "^8.11.3",
-    "socket.io": "^4.7.4"
+    "socket.io": "^4.7.4",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
