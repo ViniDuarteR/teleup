@@ -62,7 +62,7 @@ const GerenciarRecompensas = () => {
 
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/recompensas`, {
+      const response = await fetch(`${API_BASE_URL}/api/recompensas`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -87,8 +87,8 @@ const GerenciarRecompensas = () => {
 
     try {
       const url = editando 
-      ? `${API_BASE_URL}/recompensas/${editando.id}`
-      : `${API_BASE_URL}/recompensas`;
+      ? `${API_BASE_URL}/api/recompensas/${editando.id}`
+      : `${API_BASE_URL}/api/recompensas`;
       
       const method = editando ? 'PUT' : 'POST';
       
@@ -121,7 +121,7 @@ const GerenciarRecompensas = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/recompensas/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/recompensas/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -148,7 +148,7 @@ const GerenciarRecompensas = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/recompensas/${id}/toggle`, {
+      const response = await fetch(`${API_BASE_URL}/api/recompensas/${id}/toggle`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,

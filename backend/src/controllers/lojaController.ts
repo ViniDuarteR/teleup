@@ -38,7 +38,7 @@ export const getCompras = async (req: AuthRequest, res: Response) => {
       `SELECT c.*, r.nome as recompensa_nome, r.descricao as recompensa_descricao, r.preco
        FROM compras c
        JOIN recompensas r ON c.recompensa_id = r.id
-       WHERE c.operador_id = ?
+       WHERE c.operador_id = $1
        ORDER BY c.data_compra DESC`,
       [operadorId]
     );
@@ -71,7 +71,7 @@ export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
 
     // Buscar recompensa
     const [recompensas] = await pool.execute(
-      'SELECT * FROM recompensas WHERE id = ? AND disponivel = 1',
+      'SELECT * FROM recompensas WHERE id = $1 AND disponivel = 1',
       [recompensa_id]
     );
     
@@ -86,7 +86,7 @@ export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
 
     // Verificar se o operador tem pontos suficientes
     const [operador] = await pool.execute(
-      'SELECT pontos_totais FROM operadores WHERE id = ?',
+      'SELECT pontos_totais FROM operadores WHERE id = $1',
       [operadorId]
     );
 
@@ -101,13 +101,13 @@ export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
 
     // Realizar a compra
     await pool.execute(
-      'INSERT INTO compras (operador_id, recompensa_id, pontos_gastos, data_compra) VALUES (?, ?, ?, NOW())',
+      'INSERT INTO compras (operador_id, recompensa_id, pontos_gastos, data_compra) VALUES ($1, $2, $3, NOW())',
       [operadorId, recompensa_id, recompensa.preco]
     );
 
     // Deduzir pontos do operador
     await pool.execute(
-      'UPDATE operadores SET pontos_totais = pontos_totais - ? WHERE id = ?',
+      'UPDATE operadores SET pontos_totais = pontos_totais - $1 WHERE id = $2',
       [recompensa.preco, operadorId]
     );
 
@@ -147,7 +147,7 @@ export const criarRecompensa = async (req: AuthRequest, res: Response) => {
 
     const [result] = await pool.execute(
       `INSERT INTO recompensas (nome, descricao, categoria, preco, tipo, raridade, imagem, disponivel, quantidade_restante)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [nome, descricao, categoria, parseInt(preco), tipo, raridade, imagem || null, disponivel !== false ? 1 : 0, quantidade_restante ? parseInt(quantidade_restante) : null]
     );
 
@@ -195,8 +195,8 @@ export const atualizarRecompensa = async (req: AuthRequest, res: Response) => {
     } = req.body;
 
     const [result] = await pool.execute(
-      `UPDATE recompensas SET nome = ?, descricao = ?, categoria = ?, preco = ?, tipo = ?, raridade = ?, imagem = ?, disponivel = ?, quantidade_restante = ?
-       WHERE id = ?`,
+      `UPDATE recompensas SET nome = $1, descricao = $2, categoria = $3, preco = $4, tipo = $5, raridade = $6, imagem = $7, disponivel = $8, quantidade_restante = $9
+       WHERE id = $10`,
       [nome, descricao, categoria, parseInt(preco), tipo, raridade, imagem || null, disponivel !== false ? 1 : 0, quantidade_restante ? parseInt(quantidade_restante) : null, parseInt(id)]
     );
 
@@ -238,7 +238,7 @@ export const excluirRecompensa = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     
     const [result] = await pool.execute(
-      'DELETE FROM recompensas WHERE id = ?',
+      'DELETE FROM recompensas WHERE id = $1',
       [parseInt(id)]
     );
 
@@ -269,7 +269,7 @@ export const toggleDisponibilidade = async (req: AuthRequest, res: Response) => 
     const { disponivel } = req.body;
     
     const [result] = await pool.execute(
-      'UPDATE recompensas SET disponivel = ? WHERE id = ?',
+      'UPDATE recompensas SET disponivel = $1 WHERE id = $2',
       [disponivel ? 1 : 0, parseInt(id)]
     );
 
