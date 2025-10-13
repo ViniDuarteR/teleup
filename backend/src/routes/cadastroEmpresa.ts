@@ -5,7 +5,8 @@ const router = express.Router();
 
 // Rota de teste simples
 router.get('/test', (req, res) => {
-  res.json({ success: true, message: 'Rota de cadastro funcionando sem autenticação' });
+  console.log('🧪 [CADASTRO TEST] Rota de teste acessada');
+  res.json({ success: true, message: 'Rota de cadastro funcionando sem autenticação', timestamp: new Date().toISOString() });
 });
 
 // Rota pública para cadastro de empresas

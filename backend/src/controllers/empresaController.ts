@@ -7,6 +7,10 @@ import { ApiResponse, AuthRequest } from '../types';
 // Cadastro de empresa
 export const cadastrarEmpresa = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log('🚀 [CADASTRO EMPRESA] Controller chamado!');
+    console.log('🚀 [CADASTRO EMPRESA] Headers:', req.headers);
+    console.log('🚀 [CADASTRO EMPRESA] Body:', req.body);
+    
     const { nome, email, senha, telefone, cnpj, endereco, cidade, estado, cep } = req.body;
     
     console.log(`🏢 [CADASTRO EMPRESA] Tentativa de cadastro para: ${email}`);
