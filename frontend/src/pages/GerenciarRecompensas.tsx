@@ -54,6 +54,8 @@ const GerenciarRecompensas = () => {
     disponivel: true,
     quantidade_restante: null as number | null
   });
+  const [imagemPreview, setImagemPreview] = useState<string | null>(null);
+  const [arquivoImagem, setArquivoImagem] = useState<File | null>(null);
 
 
   // Buscar recompensas
@@ -92,23 +94,56 @@ const GerenciarRecompensas = () => {
       
       const method = editando ? 'PUT' : 'POST';
       
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formulario)
-      });
-      
-      const data = await response.json();
-
-      if (data.success) {
-        toast.success(editando ? 'Recompensa atualizada!' : 'Recompensa criada!');
-        buscarRecompensas();
-        limparFormulario();
+      // Se há um arquivo de imagem, usar FormData
+      if (arquivoImagem) {
+        const formData = new FormData();
+        formData.append('imagem', arquivoImagem);
+        formData.append('nome', formulario.nome);
+        formData.append('descricao', formulario.descricao);
+        formData.append('categoria', formulario.categoria);
+        formData.append('preco', formulario.preco.toString());
+        formData.append('tipo', formulario.tipo);
+        formData.append('raridade', formulario.raridade);
+        formData.append('disponivel', formulario.disponivel.toString());
+        formData.append('quantidade_restante', formulario.quantidade_restante?.toString() || '');
+        
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          toast.success(editando ? 'Recompensa atualizada!' : 'Recompensa criada!');
+          buscarRecompensas();
+          limparFormulario();
+        } else {
+          toast.error(data.message || 'Erro ao salvar recompensa');
+        }
       } else {
-        toast.error(data.message || 'Erro ao salvar recompensa');
+        // Se não há arquivo, enviar como JSON normal
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formulario)
+        });
+        
+        const data = await response.json();
+
+        if (data.success) {
+          toast.success(editando ? 'Recompensa atualizada!' : 'Recompensa criada!');
+          buscarRecompensas();
+          limparFormulario();
+        } else {
+          toast.error(data.message || 'Erro ao salvar recompensa');
+        }
       }
     } catch (error) {
       console.error('Erro ao salvar recompensa:', error);
@@ -185,6 +220,46 @@ const GerenciarRecompensas = () => {
     });
     setEditando(null);
     setMostrarFormulario(false);
+    setImagemPreview(null);
+    setArquivoImagem(null);
+  };
+
+  // Função para lidar com o upload de imagem
+  const handleImagemChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Verificar se é uma imagem
+      if (!file.type.startsWith('image/')) {
+        toast.error('Por favor, selecione apenas arquivos de imagem');
+        return;
+      }
+      
+      // Verificar tamanho do arquivo (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('A imagem deve ter no máximo 5MB');
+        return;
+      }
+
+      setArquivoImagem(file);
+      
+      // Criar preview da imagem
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagemPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Função para remover imagem
+  const removerImagem = () => {
+    setArquivoImagem(null);
+    setImagemPreview(null);
+    // Limpar o input de arquivo
+    const input = document.getElementById('imagem-input') as HTMLInputElement;
+    if (input) {
+      input.value = '';
+    }
   };
 
   const editarRecompensa = (recompensa: Recompensa) => {
@@ -201,6 +276,14 @@ const GerenciarRecompensas = () => {
     });
     setEditando(recompensa);
     setMostrarFormulario(true);
+    
+    // Se já tem imagem, mostrar preview
+    if (recompensa.imagem) {
+      setImagemPreview(recompensa.imagem);
+    } else {
+      setImagemPreview(null);
+    }
+    setArquivoImagem(null);
   };
 
   const getIconeCategoria = (categoria: string) => {
@@ -386,13 +469,39 @@ const GerenciarRecompensas = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="imagem">URL da Imagem (opcional)</Label>
-                  <Input
-                    id="imagem"
-                    value={formulario.imagem}
-                    onChange={(e) => setFormulario({...formulario, imagem: e.target.value})}
-                    placeholder="https://exemplo.com/imagem.jpg"
-                  />
+                  <Label htmlFor="imagem-input">Imagem da Recompensa</Label>
+                  <div className="space-y-3">
+                    <Input
+                      id="imagem-input"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImagemChange}
+                      className="cursor-pointer"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Selecione uma imagem (JPG, PNG, GIF - máx. 5MB)
+                    </p>
+                    
+                    {/* Preview da imagem */}
+                    {imagemPreview && (
+                      <div className="relative">
+                        <img 
+                          src={imagemPreview} 
+                          alt="Preview da recompensa"
+                          className="w-32 h-32 object-cover rounded-lg border-2 border-dashed border-gray-300"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={removerImagem}
+                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="flex items-center gap-4">
