@@ -2,8 +2,11 @@
   "version": 2,
   "builds": [
     {
-      "src": "dist/index.js",
-      "use": "@vercel/node"
+      "src": "package.json",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["dist/**"]
+      }
     }
   ],
   "routes": [
@@ -12,41 +15,11 @@
       "dest": "dist/index.js"
     }
   ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Credentials",
-          "value": "true"
-        },
-        {
-          "key": "Access-Control-Max-Age",
-          "value": "86400"
-        },
-        {
-          "key": "Access-Control-Expose-Headers",
-          "value": "*"
-        },
-        {
-          "key": "Vary",
-          "value": "Origin"
-        }
-      ]
+  "functions": {
+    "dist/index.js": {
+      "maxDuration": 30
     }
-  ],
+  },
   "env": {
     "NODE_ENV": "production"
   }

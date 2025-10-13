@@ -9,7 +9,8 @@
     "build": "npx tsc",
     "build:watch": "tsc --watch",
     "init-db": "node scripts/init-database.js",
-    "vercel-build": "npm run build"
+    "vercel-build": "npm run build",
+    "vercel-dev": "npm run build && npm run dev"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
