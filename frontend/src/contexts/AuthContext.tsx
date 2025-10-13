@@ -69,88 +69,87 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       
-      // Detectar tipo de usuário baseado no email
-      let endpoint = '/auth/login'; // padrão para operadores
-      let userType = 'operador';
-      
-      // Gestores específicos
-      if (email === 'hyttalo@teleup.com' || email === 'roberto.silva@techcorp.com') {
-        endpoint = '/gestor-auth/login';
-        userType = 'gestor';
-        console.log('AuthContext - Tentando login como gestor para:', email);
-      }
-      // Empresas específicas (incluindo emails cadastrados recentemente)
-      else if (email === 'contato@teleup.com' || email === 'admin@techcorp.com' || 
-               email === 'hyttalo.ivann@cs.unicid.edu.br' || email.includes('@empresa') || 
-               email.includes('@company') || email.includes('@corp')) {
-        endpoint = '/empresa-auth/login';
-        userType = 'empresa';
-        console.log('AuthContext - Tentando login como empresa para:', email);
-      }
-      // Operadores (padrão)
-      else {
-        console.log('AuthContext - Tentando login como operador para:', email);
-      }
+      // Lista de endpoints para tentar (em ordem de prioridade)
+      const endpoints = [
+        { path: '/empresa-auth/login', type: 'empresa' },
+        { path: '/gestor-auth/login', type: 'gestor' },
+        { path: '/auth/login', type: 'operador' }
+      ];
 
-      console.log(`AuthContext - Usando endpoint: ${API_BASE_URL}${endpoint}`);
+      console.log(`🔍 [FRONTEND LOGIN] Tentando login para: ${email}`);
 
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, senha }),
-      });
-
-      console.log(`🔍 [FRONTEND LOGIN] Response status: ${response.status}`);
-      console.log(`🔍 [FRONTEND LOGIN] Response headers:`, Object.fromEntries(response.headers.entries()));
-
-      if (!response.ok) {
-        console.log(`❌ [FRONTEND LOGIN] HTTP Error: ${response.status} ${response.statusText}`);
+      // Tentar cada endpoint até encontrar um que funcione
+      for (const { path, type } of endpoints) {
         try {
-          const errorData = await response.json();
-          console.log(`❌ [FRONTEND LOGIN] Error response data:`, errorData);
-        } catch (parseError) {
-          console.log(`❌ [FRONTEND LOGIN] Could not parse error response as JSON`);
+          console.log(`🔍 [FRONTEND LOGIN] Tentando ${type} - endpoint: ${API_BASE_URL}${path}`);
+
+          const response = await fetch(`${API_BASE_URL}${path}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, senha }),
+          });
+
+          console.log(`🔍 [FRONTEND LOGIN] ${type} - Response status: ${response.status}`);
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`📊 [FRONTEND LOGIN] ${type} - Response data:`, data);
+
+            if (data.success) {
+              const { token: newToken } = data.data;
+              let userData;
+              
+              if (type === 'empresa') {
+                userData = data.data.empresa;
+                userData.tipo = 'empresa';
+                console.log(`✅ [FRONTEND LOGIN] Login empresa bem-sucedido - ID: ${userData.id}, Nome: ${userData.nome}`);
+              } else if (type === 'gestor') {
+                userData = data.data.gestor;
+                userData.tipo = 'gestor';
+                console.log(`✅ [FRONTEND LOGIN] Login gestor bem-sucedido - ID: ${userData.id}, Nome: ${userData.nome}`);
+              } else {
+                userData = data.data.operador;
+                userData.tipo = 'operador';
+                console.log(`✅ [FRONTEND LOGIN] Login operador bem-sucedido - ID: ${userData.id}, Nome: ${userData.nome}`);
+              }
+              
+              console.log(`💾 [FRONTEND LOGIN] Salvando dados no localStorage`);
+              setToken(newToken);
+              setUser(userData);
+              
+              // Salvar no localStorage
+              localStorage.setItem('teleup_token', newToken);
+              localStorage.setItem('teleup_user', JSON.stringify(userData));
+              
+              console.log(`🎉 [FRONTEND LOGIN] Login realizado com sucesso para: ${email} como ${type}`);
+              return true;
+            }
+          } else {
+            console.log(`❌ [FRONTEND LOGIN] ${type} - HTTP Error: ${response.status}`);
+            // Se não for 401, pode ser um erro diferente (500, etc)
+            if (response.status !== 401) {
+              try {
+                const errorData = await response.json();
+                console.log(`❌ [FRONTEND LOGIN] ${type} - Error response data:`, errorData);
+              } catch (parseError) {
+                console.log(`❌ [FRONTEND LOGIN] ${type} - Could not parse error response as JSON`);
+              }
+            }
+          }
+        } catch (endpointError) {
+          console.log(`❌ [FRONTEND LOGIN] ${type} - Erro na requisição:`, endpointError);
+          // Continuar para o próximo endpoint
         }
-        return false;
       }
 
-      const data = await response.json();
-      console.log(`📊 [FRONTEND LOGIN] Response data:`, data);
+      // Se chegou aqui, nenhum endpoint funcionou
+      console.log(`❌ [FRONTEND LOGIN] Todas as tentativas falharam para: ${email}`);
+      return false;
 
-      if (data.success) {
-        const { token: newToken } = data.data;
-        let userData;
-        
-        if (userType === 'empresa') {
-          userData = data.data.empresa;
-          userData.tipo = 'empresa';
-          console.log(`✅ [FRONTEND LOGIN] Login empresa bem-sucedido - ID: ${userData.id}, Nome: ${userData.nome}`);
-        } else {
-          userData = data.data.operador;
-          console.log(`✅ [FRONTEND LOGIN] Login ${userType} bem-sucedido - ID: ${userData.id}, Nome: ${userData.nome}`);
-        }
-        
-        console.log(`🔍 [FRONTEND LOGIN] User tipo final:`, userData.tipo);
-        
-        console.log(`💾 [FRONTEND LOGIN] Salvando dados no localStorage`);
-        setToken(newToken);
-        setUser(userData);
-        
-        // Salvar no localStorage
-        localStorage.setItem('teleup_token', newToken);
-        localStorage.setItem('teleup_user', JSON.stringify(userData));
-        
-        console.log(`🎉 [FRONTEND LOGIN] Login realizado com sucesso para: ${email}`);
-        return true;
-      } else {
-        console.error(`❌ [FRONTEND LOGIN] Login failed: ${data.message}`);
-        return false;
-      }
     } catch (error) {
-      console.error(`❌ [FRONTEND LOGIN] Erro na requisição de login para ${email}:`, error);
-      console.error(`❌ [FRONTEND LOGIN] Stack trace:`, error.stack);
+      console.error(`❌ [FRONTEND LOGIN] Erro geral na requisição de login para ${email}:`, error);
       return false;
     } finally {
       setIsLoading(false);
