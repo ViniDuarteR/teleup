@@ -30,9 +30,9 @@ interface Recompensa {
   descricao: string;
   categoria: string;
   preco: number;
-  tipo: 'item' | 'beneficio' | 'titulo' | 'avatar';
-  raridade: 'comum' | 'raro' | 'epico' | 'lendario';
-  imagem: string;
+  tipo?: 'item' | 'beneficio' | 'titulo' | 'avatar';
+  raridade?: 'comum' | 'raro' | 'epico' | 'lendario';
+  imagem?: string;
   disponivel: boolean;
   quantidade_restante?: number;
 }
@@ -263,23 +263,28 @@ const GerenciarRecompensas = () => {
   };
 
   const editarRecompensa = (recompensa: Recompensa) => {
+    console.log('🔍 [EDITAR RECOMPENSA] Função chamada com:', recompensa);
+    
     setFormulario({
       nome: recompensa.nome || '',
       descricao: recompensa.descricao || '',
       categoria: recompensa.categoria || 'Itens',
       preco: recompensa.preco || 0,
-      tipo: (recompensa as any).tipo || 'item',
-      raridade: (recompensa as any).raridade || 'comum',
-      imagem: (recompensa as any).imagem || '',
+      tipo: recompensa.tipo || 'item',
+      raridade: recompensa.raridade || 'comum',
+      imagem: recompensa.imagem || '',
       disponivel: recompensa.disponivel !== undefined ? recompensa.disponivel : true,
       quantidade_restante: recompensa.quantidade_restante || null
     });
+    
+    console.log('🔍 [EDITAR RECOMPENSA] Formulário atualizado');
     setEditando(recompensa);
     setMostrarFormulario(true);
+    console.log('🔍 [EDITAR RECOMPENSA] Estados atualizados - editando:', recompensa, 'mostrarFormulario: true');
     
     // Se já tem imagem, mostrar preview
-    if ((recompensa as any).imagem) {
-      setImagemPreview((recompensa as any).imagem);
+    if (recompensa.imagem) {
+      setImagemPreview(recompensa.imagem);
     } else {
       setImagemPreview(null);
     }
