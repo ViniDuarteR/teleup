@@ -102,6 +102,9 @@ const Login = () => {
           <p className="text-muted-foreground">
             Faça login para acessar sua conta
           </p>
+          <Link to="/" className="text-sm text-primary hover:underline">
+            ← Voltar para a página inicial
+          </Link>
         </div>
 
         {/* Login Form */}
