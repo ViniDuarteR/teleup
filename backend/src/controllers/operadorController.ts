@@ -8,8 +8,10 @@ import { AuthRequest, LoginRequest, LoginResponse, DashboardData, ApiResponse } 
 export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRequest>, res: Response<ApiResponse<LoginResponse>>): Promise<void> => {
   try {
     const { email, senha } = req.body;
+    console.log(`🔐 [OPERADOR LOGIN] Tentativa de login iniciada para: ${email}`);
 
     if (!email || !senha) {
+      console.log(`❌ [OPERADOR LOGIN] Dados incompletos - Email: ${!!email}, Senha: ${!!senha}`);
       res.status(400).json({
         success: false,
         message: 'Email e senha são obrigatórios'
@@ -17,13 +19,18 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
       return;
     }
 
+    console.log(`🔍 [OPERADOR LOGIN] Buscando operador no banco de dados para: ${email}`);
+    
     // Buscar operador por email
     const [operadores] = await pool.execute(
       'SELECT * FROM operadores WHERE email = $1',
       [email]
     );
 
+    console.log(`📊 [OPERADOR LOGIN] Resultado da busca: ${(operadores as any[]).length} operador(es) encontrado(s)`);
+
     if ((operadores as any[]).length === 0) {
+      console.log(`❌ [OPERADOR LOGIN] Operador não encontrado para: ${email}`);
       res.status(401).json({
         success: false,
         message: 'Credenciais inválidas'
@@ -32,10 +39,15 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
     }
 
     const operador = (operadores as any[])[0];
+    console.log(`✅ [OPERADOR LOGIN] Operador encontrado - ID: ${operador.id}, Nome: ${operador.nome}, Status: ${operador.status}`);
 
     // Verificar senha
+    console.log(`🔐 [OPERADOR LOGIN] Verificando senha para operador ID: ${operador.id}`);
     const senhaValida = await bcrypt.compare(senha, operador.senha);
+    console.log(`🔐 [OPERADOR LOGIN] Senha válida: ${senhaValida}`);
+    
     if (!senhaValida) {
+      console.log(`❌ [OPERADOR LOGIN] Senha inválida para operador: ${email}`);
       res.status(401).json({
         success: false,
         message: 'Credenciais inválidas'
@@ -44,41 +56,53 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
     }
 
     // Gerar token JWT
+    console.log(`🎫 [OPERADOR LOGIN] Gerando token JWT para operador ID: ${operador.id}`);
     const token = jwt.sign(
       { operadorId: operador.id, email: operador.email, tipo: 'operador' },
       process.env.JWT_SECRET || 'seu_jwt_secret_super_seguro_aqui',
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' } as jwt.SignOptions
     );
+    console.log(`🎫 [OPERADOR LOGIN] Token JWT gerado com sucesso`);
 
     // Salvar sessão no banco
     const dataExpiracao = new Date();
     dataExpiracao.setHours(dataExpiracao.getHours() + 24);
+    console.log(`💾 [OPERADOR LOGIN] Tentando salvar sessão para operador ID: ${operador.id}`);
 
     // Verificar se a tabela sessoes existe, se não, usar sessoes_empresa
     try {
+      console.log(`💾 [OPERADOR LOGIN] Tentando inserir na tabela 'sessoes'`);
       await pool.execute(
         'INSERT INTO sessoes (operador_id, token, expiracao) VALUES ($1, $2, $3)',
         [operador.id, token, dataExpiracao]
       );
+      console.log(`✅ [OPERADOR LOGIN] Sessão salva na tabela 'sessoes' com sucesso`);
     } catch (error: any) {
+      console.log(`⚠️ [OPERADOR LOGIN] Erro ao salvar na tabela 'sessoes': ${error.code} - ${error.message}`);
       // Se a tabela sessoes não existir, usar sessoes_empresa
       if (error.code === '42P01') { // Tabela não existe
+        console.log(`💾 [OPERADOR LOGIN] Tentando inserir na tabela 'sessoes_empresa' como fallback`);
         await pool.execute(
           'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES ($1, $2, $3)',
           [operador.empresa_id, token, dataExpiracao]
         );
+        console.log(`✅ [OPERADOR LOGIN] Sessão salva na tabela 'sessoes_empresa' com sucesso`);
       } else {
+        console.log(`❌ [OPERADOR LOGIN] Erro não relacionado à tabela: ${error.message}`);
         throw error;
       }
     }
 
     // Atualizar status para online
+    console.log(`📊 [OPERADOR LOGIN] Atualizando status do operador para 'Aguardando Chamada'`);
     await pool.execute(
       'UPDATE operadores SET status = $1 WHERE id = $2',
       ['Aguardando Chamada', operador.id]
     );
+    console.log(`✅ [OPERADOR LOGIN] Status atualizado com sucesso`);
 
     // Preparar dados do operador
+    console.log(`📋 [OPERADOR LOGIN] Preparando dados do operador para resposta`);
     let operadorData: any = {
       id: operador.id,
       nome: operador.nome,
@@ -97,6 +121,7 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
     operadorData.pontos_totais = operador.pontos_totais;
     operadorData.tempo_online = operador.tempo_online;
 
+    console.log(`🎉 [OPERADOR LOGIN] Login realizado com sucesso para: ${email}`);
     res.json({
       success: true,
       message: 'Login realizado com sucesso',
@@ -107,10 +132,12 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
     });
 
   } catch (error: any) {
-    console.error('Erro no login:', error);
+    console.error(`❌ [OPERADOR LOGIN] Erro no login do operador ${req.body?.email}:`, error);
+    console.error(`❌ [OPERADOR LOGIN] Stack trace:`, error.stack);
     
     // Verificar se é erro de conexão com banco
     if (error?.code === 'ECONNREFUSED' || error?.code === 'ENOTFOUND') {
+      console.log(`❌ [OPERADOR LOGIN] Erro de conexão com banco de dados`);
       res.status(500).json({
         success: false,
         message: 'Erro de conexão com banco de dados'

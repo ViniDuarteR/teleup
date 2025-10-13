@@ -7,8 +7,10 @@ import { ApiResponse, LoginRequest, LoginResponse } from '../types';
 export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Response): Promise<void> => {
   try {
     const { email, senha } = req.body;
+    console.log(`🔐 [GESTOR LOGIN] Tentativa de login iniciada para: ${email}`);
 
     if (!email || !senha) {
+      console.log(`❌ [GESTOR LOGIN] Dados incompletos - Email: ${!!email}, Senha: ${!!senha}`);
       res.status(400).json({
         success: false,
         message: 'Email e senha são obrigatórios'
@@ -16,12 +18,16 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
       return;
     }
 
+    console.log(`🔍 [GESTOR LOGIN] Buscando gestor no banco de dados para: ${email}`);
     const [gestores] = await pool.execute(
       'SELECT * FROM gestores WHERE email = ? AND status = ?',
       [email, 'Ativo']
     );
 
+    console.log(`📊 [GESTOR LOGIN] Resultado da busca: ${(gestores as any[]).length} gestor(es) encontrado(s)`);
+
     if ((gestores as any[]).length === 0) {
+      console.log(`❌ [GESTOR LOGIN] Gestor não encontrado ou inativo para: ${email}`);
       res.status(401).json({
         success: false,
         message: 'Credenciais inválidas'
@@ -30,9 +36,14 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
     }
 
     const gestor = (gestores as any[])[0];
+    console.log(`✅ [GESTOR LOGIN] Gestor encontrado - ID: ${gestor.id}, Nome: ${gestor.nome}, Status: ${gestor.status}`);
 
+    console.log(`🔐 [GESTOR LOGIN] Verificando senha para gestor ID: ${gestor.id}`);
     const senhaValida = await bcrypt.compare(senha, gestor.senha);
+    console.log(`🔐 [GESTOR LOGIN] Senha válida: ${senhaValida}`);
+    
     if (!senhaValida) {
+      console.log(`❌ [GESTOR LOGIN] Senha inválida para gestor: ${email}`);
       res.status(401).json({
         success: false,
         message: 'Credenciais inválidas'
@@ -40,26 +51,32 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
       return;
     }
 
+    console.log(`🎫 [GESTOR LOGIN] Gerando token JWT para gestor ID: ${gestor.id}`);
     const token = jwt.sign(
       { gestorId: gestor.id, email: gestor.email, tipo: 'gestor' },
       process.env.JWT_SECRET || 'seu_jwt_secret_super_seguro_aqui',
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' } as jwt.SignOptions
     );
+    console.log(`🎫 [GESTOR LOGIN] Token JWT gerado com sucesso`);
 
     const dataExpiracao = new Date();
     dataExpiracao.setHours(dataExpiracao.getHours() + 24);
 
+    console.log(`💾 [GESTOR LOGIN] Tentando salvar sessão para gestor ID: ${gestor.id}, Empresa ID: ${gestor.empresa_id}`);
     try {
       await pool.execute(
         'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES (?, ?, ?)',
         [gestor.empresa_id, token, dataExpiracao]
       );
+      console.log(`✅ [GESTOR LOGIN] Sessão salva na tabela 'sessoes_empresa' com sucesso`);
     } catch (error: any) {
-      console.error('Erro ao salvar sessão do gestor:', error.message);
+      console.error(`⚠️ [GESTOR LOGIN] Erro ao salvar sessão do gestor: ${error.message}`);
+      console.error(`⚠️ [GESTOR LOGIN] Stack trace:`, error.stack);
       // Continuar mesmo se falhar ao salvar sessão
     }
 
     // Preparar dados do gestor (sem campos de gamificação)
+    console.log(`📋 [GESTOR LOGIN] Preparando dados do gestor para resposta`);
     const gestorData: any = {
       id: gestor.id,
       nome: gestor.nome,
@@ -71,6 +88,7 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
       data_atualizacao: gestor.data_atualizacao
     };
 
+    console.log(`🎉 [GESTOR LOGIN] Login realizado com sucesso para: ${email}`);
     res.json({
       success: true,
       message: 'Login realizado com sucesso',
@@ -81,10 +99,12 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
     });
 
   } catch (error: any) {
-    console.error('Erro no login do gestor:', error);
+    console.error(`❌ [GESTOR LOGIN] Erro no login do gestor ${req.body?.email}:`, error);
+    console.error(`❌ [GESTOR LOGIN] Stack trace:`, error.stack);
     
     // Verificar se é erro de conexão com banco
     if (error?.code === 'ECONNREFUSED' || error?.code === 'ENOTFOUND' || error?.message?.includes('connect')) {
+      console.log(`❌ [GESTOR LOGIN] Erro de conexão com banco de dados`);
       res.status(500).json({
         success: false,
         message: 'Erro de conexão com banco de dados'

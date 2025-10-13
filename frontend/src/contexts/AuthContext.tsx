@@ -102,10 +102,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         body: JSON.stringify({ email, senha }),
       });
 
-      console.log('AuthContext - Response status:', response.status);
+      console.log(`🔍 [FRONTEND LOGIN] Response status: ${response.status}`);
+      console.log(`🔍 [FRONTEND LOGIN] Response headers:`, Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        console.log(`❌ [FRONTEND LOGIN] HTTP Error: ${response.status} ${response.statusText}`);
+        try {
+          const errorData = await response.json();
+          console.log(`❌ [FRONTEND LOGIN] Error response data:`, errorData);
+        } catch (parseError) {
+          console.log(`❌ [FRONTEND LOGIN] Could not parse error response as JSON`);
+        }
+        return false;
+      }
 
       const data = await response.json();
-      console.log('AuthContext - Response data:', data);
+      console.log(`📊 [FRONTEND LOGIN] Response data:`, data);
 
       if (data.success) {
         const { token: newToken } = data.data;
@@ -114,14 +126,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (userType === 'empresa') {
           userData = data.data.empresa;
           userData.tipo = 'empresa';
-          console.log('AuthContext - Login empresa successful, empresa:', userData);
+          console.log(`✅ [FRONTEND LOGIN] Login empresa bem-sucedido - ID: ${userData.id}, Nome: ${userData.nome}`);
         } else {
           userData = data.data.operador;
-          console.log('AuthContext - Login operador/gestor successful, user:', userData);
+          console.log(`✅ [FRONTEND LOGIN] Login ${userType} bem-sucedido - ID: ${userData.id}, Nome: ${userData.nome}`);
         }
         
-        console.log('AuthContext - User tipo final:', userData.tipo);
+        console.log(`🔍 [FRONTEND LOGIN] User tipo final:`, userData.tipo);
         
+        console.log(`💾 [FRONTEND LOGIN] Salvando dados no localStorage`);
         setToken(newToken);
         setUser(userData);
         
@@ -129,13 +142,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem('teleup_token', newToken);
         localStorage.setItem('teleup_user', JSON.stringify(userData));
         
+        console.log(`🎉 [FRONTEND LOGIN] Login realizado com sucesso para: ${email}`);
         return true;
       } else {
-        console.error('Erro no login:', data.message);
+        console.error(`❌ [FRONTEND LOGIN] Login failed: ${data.message}`);
         return false;
       }
     } catch (error) {
-      console.error('Erro na requisição de login:', error);
+      console.error(`❌ [FRONTEND LOGIN] Erro na requisição de login para ${email}:`, error);
+      console.error(`❌ [FRONTEND LOGIN] Stack trace:`, error.stack);
       return false;
     } finally {
       setIsLoading(false);

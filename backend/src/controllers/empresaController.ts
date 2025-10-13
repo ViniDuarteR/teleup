@@ -8,8 +8,10 @@ import { ApiResponse, AuthRequest } from '../types';
 export const loginEmpresa = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, senha } = req.body;
+    console.log(`🔐 [EMPRESA LOGIN] Tentativa de login iniciada para: ${email}`);
 
     if (!email || !senha) {
+      console.log(`❌ [EMPRESA LOGIN] Dados incompletos - Email: ${!!email}, Senha: ${!!senha}`);
       res.status(400).json({
         success: false,
         message: 'Email e senha são obrigatórios'
@@ -17,15 +19,19 @@ export const loginEmpresa = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
+    console.log(`🔍 [EMPRESA LOGIN] Buscando empresa no banco de dados para: ${email}`);
     // Buscar empresa
     const [empresas] = await pool.execute(
       'SELECT id, nome, email, senha, status FROM empresas WHERE email = $1 AND status = $2',
       [email, 'Ativo']
     );
 
+    console.log(`📊 [EMPRESA LOGIN] Resultado da busca: ${(empresas as any[]).length} empresa(s) encontrada(s)`);
+
     const empresa = (empresas as any[])[0];
 
     if (!empresa) {
+      console.log(`❌ [EMPRESA LOGIN] Empresa não encontrada ou inativa para: ${email}`);
       res.status(401).json({
         success: false,
         message: 'Empresa não encontrada ou inativa'
@@ -33,9 +39,15 @@ export const loginEmpresa = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
+    console.log(`✅ [EMPRESA LOGIN] Empresa encontrada - ID: ${empresa.id}, Nome: ${empresa.nome}, Status: ${empresa.status}`);
+
     // Verificar senha
+    console.log(`🔐 [EMPRESA LOGIN] Verificando senha para empresa ID: ${empresa.id}`);
     const senhaValida = await bcrypt.compare(senha, empresa.senha);
+    console.log(`🔐 [EMPRESA LOGIN] Senha válida: ${senhaValida}`);
+    
     if (!senhaValida) {
+      console.log(`❌ [EMPRESA LOGIN] Senha inválida para empresa: ${email}`);
       res.status(401).json({
         success: false,
         message: 'Credenciais inválidas'
@@ -44,6 +56,7 @@ export const loginEmpresa = async (req: Request, res: Response): Promise<void> =
     }
 
     // Gerar token JWT
+    console.log(`🎫 [EMPRESA LOGIN] Gerando token JWT para empresa ID: ${empresa.id}`);
     const token = jwt.sign(
       { 
         empresaId: empresa.id, 
@@ -53,28 +66,35 @@ export const loginEmpresa = async (req: Request, res: Response): Promise<void> =
       process.env.JWT_SECRET || 'teleup_secret',
       { expiresIn: '24h' }
     );
+    console.log(`🎫 [EMPRESA LOGIN] Token JWT gerado com sucesso`);
 
     // Salvar sessão
     const expiracao = new Date();
     expiracao.setHours(expiracao.getHours() + 24);
 
+    console.log(`💾 [EMPRESA LOGIN] Tentando salvar sessão para empresa ID: ${empresa.id}`);
     try {
       await pool.execute(
         'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES ($1, $2, $3)',
         [empresa.id, token, expiracao]
       );
+      console.log(`✅ [EMPRESA LOGIN] Sessão salva na tabela 'sessoes_empresa' com sucesso`);
     } catch (error: any) {
-      console.error('Erro ao salvar sessão da empresa:', error.message);
+      console.error(`⚠️ [EMPRESA LOGIN] Erro ao salvar sessão da empresa: ${error.message}`);
+      console.error(`⚠️ [EMPRESA LOGIN] Stack trace:`, error.stack);
       // Continuar mesmo se falhar ao salvar sessão
     }
 
     // Atualizar último login
+    console.log(`📊 [EMPRESA LOGIN] Atualizando data do último login para empresa ID: ${empresa.id}`);
     await pool.execute(
       'UPDATE empresas SET data_ultimo_login = NOW() WHERE id = $1',
       [empresa.id]
     );
+    console.log(`✅ [EMPRESA LOGIN] Data do último login atualizada com sucesso`);
 
     // Preparar dados da empresa (sem senha)
+    console.log(`📋 [EMPRESA LOGIN] Preparando dados da empresa para resposta`);
     const empresaData = {
       id: empresa.id,
       nome: empresa.nome,
@@ -82,6 +102,7 @@ export const loginEmpresa = async (req: Request, res: Response): Promise<void> =
       status: empresa.status
     };
 
+    console.log(`🎉 [EMPRESA LOGIN] Login realizado com sucesso para: ${email}`);
     res.json({
       success: true,
       message: 'Login realizado com sucesso',
@@ -91,10 +112,12 @@ export const loginEmpresa = async (req: Request, res: Response): Promise<void> =
       }
     });
   } catch (error: any) {
-    console.error('Erro no login da empresa:', error);
+    console.error(`❌ [EMPRESA LOGIN] Erro no login da empresa ${req.body?.email}:`, error);
+    console.error(`❌ [EMPRESA LOGIN] Stack trace:`, error.stack);
     
     // Verificar se é erro de conexão com banco
     if (error?.code === 'ECONNREFUSED' || error?.code === 'ENOTFOUND') {
+      console.log(`❌ [EMPRESA LOGIN] Erro de conexão com banco de dados`);
       res.status(500).json({
         success: false,
         message: 'Erro de conexão com banco de dados'
