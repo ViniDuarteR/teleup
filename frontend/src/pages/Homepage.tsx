@@ -277,12 +277,12 @@ const Homepage = () => {
                       <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                     ))}
                   </div>
-                  <p className="text-gray-700 mb-6 text-lg italic">
+                  <p className="text-white-700 mb-6 text-lg italic">
                     "{testimonial.content}"
                   </p>
                   <div>
                     <div className="font-semibold text-gray-900">{testimonial.name}</div>
-                    <div className="text-gray-600">{testimonial.role}</div>
+                    <div className="text-blue-600">{testimonial.role}</div>
                     <div className="text-blue-600 font-medium">{testimonial.company}</div>
                   </div>
                 </CardContent>
@@ -353,7 +353,7 @@ const Homepage = () => {
               <h3 className="font-semibold mb-4">Suporte</h3>
               <ul className="space-y-2 text-gray-400">
                 <li><a href="#" className="hover:text-white">Central de Ajuda</a></li>
-                <li><a href="#" className="hover:text-white">Contato</a></li>
+                <li><a href="https://wa.me/5511942579879" target="_blank" rel="noopener noreferrer" className="hover:text-white">Contato</a></li>
                 <li><a href="#" className="hover:text-white">Status</a></li>
               </ul>
             </div>

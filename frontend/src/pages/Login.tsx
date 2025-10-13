@@ -148,7 +148,7 @@ const Login = () => {
 
               <Button 
                 type="submit" 
-                className="btn-gaming w-full"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full"
                 disabled={isLoading}
               >
                 {isLoading ? (
