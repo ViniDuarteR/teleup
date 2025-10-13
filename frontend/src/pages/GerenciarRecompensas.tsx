@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/useAuth";
 import HeaderGestor from "../components/HeaderGestor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,23 +43,33 @@ const GerenciarRecompensas = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [editando, setEditando] = useState<Recompensa | null>(null);
-  const [formulario, setFormulario] = useState({
+  const [formulario, setFormulario] = useState<{
+    nome: string;
+    descricao: string;
+    categoria: string;
+    preco: number;
+    tipo: 'item' | 'beneficio' | 'titulo' | 'avatar';
+    raridade: 'comum' | 'raro' | 'epico' | 'lendario';
+    imagem: string;
+    disponivel: boolean;
+    quantidade_restante: number | null;
+  }>({
     nome: '',
     descricao: '',
     categoria: 'Itens',
     preco: 0,
-    tipo: 'item' as const,
-    raridade: 'comum' as const,
+    tipo: 'item',
+    raridade: 'comum',
     imagem: '',
     disponivel: true,
-    quantidade_restante: null as number | null
+    quantidade_restante: null
   });
   const [imagemPreview, setImagemPreview] = useState<string | null>(null);
   const [arquivoImagem, setArquivoImagem] = useState<File | null>(null);
 
 
   // Buscar recompensas
-  const buscarRecompensas = async () => {
+  const buscarRecompensas = useCallback(async () => {
     if (!token) return;
 
     try {
@@ -81,7 +91,7 @@ const GerenciarRecompensas = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
   // Salvar recompensa
   const salvarRecompensa = async () => {
@@ -121,7 +131,7 @@ const GerenciarRecompensas = () => {
         
         console.log('🔍 [SALVAR RECOMPENSA] Enviando FormData');
         console.log('🔍 [SALVAR RECOMPENSA] FormData contents:');
-        for (let [key, value] of formData.entries()) {
+        for (const [key, value] of formData.entries()) {
           console.log(`  ${key}:`, value);
         }
         
@@ -319,8 +329,8 @@ const GerenciarRecompensas = () => {
       descricao: recompensa.descricao || '',
       categoria: recompensa.categoria || 'Itens',
       preco: recompensa.preco || 0,
-      tipo: recompensa.tipo || 'item',
-      raridade: recompensa.raridade || 'comum',
+      tipo: (recompensa.tipo || 'item') as 'item' | 'beneficio' | 'titulo' | 'avatar',
+      raridade: (recompensa.raridade || 'comum') as 'comum' | 'raro' | 'epico' | 'lendario',
       imagem: recompensa.imagem || '',
       disponivel: recompensa.disponivel !== undefined ? recompensa.disponivel : true,
       quantidade_restante: recompensa.quantidade_restante || null
@@ -372,7 +382,7 @@ const GerenciarRecompensas = () => {
 
   useEffect(() => {
     buscarRecompensas();
-  }, [token]);
+  }, [buscarRecompensas]);
 
   // Debug do estado
   useEffect(() => {
@@ -403,7 +413,7 @@ const GerenciarRecompensas = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <HeaderGestor />
+      <HeaderGestor gestor={user} />
       
       <div className="p-6 pt-24">
         <div className="max-w-7xl mx-auto space-y-6">
@@ -482,7 +492,7 @@ const GerenciarRecompensas = () => {
                     <select
                       id="tipo"
                       value={formulario.tipo}
-                      onChange={(e) => setFormulario({...formulario, tipo: e.target.value as any})}
+                      onChange={(e) => setFormulario({...formulario, tipo: e.target.value as 'item' | 'beneficio' | 'titulo' | 'avatar'})}
                       className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
                     >
                       <option value="item">Item</option>
@@ -497,7 +507,7 @@ const GerenciarRecompensas = () => {
                     <select
                       id="raridade"
                       value={formulario.raridade}
-                      onChange={(e) => setFormulario({...formulario, raridade: e.target.value as any})}
+                      onChange={(e) => setFormulario({...formulario, raridade: e.target.value as 'comum' | 'raro' | 'epico' | 'lendario'})}
                       className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
                     >
                       <option value="comum">Comum</option>
