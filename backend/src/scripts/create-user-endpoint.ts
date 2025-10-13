@@ -75,35 +75,49 @@ async function createUserHandler() {
       console.log('🔑 Senha do gestor atualizada');
     }
     
-    // Verificar se operador já existe
-    const operadorResult = await pool.query(
-      'SELECT id FROM operadores WHERE email = $1',
-      ['hyttalo@teleup.com']
-    );
+    // Criar/atualizar operadores de teste
+    const operadores = [
+      { nome: 'Hyttalo Costa', email: 'hyttalo@teleup.com', pa: 'PA001', carteira: 'C001' },
+      { nome: 'Mateus Silva', email: 'mateus@teleup.com', pa: 'PA002', carteira: 'C002' },
+      { nome: 'Guilherme Santos', email: 'guilherme@teleup.com', pa: 'PA003', carteira: 'C003' },
+      { nome: 'Vinicius Oliveira', email: 'vinicius@teleup.com', pa: 'PA004', carteira: 'C004' }
+    ];
     
-    if (operadorResult.rows.length === 0) {
-      console.log('👤 Operador não encontrado, criando...');
-      const gestorId = gestorResult.rows.length > 0 ? gestorResult.rows[0].id : 1;
-      const operadorInsert = await pool.query(
-        'INSERT INTO operadores (empresa_id, gestor_id, nome, email, senha, pa, carteira, nivel, xp, pontos_totais, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id',
-        [empresaId, gestorId, 'Hyttalo Costa', 'hyttalo@teleup.com', hashedPassword, 'PA001', 'C001', 1, 0, 0, 'Ativo']
+    const gestorId = gestorResult.rows.length > 0 ? gestorResult.rows[0].id : 1;
+    
+    for (const operador of operadores) {
+      const operadorResult = await pool.query(
+        'SELECT id FROM operadores WHERE email = $1',
+        [operador.email]
       );
-      console.log('✅ Operador criado com ID:', operadorInsert.rows[0].id);
-    } else {
-      console.log('✅ Operador já existe com ID:', operadorResult.rows[0].id);
       
-      // Atualizar senha do operador existente
-      await pool.query(
-        'UPDATE operadores SET senha = $1, data_atualizacao = NOW() WHERE email = $2',
-        [hashedPassword, 'hyttalo@teleup.com']
-      );
-      console.log('🔑 Senha do operador atualizada');
+      if (operadorResult.rows.length === 0) {
+        console.log(`👤 Operador ${operador.nome} não encontrado, criando...`);
+        const operadorInsert = await pool.query(
+          'INSERT INTO operadores (empresa_id, gestor_id, nome, email, senha, pa, carteira, nivel, xp, pontos_totais, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id',
+          [empresaId, gestorId, operador.nome, operador.email, hashedPassword, operador.pa, operador.carteira, 1, 0, 0, 'Ativo']
+        );
+        console.log(`✅ Operador ${operador.nome} criado com ID:`, operadorInsert.rows[0].id);
+      } else {
+        console.log(`✅ Operador ${operador.nome} já existe com ID:`, operadorResult.rows[0].id);
+        
+        // Atualizar senha do operador existente
+        await pool.query(
+          'UPDATE operadores SET senha = $1, data_atualizacao = NOW() WHERE email = $2',
+          [hashedPassword, operador.email]
+        );
+        console.log(`🔑 Senha do operador ${operador.nome} atualizada`);
+      }
     }
     
-    console.log('\n🎉 Usuário configurado com sucesso!');
-    console.log('📋 Credenciais:');
-    console.log('   Email: hyttalo@teleup.com');
-    console.log('   Senha: password');
+    console.log('\n🎉 Todos os usuários configurados com sucesso!');
+    console.log('📋 Credenciais disponíveis:');
+    console.log('   Gestor: hyttalo@teleup.com / password');
+    console.log('   Empresa: contato@teleup.com / password');
+    console.log('   Operador 1: hyttalo@teleup.com / password');
+    console.log('   Operador 2: mateus@teleup.com / password');
+    console.log('   Operador 3: guilherme@teleup.com / password');
+    console.log('   Operador 4: vinicius@teleup.com / password');
     console.log('\n🔗 URLs de login:');
     console.log('   Gestor: /api/gestor-auth/login');
     console.log('   Operador: /api/auth/login');
@@ -111,10 +125,16 @@ async function createUserHandler() {
     
     return {
       success: true,
-      message: 'Usuário criado com sucesso',
+      message: 'Todos os usuários criados com sucesso',
       credentials: {
-        email: 'hyttalo@teleup.com',
-        password: 'password'
+        gestor: { email: 'hyttalo@teleup.com', password: 'password' },
+        empresa: { email: 'contato@teleup.com', password: 'password' },
+        operadores: [
+          { email: 'hyttalo@teleup.com', password: 'password' },
+          { email: 'mateus@teleup.com', password: 'password' },
+          { email: 'guilherme@teleup.com', password: 'password' },
+          { email: 'vinicius@teleup.com', password: 'password' }
+        ]
       }
     };
     
