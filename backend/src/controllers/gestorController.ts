@@ -20,7 +20,7 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
 
     console.log(`🔍 [GESTOR LOGIN] Buscando gestor no banco de dados para: ${email}`);
     const [gestores] = await pool.execute(
-      'SELECT * FROM gestores WHERE email = ? AND status = ?',
+      'SELECT * FROM gestores WHERE email = $1 AND status = $2',
       [email, 'Ativo']
     );
 
@@ -65,7 +65,7 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
     console.log(`💾 [GESTOR LOGIN] Tentando salvar sessão para gestor ID: ${gestor.id}, Empresa ID: ${gestor.empresa_id}`);
     try {
       await pool.execute(
-        'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES (?, ?, ?)',
+        'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES ($1, $2, $3)',
         [gestor.empresa_id, token, dataExpiracao]
       );
       console.log(`✅ [GESTOR LOGIN] Sessão salva na tabela 'sessoes_empresa' com sucesso`);
