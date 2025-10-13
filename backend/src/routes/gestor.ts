@@ -105,9 +105,5 @@ router.get('/operadores', async (req: AuthRequest, res) => {
   }
 });
 
-// Rota temporária para teste
-router.get('/test', (req, res) => {
-  res.json({ success: true, message: 'Gestor route working' });
-});
 
 export default router;

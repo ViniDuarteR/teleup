@@ -32,19 +32,6 @@ const Home = () => {
             </div>
           </Link>
 
-          <Link to="/debug">
-            <div className="p-8 rounded-lg text-center hover:scale-105 transition-all duration-300 bg-secondary/10 border border-secondary/20">
-              <Users className="w-12 h-12 text-secondary mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-foreground mb-2">Debug</h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                Verificar sistema
-              </p>
-              <Button variant="secondary" className="w-full">
-                Debug
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </Link>
         </div>
 
         {/* Sistema de Gamificação */}

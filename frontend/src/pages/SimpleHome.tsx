@@ -33,21 +33,6 @@ const SimpleHome = () => {
             🔐 Login
           </a>
           
-          <a 
-            href="/debug" 
-            style={{
-              display: 'inline-block',
-              padding: '15px 30px',
-              backgroundColor: '#6B7280',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '8px',
-              fontSize: '1.1rem',
-              fontWeight: 'bold'
-            }}
-          >
-            🔧 Debug
-          </a>
         </div>
         
         <div style={{ marginTop: '40px', padding: '20px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>

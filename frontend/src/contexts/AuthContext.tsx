@@ -42,8 +42,6 @@ interface AuthProviderProps {
 
 import { API_BASE_URL } from '../lib/api';
 
-// Log direto para debug
-console.log('🔧 AuthContext - API_BASE_URL:', API_BASE_URL);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);

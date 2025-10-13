@@ -104,7 +104,6 @@ export const testConnection = async (): Promise<boolean> => {
     
     const result = await pgPool.query('SELECT 1 as test, version() as postgres_version');
     console.log('✅ [DATABASE] Conectado ao Neon PostgreSQL com sucesso');
-    console.log('✅ [DATABASE] Resultado do teste:', result.rows[0]);
     return true;
   } catch (error: any) {
     console.error('❌ [DATABASE] Erro ao conectar ao Neon PostgreSQL:');
