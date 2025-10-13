@@ -20,7 +20,7 @@ router.get('/metricas-equipe', async (req: AuthRequest, res) => {
 
     // Buscar empresa do gestor
     const [gestorEmpresa] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = ?',
+      'SELECT empresa_id FROM gestores WHERE id = $1',
       [gestorId]
     );
     
@@ -33,17 +33,17 @@ router.get('/metricas-equipe', async (req: AuthRequest, res) => {
 
     // Buscar métricas da equipe
     const [operadores] = await pool.execute(
-      'SELECT COUNT(*) as total_operadores FROM operadores WHERE empresa_id = ?',
+      'SELECT COUNT(*) as total_operadores FROM operadores WHERE empresa_id = $1',
       [empresaId]
     );
 
     const [operadoresAtivos] = await pool.execute(
-      'SELECT COUNT(*) as ativos FROM operadores WHERE empresa_id = ? AND status IN ("Dispon??vel", "Em Chamada")',
-      [empresaId]
+      'SELECT COUNT(*) as ativos FROM operadores WHERE empresa_id = $1 AND status IN ($2, $3)',
+      [empresaId, 'Disponível', 'Em Chamada']
     );
 
     const [totalPontos] = await pool.execute(
-      'SELECT COALESCE(SUM(pontos_totais), 0) as total FROM operadores WHERE empresa_id = ?',
+      'SELECT COALESCE(SUM(pontos_totais), 0) as total FROM operadores WHERE empresa_id = $1',
       [empresaId]
     );
 
@@ -74,7 +74,7 @@ router.get('/operadores', async (req: AuthRequest, res) => {
 
     // Buscar empresa do gestor
     const [gestorEmpresa] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = ?',
+      'SELECT empresa_id FROM gestores WHERE id = $1',
       [gestorId]
     );
     
@@ -90,7 +90,7 @@ router.get('/operadores', async (req: AuthRequest, res) => {
       `SELECT id, nome, email, nivel, xp_atual, xp_proximo_nivel, pontos_totais, 
               status, avatar, tempo_online, pa, carteira, data_criacao
        FROM operadores 
-       WHERE empresa_id = ?
+       WHERE empresa_id = $1
        ORDER BY pontos_totais DESC`,
       [empresaId]
     );
