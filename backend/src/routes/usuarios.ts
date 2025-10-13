@@ -6,12 +6,15 @@ import {
   excluirUsuario, 
   redefinirSenha 
 } from '../controllers/usuarioController';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateToken, requireGestor } from '../middleware/auth';
 
 const router = express.Router();
 
 // Todas as rotas precisam de autenticação
 router.use(authenticateToken as any);
+
+// Rotas que precisam de permissão de gestor
+router.use(requireGestor as any);
 
 // Listar usuários da empresa
 router.get('/', listarUsuarios as any);

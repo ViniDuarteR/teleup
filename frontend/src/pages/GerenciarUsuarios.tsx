@@ -94,7 +94,7 @@ const GerenciarUsuarios = () => {
       if (data.success) {
         toast.success('Usuário criado com sucesso!');
         setIsDialogOpen(false);
-        setFormData({ nome: '', email: '', senha: '', nivel: 1, status: 'Aguardando Chamada' });
+        setFormData({ nome: '', email: '', senha: '', nivel: 1, status: 'Aguardando Chamada', pa: '', carteira: '' });
         buscarUsuarios();
       } else {
         toast.error(data.message || 'Erro ao criar usuário');

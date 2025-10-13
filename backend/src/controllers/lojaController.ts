@@ -190,6 +190,11 @@ export const criarRecompensa = async (req: AuthRequest, res: Response) => {
 // Atualizar recompensa
 export const atualizarRecompensa = async (req: AuthRequest, res: Response) => {
   try {
+    console.log('🔍 [BACKEND] Atualizar recompensa chamado');
+    console.log('🔍 [BACKEND] Params:', req.params);
+    console.log('🔍 [BACKEND] Body:', req.body);
+    console.log('🔍 [BACKEND] File:', req.file);
+    
     createUploadDir(); // Garantir que o diretório existe
     
     const { id } = req.params;

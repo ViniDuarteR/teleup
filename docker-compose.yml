@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # Banco de dados PostgreSQL
+  postgres:
+    image: postgres:15
+    container_name: teleup_postgres
+    environment:
+      POSTGRES_DB: teleup_db
+      POSTGRES_USER: teleup_user
+      POSTGRES_PASSWORD: teleup_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/config/postgres-all-sql-commands.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - teleup_network
+
+  # Backend Node.js
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: teleup_backend
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://teleup_user:teleup_password@postgres:5432/teleup_db
+      JWT_SECRET: seu_jwt_secret_super_seguro_aqui
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+    networks:
+      - teleup_network
+    command: npm run dev
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: teleup_frontend
+    environment:
+      VITE_API_URL: http://localhost:3001
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - teleup_network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+
+networks:
+  teleup_network:
+    driver: bridge

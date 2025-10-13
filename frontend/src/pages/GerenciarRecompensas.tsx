@@ -86,6 +86,7 @@ const GerenciarRecompensas = () => {
   // Salvar recompensa
   const salvarRecompensa = async () => {
     console.log('🔍 [SALVAR RECOMPENSA] Função chamada');
+    console.log('🔍 [SALVAR RECOMPENSA] Botão clicado!');
     console.log('🔍 [SALVAR RECOMPENSA] Token:', token ? 'existe' : 'não existe');
     console.log('🔍 [SALVAR RECOMPENSA] Editando:', editando);
     console.log('🔍 [SALVAR RECOMPENSA] Formulário:', formulario);
@@ -119,6 +120,11 @@ const GerenciarRecompensas = () => {
         formData.append('quantidade_restante', formulario.quantidade_restante?.toString() || '');
         
         console.log('🔍 [SALVAR RECOMPENSA] Enviando FormData');
+        console.log('🔍 [SALVAR RECOMPENSA] FormData contents:');
+        for (let [key, value] of formData.entries()) {
+          console.log(`  ${key}:`, value);
+        }
+        
         const response = await fetch(url, {
           method,
           headers: {
@@ -128,6 +134,16 @@ const GerenciarRecompensas = () => {
         });
         
         console.log('🔍 [SALVAR RECOMPENSA] Response status:', response.status);
+        console.log('🔍 [SALVAR RECOMPENSA] Response ok:', response.ok);
+        
+        if (!response.ok) {
+          console.log('❌ [SALVAR RECOMPENSA] Response not ok, status:', response.status);
+          const errorText = await response.text();
+          console.log('❌ [SALVAR RECOMPENSA] Error response:', errorText);
+          toast.error(`Erro ${response.status}: ${errorText}`);
+          return;
+        }
+        
         const data = await response.json();
         console.log('🔍 [SALVAR RECOMPENSA] Response data:', data);
         
@@ -143,6 +159,8 @@ const GerenciarRecompensas = () => {
       } else {
         // Se não há arquivo, enviar como JSON normal
         console.log('🔍 [SALVAR RECOMPENSA] Enviando JSON');
+        console.log('🔍 [SALVAR RECOMPENSA] JSON data:', JSON.stringify(formulario, null, 2));
+        
         const response = await fetch(url, {
           method,
           headers: {
@@ -153,6 +171,16 @@ const GerenciarRecompensas = () => {
         });
         
         console.log('🔍 [SALVAR RECOMPENSA] Response status:', response.status);
+        console.log('🔍 [SALVAR RECOMPENSA] Response ok:', response.ok);
+        
+        if (!response.ok) {
+          console.log('❌ [SALVAR RECOMPENSA] Response not ok, status:', response.status);
+          const errorText = await response.text();
+          console.log('❌ [SALVAR RECOMPENSA] Error response:', errorText);
+          toast.error(`Erro ${response.status}: ${errorText}`);
+          return;
+        }
+        
         const data = await response.json();
         console.log('🔍 [SALVAR RECOMPENSA] Response data:', data);
 
@@ -346,6 +374,12 @@ const GerenciarRecompensas = () => {
     buscarRecompensas();
   }, [token]);
 
+  // Debug do estado
+  useEffect(() => {
+    console.log('🔍 [STATE DEBUG] mostrarFormulario:', mostrarFormulario);
+    console.log('🔍 [STATE DEBUG] editando:', editando);
+  }, [mostrarFormulario, editando]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -394,7 +428,9 @@ const GerenciarRecompensas = () => {
 
           {/* Formulário */}
           {mostrarFormulario && (
-            <Card className="gaming-card">
+            <>
+              {console.log('🔍 [FORM RENDER] Formulário sendo renderizado, mostrarFormulario:', mostrarFormulario)}
+              <Card className="gaming-card">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   {editando ? 'Editar Recompensa' : 'Nova Recompensa'}
@@ -543,16 +579,23 @@ const GerenciarRecompensas = () => {
                 </div>
                 
                 <div className="flex gap-2">
-                  <Button onClick={salvarRecompensa} className="btn-gaming">
+                  <button 
+                    onClick={() => {
+                      console.log('🔍 [BUTTON CLICK] Botão clicado!');
+                      salvarRecompensa();
+                    }} 
+                    className="btn-gaming px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+                  >
                     <Save className="w-4 h-4 mr-2" />
                     {editando ? 'Atualizar' : 'Criar'}
-                  </Button>
+                  </button>
                   <Button variant="outline" onClick={limparFormulario}>
                     Cancelar
                   </Button>
                 </div>
               </CardContent>
             </Card>
+            </>
           )}
 
           {/* Lista de Recompensas */}
