@@ -28,6 +28,12 @@ CREATE TABLE IF NOT EXISTS empresas (
   nome             VARCHAR(150) NOT NULL,
   email            VARCHAR(150) UNIQUE NOT NULL,
   senha            TEXT NOT NULL,
+  telefone         VARCHAR(20),
+  cnpj             VARCHAR(20) UNIQUE NOT NULL,
+  endereco         VARCHAR(255),
+  cidade           VARCHAR(100),
+  estado           VARCHAR(50),
+  cep              VARCHAR(10),
   status           status_usuario NOT NULL DEFAULT 'Ativo',
   data_criacao     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   data_atualizacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -35,6 +41,40 @@ CREATE TABLE IF NOT EXISTS empresas (
 );
 
 CREATE INDEX IF NOT EXISTS idx_empresas_email ON empresas(email);
+
+-- Adicionar colunas faltantes na tabela empresas (se não existirem)
+DO $$
+BEGIN
+  -- Adicionar coluna telefone se não existir
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'empresas' AND column_name = 'telefone') THEN
+    ALTER TABLE empresas ADD COLUMN telefone VARCHAR(20);
+  END IF;
+  
+  -- Adicionar coluna cnpj se não existir
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'empresas' AND column_name = 'cnpj') THEN
+    ALTER TABLE empresas ADD COLUMN cnpj VARCHAR(20) UNIQUE;
+  END IF;
+  
+  -- Adicionar coluna endereco se não existir
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'empresas' AND column_name = 'endereco') THEN
+    ALTER TABLE empresas ADD COLUMN endereco VARCHAR(255);
+  END IF;
+  
+  -- Adicionar coluna cidade se não existir
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'empresas' AND column_name = 'cidade') THEN
+    ALTER TABLE empresas ADD COLUMN cidade VARCHAR(100);
+  END IF;
+  
+  -- Adicionar coluna estado se não existir
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'empresas' AND column_name = 'estado') THEN
+    ALTER TABLE empresas ADD COLUMN estado VARCHAR(50);
+  END IF;
+  
+  -- Adicionar coluna cep se não existir
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'empresas' AND column_name = 'cep') THEN
+    ALTER TABLE empresas ADD COLUMN cep VARCHAR(10);
+  END IF;
+END$$;
 
 -- ==================================================
 -- Tabela: gestores
@@ -204,9 +244,9 @@ END$$;
 -- ==================================================
 
 -- Empresas
-INSERT INTO empresas (nome, email, senha) VALUES 
-('TeleUp', 'contato@teleup.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'), -- senha: password
-('TechCorp', 'admin@techcorp.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'); -- senha: password
+INSERT INTO empresas (nome, email, senha, telefone, cnpj, endereco, cidade, estado, cep) VALUES 
+('TeleUp', 'contato@teleup.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '(11) 99999-9999', '12345678000123', 'Rua das Empresas, 123', 'São Paulo', 'SP', '01234-567'), -- senha: password
+('TechCorp', 'admin@techcorp.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '(11) 88888-8888', '98765432000198', 'Av. Tecnologia, 456', 'São Paulo', 'SP', '09876-543'); -- senha: password
 
 -- Gestores
 INSERT INTO gestores (empresa_id, nome, email, senha) VALUES 
