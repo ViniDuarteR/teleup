@@ -9,6 +9,16 @@ router.get('/test', (req, res) => {
   res.json({ success: true, message: 'Rota de cadastro funcionando sem autenticação', timestamp: new Date().toISOString() });
 });
 
+// Rota GET para verificar se o endpoint está funcionando
+router.get('/', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'Endpoint de cadastro de empresa funcionando',
+    method: 'GET',
+    note: 'Use POST para cadastrar uma empresa'
+  });
+});
+
 // Rota pública para cadastro de empresas
 router.post('/', cadastrarEmpresa as any);
 
