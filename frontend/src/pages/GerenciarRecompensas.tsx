@@ -264,22 +264,22 @@ const GerenciarRecompensas = () => {
 
   const editarRecompensa = (recompensa: Recompensa) => {
     setFormulario({
-      nome: recompensa.nome,
-      descricao: recompensa.descricao,
-      categoria: recompensa.categoria,
-      preco: recompensa.preco,
-      tipo: recompensa.tipo,
-      raridade: recompensa.raridade,
-      imagem: recompensa.imagem,
-      disponivel: recompensa.disponivel,
-      quantidade_restante: recompensa.quantidade_restante
+      nome: recompensa.nome || '',
+      descricao: recompensa.descricao || '',
+      categoria: recompensa.categoria || 'Itens',
+      preco: recompensa.preco || 0,
+      tipo: (recompensa as any).tipo || 'item',
+      raridade: (recompensa as any).raridade || 'comum',
+      imagem: (recompensa as any).imagem || '',
+      disponivel: recompensa.disponivel !== undefined ? recompensa.disponivel : true,
+      quantidade_restante: recompensa.quantidade_restante || null
     });
     setEditando(recompensa);
     setMostrarFormulario(true);
     
     // Se já tem imagem, mostrar preview
-    if (recompensa.imagem) {
-      setImagemPreview(recompensa.imagem);
+    if ((recompensa as any).imagem) {
+      setImagemPreview((recompensa as any).imagem);
     } else {
       setImagemPreview(null);
     }
