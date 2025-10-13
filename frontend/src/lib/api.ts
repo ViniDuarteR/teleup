@@ -58,6 +58,16 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  // Cadastro de empresa (sem autenticação)
+  cadastrarEmpresa: (data: any) =>
+    fetch(`${import.meta.env.VITE_API_URL}/api/cadastro-empresa`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    }),
+
   // Empresas
   getEmpresaDashboard: () =>
     apiRequest('/empresas/dashboard'),
