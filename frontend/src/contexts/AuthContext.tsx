@@ -79,8 +79,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         userType = 'gestor';
         console.log('AuthContext - Tentando login como gestor para:', email);
       }
-      // Empresas específicas
-      else if (email === 'contato@teleup.com' || email === 'admin@techcorp.com') {
+      // Empresas específicas (incluindo emails cadastrados recentemente)
+      else if (email === 'contato@teleup.com' || email === 'admin@techcorp.com' || 
+               email === 'hyttalo.ivann@cs.unicid.edu.br' || email.includes('@empresa') || 
+               email.includes('@company') || email.includes('@corp')) {
         endpoint = '/empresa-auth/login';
         userType = 'empresa';
         console.log('AuthContext - Tentando login como empresa para:', email);
