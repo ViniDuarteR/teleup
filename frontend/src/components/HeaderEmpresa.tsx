@@ -37,6 +37,7 @@ const HeaderEmpresa: React.FC<HeaderEmpresaProps> = ({ empresa }) => {
     { label: 'Dashboard', path: '/dashboard-empresa', icon: BarChart3 },
     { label: 'Relatórios', path: '/relatorios-empresa', icon: BarChart3 },
     { label: 'Gestores', path: '/gestores-empresa', icon: Users },
+    { label: 'Configurações', path: '/configuracoes-empresa', icon: Settings },
   ];
 
   return (

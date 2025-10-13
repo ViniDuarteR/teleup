@@ -64,6 +64,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Servir arquivos estáticos (imagens)
 app.use('/uploads', express.static('uploads'));
+app.use('/uploads/empresas', express.static('uploads/empresas'));
 
 // CORS configurado para reduzir alertas de segurança
 app.use((req, res, next) => {

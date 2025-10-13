@@ -24,6 +24,7 @@ import GaleriaConquistas from "./pages/GaleriaConquistas";
 import DashboardEmpresa from "./pages/DashboardEmpresa";
 import RelatoriosEmpresa from "./pages/RelatoriosEmpresa";
 import GerenciarGestoresEmpresa from "./pages/GerenciarGestoresEmpresa";
+import ConfiguracoesEmpresa from "./pages/ConfiguracoesEmpresa";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -143,6 +144,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="empresa">
                   <GerenciarGestoresEmpresa />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/configuracoes-empresa" 
+              element={
+                <ProtectedRoute requiredRole="empresa">
+                  <ConfiguracoesEmpresa />
                 </ProtectedRoute>
               } 
             />

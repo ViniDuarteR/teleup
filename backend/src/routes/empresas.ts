@@ -9,6 +9,7 @@ import {
   atualizarAvatarEmpresa
 } from '../controllers/empresaController';
 import { authenticateEmpresa, requireEmpresa } from '../middleware/empresaAuth';
+import { uploadAvatarEmpresa } from '../middleware/uploadEmpresa';
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ router.use(requireEmpresa as any);
 router.get('/dashboard', getDashboardEmpresa as any);
 
 // Avatar da empresa
-router.put('/avatar', atualizarAvatarEmpresa as any);
+router.put('/avatar', uploadAvatarEmpresa.single('avatar'), atualizarAvatarEmpresa as any);
 
 // Gerenciar gestores
 router.get('/gestores', listarGestoresEmpresa as any);

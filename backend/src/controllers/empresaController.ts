@@ -581,7 +581,6 @@ export const getDashboardEmpresa = async (req: AuthRequest, res: Response<ApiRes
 export const atualizarAvatarEmpresa = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const empresaId = req.empresa?.id;
-    const { avatar } = req.body;
 
     if (!empresaId) {
       res.status(401).json({
@@ -591,35 +590,28 @@ export const atualizarAvatarEmpresa = async (req: AuthRequest, res: Response): P
       return;
     }
 
-    if (!avatar) {
+    // Verificar se há arquivo enviado
+    if (!req.file) {
       res.status(400).json({
         success: false,
-        message: 'URL do avatar é obrigatória'
+        message: 'Arquivo de imagem é obrigatório'
       });
       return;
     }
 
-    // Validar se é uma URL válida
-    try {
-      new URL(avatar);
-    } catch {
-      res.status(400).json({
-        success: false,
-        message: 'URL do avatar inválida'
-      });
-      return;
-    }
+    // Construir URL do avatar
+    const avatarUrl = `${req.protocol}://${req.get('host')}/uploads/empresas/${req.file.filename}`;
 
     // Atualizar avatar no banco
     await pool.execute(
       'UPDATE empresas SET avatar = $1, data_atualizacao = NOW() WHERE id = $2',
-      [avatar, empresaId]
+      [avatarUrl, empresaId]
     );
 
     res.status(200).json({
       success: true,
       message: 'Avatar atualizado com sucesso',
-      data: { avatar }
+      data: { avatar: avatarUrl }
     });
 
   } catch (error: any) {
