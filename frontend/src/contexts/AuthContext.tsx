@@ -71,7 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 userData.tipo = 'empresa';
                 console.log(`✅ [FRONTEND LOGIN] Login empresa bem-sucedido - ID: ${userData.id}, Nome: ${userData.nome}`);
               } else if (type === 'gestor') {
-                userData = data.data.gestor;
+                userData = data.data.operador; // Backend retorna como 'operador' mesmo para gestores
                 userData.tipo = 'gestor';
                 console.log(`✅ [FRONTEND LOGIN] Login gestor bem-sucedido - ID: ${userData.id}, Nome: ${userData.nome}`);
               } else {
