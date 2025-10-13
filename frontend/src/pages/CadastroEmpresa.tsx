@@ -95,13 +95,14 @@ const CadastroEmpresa = () => {
       if (response.ok && data.success) {
         setSuccess(true);
         setTimeout(() => {
-          navigate('/login', { 
+          navigate('/', { 
             state: { 
-              message: 'Empresa cadastrada com sucesso! Faça login para continuar.',
-              email: formData.email 
+              message: 'Empresa cadastrada com sucesso! Agora você pode fazer login.',
+              email: formData.email,
+              showSuccess: true
             }
           });
-        }, 2000);
+        }, 3000);
       } else {
         setError(data.message || 'Erro ao cadastrar empresa');
       }
@@ -125,7 +126,7 @@ const CadastroEmpresa = () => {
               Cadastro Realizado!
             </h2>
             <p className="text-gray-600 mb-6">
-              Sua empresa foi cadastrada com sucesso. Você será redirecionado para fazer login.
+              Sua empresa foi cadastrada com sucesso! Você será redirecionado para a página inicial onde poderá fazer login.
             </p>
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           </CardContent>
