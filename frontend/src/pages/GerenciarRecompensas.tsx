@@ -327,7 +327,7 @@ const GerenciarRecompensas = () => {
     }
   };
 
-  const getCorRaridade = (raridade: string) => {
+  const getCorRaridade = (raridade?: string) => {
     switch (raridade) {
       case 'comum':
         return 'bg-gray-500 text-white';
@@ -562,7 +562,7 @@ const GerenciarRecompensas = () => {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between mb-2">
                     <Badge className={`${getCorRaridade(recompensa.raridade)} capitalize`}>
-                      {recompensa.raridade}
+                      {recompensa.raridade || 'comum'}
                     </Badge>
                     <div className="flex items-center gap-1 text-muted-foreground">
                       {getIconeCategoria(recompensa.categoria)}
