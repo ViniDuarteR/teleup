@@ -65,11 +65,32 @@ app.use(express.urlencoded({ extended: true }));
 // Servir arquivos estáticos (imagens)
 app.use('/uploads', express.static('uploads'));
 
-// CORS básico para permitir requisições do frontend
+// CORS configurado para reduzir alertas de segurança
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  // Permitir apenas domínios específicos (não usar *)
+  const allowedOrigins = [
+    'https://teleupvercel.vercel.app',
+    'https://teleupvercel-hwe0q2t4f-euhttls-projects.vercel.app',
+    'https://teleupvercel-2t1rut8dl-euhttls-projects.vercel.app',
+    'https://teleupvercel-7fvxvisk1-euhttls-projects.vercel.app',
+    'https://teleupvercel-f2qck1yrp-euhttls-projects.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ];
+  
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin as string)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  // Headers de segurança adicionais
+  res.header('X-Content-Type-Options', 'nosniff');
+  res.header('X-Frame-Options', 'DENY');
+  res.header('X-XSS-Protection', '1; mode=block');
   
   // Responder a requisições OPTIONS (preflight)
   if (req.method === 'OPTIONS') {
@@ -80,9 +101,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware de logging
+// Middleware de logging reduzido
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  // Log apenas para rotas importantes
+  if (req.path.includes('/api/auth') || req.path.includes('/api/empresa-auth')) {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  }
   next();
 });
 
