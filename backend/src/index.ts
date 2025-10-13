@@ -62,22 +62,28 @@ if (!process.env.VERCEL) {
   app.use(limiter);
 }
 
-// CORS COMPLETAMENTE DESABILITADO - MÁXIMA PERMISSIVIDADE
+// CORS configurado para máxima compatibilidade
 app.use((req, res, next) => {
-  // Headers mais agressivos possíveis
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  
+  // Headers CORS mais específicos
+  res.header('Access-Control-Allow-Origin', origin || '*');
   res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma');
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Max-Age', '86400');
-  res.header('Access-Control-Expose-Headers', '*');
+  res.header('Access-Control-Expose-Headers', 'Content-Length, X-JSON');
   
-  // Headers extras para garantir
+  // Headers extras para debug
   res.header('Vary', 'Origin');
-  res.header('X-Requested-With', '*');
+  res.header('X-Requested-With', 'XMLHttpRequest');
+  
+  // Log para debug
+  console.log(`CORS: ${req.method} ${req.path} - Origin: ${origin}`);
   
   // Preflight sempre OK
   if (req.method === 'OPTIONS') {
+    console.log('CORS: Preflight request handled');
     res.status(200).send('OK');
     return;
   }
@@ -87,11 +93,14 @@ app.use((req, res, next) => {
 
 // Usar CORS do express também por garantia
 app.use(cors({
-  origin: '*',
+  origin: (origin, callback) => {
+    // Permitir todas as origens em desenvolvimento e produção
+    callback(null, true);
+  },
   credentials: true,
-  methods: '*',
-  allowedHeaders: '*',
-  exposedHeaders: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'Cache-Control', 'Pragma'],
+  exposedHeaders: ['Content-Length', 'X-JSON'],
   optionsSuccessStatus: 200,
   preflightContinue: false
 }));

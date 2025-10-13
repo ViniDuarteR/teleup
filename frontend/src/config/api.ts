@@ -1,6 +1,6 @@
 // Configuração da API baseada no ambiente
 export const API_CONFIG = {
-  BASE_URL: 'https://teleup-back.vercel.app/api', // Usar produção para teste
+  BASE_URL: 'https://teleup-backend.vercel.app/api', // URL correta do backend
   VERSION: '2.0.0-' + Date.now() // Cache bust
 };
 
