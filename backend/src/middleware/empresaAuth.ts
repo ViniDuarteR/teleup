@@ -39,7 +39,7 @@ export const authenticateEmpresa = async (req: AuthRequest, res: Response, next:
     // Verificar se a sessão ainda está ativa
     console.log(`🔍 [EMPRESA AUTH] Verificando sessão no banco de dados para empresa ID: ${decoded.empresaId}`);
     const [sessoes] = await pool.execute(
-      'SELECT * FROM sessoes_empresa WHERE empresa_id = ? AND token = ? AND ativo = TRUE AND expiracao > NOW()',
+      'SELECT * FROM sessoes_empresa WHERE empresa_id = $1 AND token = $2 AND ativo = TRUE AND expiracao > NOW()',
       [decoded.empresaId, token]
     );
 
@@ -57,8 +57,8 @@ export const authenticateEmpresa = async (req: AuthRequest, res: Response, next:
     // Buscar dados da empresa
     console.log(`🔍 [EMPRESA AUTH] Buscando dados da empresa ID: ${decoded.empresaId}`);
     const [empresas] = await pool.execute(
-      'SELECT id, nome, email, status, data_ultimo_login FROM empresas WHERE id = ? AND status = "Ativo"',
-      [decoded.empresaId]
+      'SELECT id, nome, email, status, data_ultimo_login FROM empresas WHERE id = $1 AND status = $2',
+      [decoded.empresaId, 'Ativo']
     );
 
     console.log(`📊 [EMPRESA AUTH] Empresas encontradas: ${(empresas as any[]).length}`);

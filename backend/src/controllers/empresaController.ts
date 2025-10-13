@@ -28,7 +28,7 @@ export const cadastrarEmpresa = async (req: Request, res: Response): Promise<voi
     // Verificar se email já existe
     console.log(`🔍 [CADASTRO EMPRESA] Verificando se email já existe: ${email}`);
     const [empresasExistentes] = await pool.execute(
-      'SELECT id FROM empresas WHERE email = ?',
+      'SELECT id FROM empresas WHERE email = $1',
       [email]
     );
 
@@ -60,8 +60,8 @@ export const cadastrarEmpresa = async (req: Request, res: Response): Promise<voi
     
     const [result] = await pool.execute(
       `INSERT INTO empresas (nome, email, senha, telefone, cnpj, endereco, cidade, estado, cep, status, data_criacao) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Ativo', NOW()) RETURNING id`,
-      [nome, email, senhaHash, telefone || null, cnpj, endereco || null, cidade || null, estado || null, cep || null]
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW()) RETURNING id`,
+      [nome, email, senhaHash, telefone || null, cnpj, endereco || null, cidade || null, estado || null, cep || null, 'Ativo']
     );
 
     console.log(`💾 [CADASTRO EMPRESA] Resultado da inserção:`, result);
