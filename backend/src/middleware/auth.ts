@@ -81,17 +81,17 @@ export const authenticateToken = async (
         tipo: 'gestor'
       };
     } else {
-      console.log(`🔍 [AUTH MIDDLEWARE] Buscando dados do operador ID: ${decoded.operadorId}`);
+      // Buscando dados do operador
       // Buscar dados do operador
       const [operadores] = await pool.execute(
         'SELECT id, nome, email, nivel, xp, pontos_totais, status, avatar, tempo_online, data_criacao, data_atualizacao FROM operadores WHERE id = $1',
         [decoded.operadorId]
       );
 
-      console.log(`📊 [AUTH MIDDLEWARE] Operadores encontrados: ${(operadores as Operador[]).length}`);
+      // Operadores encontrados
 
       if ((operadores as Operador[]).length === 0) {
-        console.log(`❌ [AUTH MIDDLEWARE] Operador não encontrado - ID: ${decoded.operadorId}`);
+        // Operador não encontrado
         res.status(401).json({ 
           success: false, 
           message: 'Operador não encontrado' 
@@ -100,7 +100,7 @@ export const authenticateToken = async (
       }
 
       const operador = (operadores as Operador[])[0];
-      console.log(`✅ [AUTH MIDDLEWARE] Operador encontrado - ID: ${operador.id}, Nome: ${operador.nome}, Status: ${operador.status}`);
+      // Operador encontrado
       
       req.operador = operador;
       req.user = {
@@ -111,7 +111,7 @@ export const authenticateToken = async (
     }
     
     req.token = token;
-    console.log(`🎉 [AUTH MIDDLEWARE] Autenticação bem-sucedida para ${req.user?.tipo} - ID: ${req.user?.id}`);
+    // Autenticação bem-sucedida
     next();
   } catch (error: any) {
     console.error(`❌ [AUTH MIDDLEWARE] Erro na autenticação para ${req.method} ${req.path}:`, error);
