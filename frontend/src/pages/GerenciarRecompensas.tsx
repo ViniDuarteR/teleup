@@ -85,7 +85,15 @@ const GerenciarRecompensas = () => {
 
   // Salvar recompensa
   const salvarRecompensa = async () => {
-    if (!token) return;
+    console.log('🔍 [SALVAR RECOMPENSA] Função chamada');
+    console.log('🔍 [SALVAR RECOMPENSA] Token:', token ? 'existe' : 'não existe');
+    console.log('🔍 [SALVAR RECOMPENSA] Editando:', editando);
+    console.log('🔍 [SALVAR RECOMPENSA] Formulário:', formulario);
+    
+    if (!token) {
+      console.log('❌ [SALVAR RECOMPENSA] Sem token, abortando');
+      return;
+    }
 
     try {
       const url = editando 
@@ -93,6 +101,9 @@ const GerenciarRecompensas = () => {
       : `${API_BASE_URL}/api/recompensas`;
       
       const method = editando ? 'PUT' : 'POST';
+      
+      console.log('🔍 [SALVAR RECOMPENSA] URL:', url);
+      console.log('🔍 [SALVAR RECOMPENSA] Method:', method);
       
       // Se há um arquivo de imagem, usar FormData
       if (arquivoImagem) {
@@ -107,6 +118,7 @@ const GerenciarRecompensas = () => {
         formData.append('disponivel', formulario.disponivel.toString());
         formData.append('quantidade_restante', formulario.quantidade_restante?.toString() || '');
         
+        console.log('🔍 [SALVAR RECOMPENSA] Enviando FormData');
         const response = await fetch(url, {
           method,
           headers: {
@@ -115,17 +127,22 @@ const GerenciarRecompensas = () => {
           body: formData
         });
         
+        console.log('🔍 [SALVAR RECOMPENSA] Response status:', response.status);
         const data = await response.json();
+        console.log('🔍 [SALVAR RECOMPENSA] Response data:', data);
         
         if (data.success) {
+          console.log('✅ [SALVAR RECOMPENSA] Sucesso!');
           toast.success(editando ? 'Recompensa atualizada!' : 'Recompensa criada!');
           buscarRecompensas();
           limparFormulario();
         } else {
+          console.log('❌ [SALVAR RECOMPENSA] Erro:', data.message);
           toast.error(data.message || 'Erro ao salvar recompensa');
         }
       } else {
         // Se não há arquivo, enviar como JSON normal
+        console.log('🔍 [SALVAR RECOMPENSA] Enviando JSON');
         const response = await fetch(url, {
           method,
           headers: {
@@ -135,13 +152,17 @@ const GerenciarRecompensas = () => {
           body: JSON.stringify(formulario)
         });
         
+        console.log('🔍 [SALVAR RECOMPENSA] Response status:', response.status);
         const data = await response.json();
+        console.log('🔍 [SALVAR RECOMPENSA] Response data:', data);
 
         if (data.success) {
+          console.log('✅ [SALVAR RECOMPENSA] Sucesso!');
           toast.success(editando ? 'Recompensa atualizada!' : 'Recompensa criada!');
           buscarRecompensas();
           limparFormulario();
         } else {
+          console.log('❌ [SALVAR RECOMPENSA] Erro:', data.message);
           toast.error(data.message || 'Erro ao salvar recompensa');
         }
       }
