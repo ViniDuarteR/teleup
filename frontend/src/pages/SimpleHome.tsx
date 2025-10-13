@@ -51,12 +51,12 @@ const SimpleHome = () => {
         </div>
         
         <div style={{ marginTop: '40px', padding: '20px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <h3 style={{ marginBottom: '15px', color: '#333' }}>Credenciais de Teste</h3>
+          <h3 style={{ marginBottom: '15px', color: '#333' }}>Sistema de Gamificação</h3>
           <div style={{ fontSize: '0.9rem', color: '#666', lineHeight: '1.6' }}>
-            <p><strong>Gestor:</strong> hyttalo@teleup.com / password</p>
-            <p><strong>Operador:</strong> mateus@teleup.com / password</p>
-            <p><strong>Operador 2:</strong> guilherme@teleup.com / password</p>
-            <p><strong>Operador 3:</strong> vinicius@teleup.com / password</p>
+            <p>🎮 Sistema completo de gamificação para call centers</p>
+            <p>📊 Métricas e rankings em tempo real</p>
+            <p>🏆 Sistema de conquistas e recompensas</p>
+            <p>👥 Gestão de equipes e operadores</p>
           </div>
         </div>
       </div>

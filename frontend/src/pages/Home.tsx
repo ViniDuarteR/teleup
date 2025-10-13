@@ -47,17 +47,17 @@ const Home = () => {
           </Link>
         </div>
 
-        {/* Informações de Teste */}
-        <div className="mt-12 p-6 bg-muted/50 rounded-lg">
-          <h3 className="text-lg font-semibold mb-4">Credenciais de Teste</h3>
+        {/* Sistema de Gamificação */}
+        <div className="mt-12 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+          <h3 className="text-lg font-semibold mb-4">Sistema de Gamificação</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <p><strong>Gestor:</strong> hyttalo@teleup.com / password</p>
-              <p><strong>Operador:</strong> mateus@teleup.com / password</p>
+              <p>🎮 Sistema completo de gamificação</p>
+              <p>📊 Métricas e rankings em tempo real</p>
             </div>
             <div>
-              <p><strong>Operador 2:</strong> guilherme@teleup.com / password</p>
-              <p><strong>Operador 3:</strong> vinicius@teleup.com / password</p>
+              <p>🏆 Sistema de conquistas e recompensas</p>
+              <p>👥 Gestão de equipes e operadores</p>
             </div>
           </div>
         </div>
