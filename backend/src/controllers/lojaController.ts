@@ -7,7 +7,7 @@ import { createUploadDir } from '../middleware/upload';
 export const getRecompensas = async (req: AuthRequest, res: Response) => {
   try {
     const [recompensas] = await pool.execute(
-      'SELECT * FROM recompensas WHERE disponivel = 1 ORDER BY categoria, preco'
+      'SELECT id, titulo as nome, descricao, categoria, preco, tipo, raridade, imagem, disponivel, quantidade_restante, criado_em as data_criacao FROM recompensas WHERE disponivel = 1 ORDER BY categoria, preco'
     );
 
     return res.json({
@@ -36,7 +36,7 @@ export const getCompras = async (req: AuthRequest, res: Response) => {
     }
 
     const [compras] = await pool.execute(
-      `SELECT c.*, r.nome as recompensa_nome, r.descricao as recompensa_descricao, r.preco
+      `SELECT c.*, r.titulo as recompensa_nome, r.descricao as recompensa_descricao, r.preco
        FROM compras c
        JOIN recompensas r ON c.recompensa_id = r.id
        WHERE c.operador_id = $1
@@ -155,7 +155,7 @@ export const criarRecompensa = async (req: AuthRequest, res: Response) => {
     }
 
     const [result] = await pool.execute(
-      `INSERT INTO recompensas (nome, descricao, categoria, preco, tipo, raridade, imagem, disponivel, quantidade_restante)
+      `INSERT INTO recompensas (titulo, descricao, categoria, preco, tipo, raridade, imagem, disponivel, quantidade_restante)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [nome, descricao, categoria, parseInt(preco), tipo, raridade, caminhoImagem, disponivel !== false ? 1 : 0, quantidade_restante ? parseInt(quantidade_restante) : null]
     );
@@ -214,11 +214,11 @@ export const atualizarRecompensa = async (req: AuthRequest, res: Response) => {
     // Se não há novo arquivo, manter a imagem atual
     let query, params;
     if (caminhoImagem) {
-      query = `UPDATE recompensas SET nome = $1, descricao = $2, categoria = $3, preco = $4, tipo = $5, raridade = $6, imagem = $7, disponivel = $8, quantidade_restante = $9
+      query = `UPDATE recompensas SET titulo = $1, descricao = $2, categoria = $3, preco = $4, tipo = $5, raridade = $6, imagem = $7, disponivel = $8, quantidade_restante = $9
                WHERE id = $10`;
       params = [nome, descricao, categoria, parseInt(preco), tipo, raridade, caminhoImagem, disponivel !== false ? 1 : 0, quantidade_restante ? parseInt(quantidade_restante) : null, parseInt(id)];
     } else {
-      query = `UPDATE recompensas SET nome = $1, descricao = $2, categoria = $3, preco = $4, tipo = $5, raridade = $6, disponivel = $7, quantidade_restante = $8
+      query = `UPDATE recompensas SET titulo = $1, descricao = $2, categoria = $3, preco = $4, tipo = $5, raridade = $6, disponivel = $7, quantidade_restante = $8
                WHERE id = $9`;
       params = [nome, descricao, categoria, parseInt(preco), tipo, raridade, disponivel !== false ? 1 : 0, quantidade_restante ? parseInt(quantidade_restante) : null, parseInt(id)];
     }
