@@ -1,5 +1,4 @@
 import express from 'express';
-import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
@@ -31,13 +30,7 @@ dotenv.config();
 
 const app = express();
 const server = createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: true, // Permite todas as origens
-    methods: ['GET', 'POST'],
-    credentials: true
-  }
-});
+const io = new Server(server);
 
 const PORT = process.env.PORT || 3001;
 
@@ -62,48 +55,7 @@ if (!process.env.VERCEL) {
   app.use(limiter);
 }
 
-// CORS configurado para máxima compatibilidade
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  
-  // Headers CORS mais específicos
-  res.header('Access-Control-Allow-Origin', origin || '*');
-  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Max-Age', '86400');
-  res.header('Access-Control-Expose-Headers', 'Content-Length, X-JSON');
-  
-  // Headers extras para debug
-  res.header('Vary', 'Origin');
-  res.header('X-Requested-With', 'XMLHttpRequest');
-  
-  // Log para debug
-  console.log(`CORS: ${req.method} ${req.path} - Origin: ${origin}`);
-  
-  // Preflight sempre OK
-  if (req.method === 'OPTIONS') {
-    console.log('CORS: Preflight request handled');
-    res.status(200).send('OK');
-    return;
-  }
-  
-  next();
-});
-
-// Usar CORS do express também por garantia
-app.use(cors({
-  origin: (origin, callback) => {
-    // Permitir todas as origens em desenvolvimento e produção
-    callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'Cache-Control', 'Pragma'],
-  exposedHeaders: ['Content-Length', 'X-JSON'],
-  optionsSuccessStatus: 200,
-  preflightContinue: false
-}));
+// CORS removido conforme solicitado
 
 // Middleware para parsing JSON
 app.use(express.json({ limit: '10mb' }));
