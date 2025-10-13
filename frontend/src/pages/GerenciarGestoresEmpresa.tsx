@@ -18,6 +18,13 @@ import {
   Calendar
 } from 'lucide-react';
 
+interface EmpresaData {
+  id: number;
+  nome: string;
+  email: string;
+  status: string;
+}
+
 interface GestorData {
   id: number;
   nome: string;
@@ -107,6 +114,10 @@ const GerenciarGestoresEmpresa: React.FC = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('teleup_token');
+      console.log('🔍 [CRIAR GESTOR] Token:', token ? 'presente' : 'ausente');
+      console.log('🔍 [CRIAR GESTOR] Dados:', formData);
+      console.log('🔍 [CRIAR GESTOR] URL:', `${import.meta.env.VITE_API_URL}/api/empresas/gestores`);
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/empresas/gestores`, {
         method: 'POST',
         headers: {
@@ -116,13 +127,20 @@ const GerenciarGestoresEmpresa: React.FC = () => {
         body: JSON.stringify(formData)
       });
 
+      console.log('🔍 [CRIAR GESTOR] Status:', response.status);
+      console.log('🔍 [CRIAR GESTOR] Response:', await response.text());
+
       if (response.ok) {
         setFormData({ nome: '', email: '', senha: '' });
         setShowForm(false);
         fetchGestores();
+        alert('Gestor criado com sucesso!');
+      } else {
+        alert('Erro ao criar gestor. Verifique o console para mais detalhes.');
       }
     } catch (error) {
       console.error('Erro ao criar gestor:', error);
+      alert('Erro ao criar gestor: ' + error);
     }
   };
 
