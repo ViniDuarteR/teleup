@@ -14,6 +14,11 @@
       "src": "/(.*)",
       "dest": "/$1"
     }
-  ]
+  ],
+  "env": {
+    "VITE_API_URL": "https://teleup-backend.vercel.app",
+    "VITE_APP_NAME": "TeleUp",
+    "VITE_APP_VERSION": "1.0.0"
+  }
 }
 
