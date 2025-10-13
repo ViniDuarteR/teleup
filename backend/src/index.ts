@@ -94,7 +94,7 @@ app.use('/api/gestores', gestoresRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/recompensas', recompensasRoutes);
 app.use('/api/empresa-auth', empresaAuthRoutes);
-app.use('/api/empresas/cadastro', cadastroEmpresaRoutes);
+app.use('/api/cadastro-empresa', cadastroEmpresaRoutes);
 app.use('/api/empresas', empresasRoutes);
 app.use('/api/setup', setupRoutes);
 
