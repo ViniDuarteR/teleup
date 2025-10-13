@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/useAuth";
 import { toast } from "sonner";
 import DialpadDiscagem from "./DialpadDiscagem";
 import ModalChamadaAtiva from "./ModalChamadaAtiva";

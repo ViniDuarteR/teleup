@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/useAuth";
 import Header from "../components/Header";
 import GridMetas from "../components/GridMetas";
 import SistemaDiscagem from "../components/SistemaDiscagem";

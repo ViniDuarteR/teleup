@@ -11,7 +11,7 @@ import {
   Shield
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 

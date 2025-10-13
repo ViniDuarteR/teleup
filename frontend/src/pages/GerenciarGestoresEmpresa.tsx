@@ -226,17 +226,26 @@ const GerenciarGestoresEmpresa: React.FC = () => {
           </Card>
         )}
 
-        {/* Busca */}
+        {/* Busca e Ações */}
         <Card className="gaming-card mb-6">
           <CardContent className="pt-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Buscar gestores..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="gaming-input pl-10"
-              />
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Buscar gestores..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="gaming-input pl-10"
+                />
+              </div>
+              <Button 
+                onClick={() => setShowForm(true)}
+                className="gaming-button flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Adicionar Gestor
+              </Button>
             </div>
           </CardContent>
         </Card>

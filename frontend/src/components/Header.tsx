@@ -3,7 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Phone, Store, User, Target, LogOut } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
