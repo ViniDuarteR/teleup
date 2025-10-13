@@ -1,6 +1,7 @@
 import express, { Response, NextFunction } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { AuthRequest } from '../types';
+import { uploadImagem } from '../middleware/upload';
 import { 
   getRecompensas, 
   getCompras, 
@@ -34,7 +35,7 @@ router.post('/', (req: AuthRequest, res: Response, next: NextFunction) => {
     });
   }
   return next();
-}, criarRecompensa);
+}, uploadImagem.single('imagem'), criarRecompensa);
 
 // Atualizar recompensa (apenas gestores)
 router.put('/:id', (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -45,7 +46,7 @@ router.put('/:id', (req: AuthRequest, res: Response, next: NextFunction) => {
     });
   }
   return next();
-}, atualizarRecompensa);
+}, uploadImagem.single('imagem'), atualizarRecompensa);
 
 // Excluir recompensa (apenas gestores)
 router.delete('/:id', (req: AuthRequest, res: Response, next: NextFunction) => {

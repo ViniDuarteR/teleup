@@ -62,6 +62,9 @@ if (!process.env.VERCEL) {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Servir arquivos estáticos (imagens)
+app.use('/uploads', express.static('uploads'));
+
 // CORS básico para permitir requisições do frontend
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');

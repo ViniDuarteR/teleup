@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../types';
 import { pool } from '../config/database';
+import { createUploadDir } from '../middleware/upload';
 
 // Buscar recompensas
 export const getRecompensas = async (req: AuthRequest, res: Response) => {
@@ -133,6 +134,8 @@ export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
 // Criar nova recompensa
 export const criarRecompensa = async (req: AuthRequest, res: Response) => {
   try {
+    createUploadDir(); // Garantir que o diretório existe
+    
     const {
       nome,
       descricao,
@@ -140,15 +143,21 @@ export const criarRecompensa = async (req: AuthRequest, res: Response) => {
       preco,
       tipo,
       raridade,
-      imagem,
       disponivel,
       quantidade_restante
     } = req.body;
 
+    // Verificar se há arquivo de imagem
+    let caminhoImagem = null;
+    if (req.file) {
+      // Se há upload de arquivo, usar o caminho do arquivo
+      caminhoImagem = `/uploads/recompensas/${req.file.filename}`;
+    }
+
     const [result] = await pool.execute(
       `INSERT INTO recompensas (nome, descricao, categoria, preco, tipo, raridade, imagem, disponivel, quantidade_restante)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-      [nome, descricao, categoria, parseInt(preco), tipo, raridade, imagem || null, disponivel !== false ? 1 : 0, quantidade_restante ? parseInt(quantidade_restante) : null]
+      [nome, descricao, categoria, parseInt(preco), tipo, raridade, caminhoImagem, disponivel !== false ? 1 : 0, quantidade_restante ? parseInt(quantidade_restante) : null]
     );
 
     const novaRecompensa = {
@@ -159,7 +168,7 @@ export const criarRecompensa = async (req: AuthRequest, res: Response) => {
       preco: parseInt(preco),
       tipo,
       raridade,
-      imagem: imagem || null,
+      imagem: caminhoImagem,
       disponivel: disponivel !== false,
       quantidade_restante: quantidade_restante ? parseInt(quantidade_restante) : null
     };
@@ -181,6 +190,8 @@ export const criarRecompensa = async (req: AuthRequest, res: Response) => {
 // Atualizar recompensa
 export const atualizarRecompensa = async (req: AuthRequest, res: Response) => {
   try {
+    createUploadDir(); // Garantir que o diretório existe
+    
     const { id } = req.params;
     const {
       nome,
@@ -189,16 +200,30 @@ export const atualizarRecompensa = async (req: AuthRequest, res: Response) => {
       preco,
       tipo,
       raridade,
-      imagem,
       disponivel,
       quantidade_restante
     } = req.body;
 
-    const [result] = await pool.execute(
-      `UPDATE recompensas SET nome = $1, descricao = $2, categoria = $3, preco = $4, tipo = $5, raridade = $6, imagem = $7, disponivel = $8, quantidade_restante = $9
-       WHERE id = $10`,
-      [nome, descricao, categoria, parseInt(preco), tipo, raridade, imagem || null, disponivel !== false ? 1 : 0, quantidade_restante ? parseInt(quantidade_restante) : null, parseInt(id)]
-    );
+    // Verificar se há arquivo de imagem
+    let caminhoImagem = null;
+    if (req.file) {
+      // Se há upload de arquivo, usar o caminho do arquivo
+      caminhoImagem = `/uploads/recompensas/${req.file.filename}`;
+    }
+
+    // Se não há novo arquivo, manter a imagem atual
+    let query, params;
+    if (caminhoImagem) {
+      query = `UPDATE recompensas SET nome = $1, descricao = $2, categoria = $3, preco = $4, tipo = $5, raridade = $6, imagem = $7, disponivel = $8, quantidade_restante = $9
+               WHERE id = $10`;
+      params = [nome, descricao, categoria, parseInt(preco), tipo, raridade, caminhoImagem, disponivel !== false ? 1 : 0, quantidade_restante ? parseInt(quantidade_restante) : null, parseInt(id)];
+    } else {
+      query = `UPDATE recompensas SET nome = $1, descricao = $2, categoria = $3, preco = $4, tipo = $5, raridade = $6, disponivel = $7, quantidade_restante = $8
+               WHERE id = $9`;
+      params = [nome, descricao, categoria, parseInt(preco), tipo, raridade, disponivel !== false ? 1 : 0, quantidade_restante ? parseInt(quantidade_restante) : null, parseInt(id)];
+    }
+
+    const [result] = await pool.execute(query, params);
 
     if ((result as any).affectedRows === 0) {
       return res.status(404).json({
@@ -218,7 +243,7 @@ export const atualizarRecompensa = async (req: AuthRequest, res: Response) => {
         preco: parseInt(preco),
         tipo,
         raridade,
-        imagem: imagem || null,
+        imagem: caminhoImagem,
         disponivel: disponivel !== false,
         quantidade_restante: quantidade_restante ? parseInt(quantidade_restante) : null
       }
