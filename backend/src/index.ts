@@ -84,6 +84,10 @@ app.use((req, res, next) => {
 });
 
 // Rotas da API
+// Rota de cadastro SEMPRE primeiro (sem autenticação)
+app.use('/api/cadastro-empresa', cadastroEmpresaRoutes);
+
+// Rotas com autenticação
 app.use('/api/auth', authRoutes);
 app.use('/api/operador', operadorRoutes);
 app.use('/api/chamadas', chamadasRoutes);
@@ -94,7 +98,6 @@ app.use('/api/gestores', gestoresRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/recompensas', recompensasRoutes);
 app.use('/api/empresa-auth', empresaAuthRoutes);
-app.use('/api/cadastro-empresa', cadastroEmpresaRoutes);
 app.use('/api/empresas', empresasRoutes);
 app.use('/api/setup', setupRoutes);
 
