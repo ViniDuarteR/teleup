@@ -293,7 +293,7 @@ export const criarGestorEmpresa = async (req: AuthRequest, res: Response<ApiResp
 
     // Verificar se email já existe
     const [emailExists] = await pool.execute(
-      'SELECT id FROM gestores WHERE email = ?',
+      'SELECT id FROM gestores WHERE email = $1',
       [email]
     );
 
@@ -308,8 +308,8 @@ export const criarGestorEmpresa = async (req: AuthRequest, res: Response<ApiResp
     const senhaHash = await bcrypt.hash(senha, 10);
 
     const [result] = await pool.execute(
-      'INSERT INTO gestores (nome, email, senha, status, avatar, empresa_id) VALUES (?, ?, ?, "Ativo", "avatar_gestor.png", ?)',
-      [nome, email, senhaHash, empresaId]
+      'INSERT INTO gestores (nome, email, senha, status, avatar, empresa_id) VALUES ($1, $2, $3, $4, $5, $6)',
+      [nome, email, senhaHash, 'Ativo', 'avatar_gestor.png', empresaId]
     );
 
     const insertResult = result as any;
