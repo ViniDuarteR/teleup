@@ -66,6 +66,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
 app.use('/uploads/empresas', express.static('uploads/empresas'));
 
+// Rota específica para avatares de gestores
+app.get('/avatar_gestor.png', (req, res) => {
+  res.sendFile('avatar_gestor.png', { root: 'uploads' });
+});
+
 // CORS configurado para reduzir alertas de segurança
 app.use((req, res, next) => {
   // Permitir apenas domínios específicos (não usar *)

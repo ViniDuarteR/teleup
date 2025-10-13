@@ -60,7 +60,7 @@ export const api = {
 
   // Cadastro de empresa (sem autenticação)
   cadastrarEmpresa: (data: any) =>
-    fetch(`${import.meta.env.VITE_API_URL}/api/cadastro-empresa`, {
+    fetch(`${API_BASE_URL}/cadastro-empresa`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
