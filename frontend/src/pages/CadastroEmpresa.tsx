@@ -160,12 +160,12 @@ const CadastroEmpresa = () => {
 
       {/* Main Content */}
       <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <Card className="w-full max-w-2xl">
+        <Card className="w-full max-w-2xl bg-gradient-to-br from-blue-600/20 to-purple-600/20 backdrop-blur-sm border-white/20">
           <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold text-gray-900">
+            <CardTitle className="text-3xl font-bold text-white">
               Cadastre sua Empresa
             </CardTitle>
-            <CardDescription className="text-lg text-gray-600">
+            <CardDescription className="text-lg text-white/80">
               Comece a transformar seu call center hoje mesmo. 
               Cadastro gratuito e sem compromisso.
             </CardDescription>
@@ -181,26 +181,27 @@ const CadastroEmpresa = () => {
 
               {/* Informações da Empresa */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                <h3 className="text-lg font-semibold text-white border-b border-white/20 pb-2">
                   Informações da Empresa
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <Label htmlFor="nome">Nome da Empresa *</Label>
-                    <Input
-                      id="nome"
-                      name="nome"
-                      type="text"
-                      value={formData.nome}
-                      onChange={handleChange}
-                      placeholder="Ex: TechCorp Solutions"
-                      required
-                    />
+                  <Label htmlFor="nome" className="text-white">Nome da Empresa *</Label>
+                  <Input
+                    id="nome"
+                    name="nome"
+                    type="text"
+                    value={formData.nome}
+                    onChange={handleChange}
+                    placeholder="Ex: TechCorp Solutions"
+                    className="text-white bg-white/10 border-white/20 placeholder:text-white/60"
+                    required
+                  />
                   </div>
                   
                   <div>
-                    <Label htmlFor="email">Email Corporativo *</Label>
+                    <Label htmlFor="email" className="text-white">Email Corporativo *</Label>
                     <Input
                       id="email"
                       name="email"
@@ -241,7 +242,7 @@ const CadastroEmpresa = () => {
 
               {/* Endereço */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                <h3 className="text-lg font-semibold text-white border-b border-white/20 pb-2">
                   Endereço
                 </h3>
                 
@@ -298,7 +299,7 @@ const CadastroEmpresa = () => {
 
               {/* Senha */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                <h3 className="text-lg font-semibold text-white border-b border-white/20 pb-2">
                   Senha de Acesso
                 </h3>
                 
@@ -353,9 +354,9 @@ const CadastroEmpresa = () => {
               </Button>
 
               <div className="text-center">
-                <p className="text-gray-600">
+                <p className="text-white/80">
                   Já tem uma conta?{' '}
-                  <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+                  <Link to="/login" className="text-blue-300 hover:text-blue-200 font-medium">
                     Fazer login
                   </Link>
                 </p>

@@ -53,12 +53,12 @@ const Homepage = () => {
   ];
 
   const benefits = [
-    "Aumento de 40% na produtividade dos operadores",
-    "Redução de 35% na taxa de turnover",
-    "Melhoria de 50% na satisfação da equipe",
-    "ROI positivo em apenas 3 meses",
+    "Aumento significativo na produtividade dos operadores",
+    "Redução na taxa de turnover da equipe",
+    "Melhoria na satisfação e motivação dos funcionários",
+    "ROI positivo em poucos meses de uso",
     "Interface intuitiva e fácil de usar",
-    "Suporte 24/7 especializado"
+    "Suporte especializado disponível"
   ];
 
   const testimonials = [
@@ -146,16 +146,16 @@ const Homepage = () => {
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">+40%</div>
-              <div className="text-gray-600">Aumento na Produtividade</div>
+              <div className="text-4xl font-bold text-blue-600 mb-2">100%</div>
+              <div className="text-gray-600">Sistema Gamificado</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-green-600 mb-2">-35%</div>
-              <div className="text-gray-600">Redução no Turnover</div>
+              <div className="text-4xl font-bold text-green-600 mb-2">24/7</div>
+              <div className="text-gray-600">Suporte Disponível</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-purple-600 mb-2">500+</div>
-              <div className="text-gray-600">Empresas Atendidas</div>
+              <div className="text-4xl font-bold text-purple-600 mb-2">R$ 0</div>
+              <div className="text-gray-600">Custo Inicial</div>
             </div>
           </div>
         </div>
