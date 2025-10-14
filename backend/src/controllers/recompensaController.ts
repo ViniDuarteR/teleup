@@ -256,6 +256,13 @@ export const criarRecompensa = async (req: AuthRequest, res: Response): Promise<
       return;
     }
     
+    // Processar arquivo de imagem se houver
+    let caminhoImagem = imagem || null;
+    if (req.file) {
+      caminhoImagem = `/uploads/recompensas/${req.file.filename}`;
+      console.log('🔍 [CRIAR RECOMPENSA] Arquivo de imagem processado:', caminhoImagem);
+    }
+    
     // Obter empresa_id do gestor logado
     const gestorId = req.user?.id;
     console.log('🔍 [CRIAR RECOMPENSA] Gestor ID:', gestorId);
@@ -299,7 +306,7 @@ export const criarRecompensa = async (req: AuthRequest, res: Response): Promise<
     
     const [result] = await pool.execute(query, [
       titulo, descricao, categoriaFinal, preco, tipo || 'item', raridade || 'comum',
-      imagem || null, quantidade_restante || null, empresaId
+      caminhoImagem, quantidade_restante || null, empresaId
     ]);
     
     console.log('✅ [CRIAR RECOMPENSA] Recompensa criada com sucesso, ID:', (result as any)[0]?.id);
