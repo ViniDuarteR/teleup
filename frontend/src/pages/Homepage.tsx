@@ -399,8 +399,8 @@ const Homepage = () => {
                       "{testimonial.content}"
                     </p>
                     <div>
-                      <div className="font-semibold text-gray-900">{testimonial.name}</div>
-                      <div className="text-blue-600">{testimonial.role}</div>
+                      <div className="text-blue-600 font-medium">{testimonial.name}</div>
+                      <div className="text-blue-600 font-medium">{testimonial.role}</div>
                       <div className="text-blue-600 font-medium">{testimonial.company}</div>
                     </div>
                   </CardContent>
