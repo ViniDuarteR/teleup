@@ -118,12 +118,12 @@
   
   .btn-gaming {
     background: var(--gradient-primary);
-    @apply text-primary-foreground border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105;
+    @apply text-primary-foreground border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:text-primary-foreground;
   }
   
   .btn-secondary-gaming {
     background: var(--gradient-secondary);
-    @apply text-secondary-foreground border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105;
+    @apply text-secondary-foreground border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:text-secondary-foreground;
   }
   
   .text-glow {

@@ -11,7 +11,7 @@ const gamingButtonVariants = cva(
         secondary: "btn-secondary-gaming hover:scale-105 active:scale-95",
         outline: "border-2 border-primary/50 bg-transparent text-primary hover:bg-primary/10 hover:border-primary hover:scale-105",
         ghost: "text-primary hover:bg-primary/10 hover:scale-105",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:scale-105",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground hover:scale-105",
         xp: "bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-900 hover:from-yellow-300 hover:to-yellow-500 hover:scale-105 shadow-lg",
         success: "bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-400 hover:to-green-500 hover:scale-105 shadow-lg",
         warning: "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-400 hover:to-orange-500 hover:scale-105 shadow-lg",
