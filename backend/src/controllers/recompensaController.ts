@@ -287,7 +287,13 @@ export const criarRecompensa = async (req: AuthRequest, res: Response): Promise<
     
     // Mapear campos do frontend para a estrutura da tabela
     const titulo = nome; // O campo na tabela é 'titulo', não 'nome'
-    const categoriaFinal = categoria || 'Outros';
+    
+    // Validar categoria contra o ENUM do banco
+    const categoriasValidas = ['Produtos', 'Servicos', 'Vouchers', 'Outros'];
+    const categoriaFinal = categoriasValidas.includes(categoria) ? categoria : 'Outros';
+    
+    console.log('🔍 [CRIAR RECOMPENSA] Categoria recebida:', categoria);
+    console.log('🔍 [CRIAR RECOMPENSA] Categoria final:', categoriaFinal);
     
     console.log('🔍 [CRIAR RECOMPENSA] Dados mapeados:', {
       titulo,
@@ -407,8 +413,14 @@ export const atualizarRecompensa = async (req: AuthRequest, res: Response): Prom
       updateValues.push(descricao);
     }
     if (categoria !== undefined) {
+      // Validar categoria contra o ENUM do banco
+      const categoriasValidas = ['Produtos', 'Servicos', 'Vouchers', 'Outros'];
+      const categoriaFinal = categoriasValidas.includes(categoria) ? categoria : 'Outros';
+      console.log('🔍 [ATUALIZAR RECOMPENSA] Categoria recebida:', categoria);
+      console.log('🔍 [ATUALIZAR RECOMPENSA] Categoria final:', categoriaFinal);
+      
       updateFields.push(`categoria = $${paramIndex++}`);
-      updateValues.push(categoria);
+      updateValues.push(categoriaFinal);
     }
     if (preco !== undefined) {
       updateFields.push(`preco = $${paramIndex++}`);
