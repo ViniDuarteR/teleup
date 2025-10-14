@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/useAuth";
 import Header from "../components/Header";
 import GridMetas from "../components/GridMetas";
@@ -9,6 +9,36 @@ import { API_BASE_URL } from "../lib/api";
 
 interface Meta {
   id: number;
+  titulo: string;
+  atual: number;
+  meta: number;
+  icone: string;
+  cor: string;
+  formato?: string;
+}
+
+interface Missao {
+  id: number;
+  titulo: string;
+  descricao: string;
+  progresso: number;
+  meta: number;
+  pontos_recompensa: number;
+  tipo: string;
+}
+
+interface Conquista {
+  id: number;
+  titulo: string;
+  descricao: string;
+  icone: string;
+  desbloqueada: boolean;
+  data: string | null;
+}
+
+// Interfaces para dados da API
+interface MetaAPI {
+  id: number;
   tipo: string;
   valor_meta: number;
   valor_atual: number;
@@ -17,7 +47,7 @@ interface Meta {
   pontos_recompensa: number;
 }
 
-interface Missao {
+interface MissaoAPI {
   id: number;
   titulo: string;
   descricao: string;
@@ -29,7 +59,7 @@ interface Missao {
   recompensa_xp: number;
 }
 
-interface Conquista {
+interface ConquistaAPI {
   id: number;
   nome: string;
   descricao: string;
@@ -47,7 +77,7 @@ const DashboardOperador = () => {
 
 
   // Buscar dados do dashboard
-  const buscarDadosDashboard = async () => {
+  const buscarDadosDashboard = useCallback(async () => {
     if (!token) {
       console.log('DashboardOperador - No token available');
       setIsLoading(false);
@@ -69,7 +99,17 @@ const DashboardOperador = () => {
         const metasData = await metasResponse.json();
         console.log('DashboardOperador - Metas response:', metasData);
         if (metasData.success) {
-          setMetas(metasData.data);
+          // Mapear os dados da API para o formato esperado pelo componente
+          const metasMapeadas = metasData.data.map((meta: MetaAPI) => ({
+            id: meta.id,
+            titulo: meta.tipo || 'Meta',
+            atual: meta.valor_atual || 0,
+            meta: meta.valor_meta || 0,
+            icone: 'phone', // Valor padrão
+            cor: meta.concluida ? 'success' : 'primary',
+            formato: meta.periodo === 'minutos' ? 'minutos' : undefined
+          }));
+          setMetas(metasMapeadas);
         }
       } catch (error) {
         console.error('DashboardOperador - Error fetching metas:', error);
@@ -86,7 +126,17 @@ const DashboardOperador = () => {
         const missoesData = await missoesResponse.json();
         console.log('DashboardOperador - Missoes response:', missoesData);
         if (missoesData.success) {
-          setMissoes(missoesData.data);
+          // Mapear os dados da API para o formato esperado pelo componente
+          const missoesMapeadas = missoesData.data.map((missao: MissaoAPI) => ({
+            id: missao.id,
+            titulo: missao.titulo,
+            descricao: missao.descricao,
+            progresso: missao.progresso_atual || 0,
+            meta: missao.objetivo || 0,
+            pontos_recompensa: missao.recompensa_pontos || 0,
+            tipo: missao.tipo || 'diaria'
+          }));
+          setMissoes(missoesMapeadas);
         }
       } catch (error) {
         console.error('DashboardOperador - Error fetching missoes:', error);
@@ -103,7 +153,16 @@ const DashboardOperador = () => {
         const conquistasData = await conquistasResponse.json();
         console.log('DashboardOperador - Conquistas response:', conquistasData);
         if (conquistasData.success) {
-          setConquistas(conquistasData.data.slice(0, 3));
+          // Mapear os dados da API para o formato esperado pelo componente
+          const conquistasMapeadas = conquistasData.data.slice(0, 3).map((conquista: ConquistaAPI) => ({
+            id: conquista.id,
+            titulo: conquista.nome,
+            descricao: conquista.descricao,
+            icone: 'star', // Valor padrão
+            desbloqueada: true, // Assumindo que as conquistas retornadas estão desbloqueadas
+            data: new Date().toISOString() // Data atual como padrão
+          }));
+          setConquistas(conquistasMapeadas);
         }
       } catch (error) {
         console.error('DashboardOperador - Error fetching conquistas:', error);
@@ -115,11 +174,11 @@ const DashboardOperador = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     buscarDadosDashboard();
-  }, [token]);
+  }, [token, buscarDadosDashboard]);
 
   if (isLoading) {
     return (

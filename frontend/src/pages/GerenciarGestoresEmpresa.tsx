@@ -37,6 +37,19 @@ interface GestorData {
   operadoresGerenciados: number;
 }
 
+interface GestorBackendData {
+  id: number;
+  nome: string;
+  email: string;
+  status: string;
+  data_criacao?: string;
+  dataCriacao?: string;
+  data_ultimo_login?: string;
+  ultimoLogin?: string;
+  operadoresGerenciados?: number;
+  total_operadores?: number;
+}
+
 const GerenciarGestoresEmpresa: React.FC = () => {
   const [empresa, setEmpresa] = useState<EmpresaData | null>(null);
   const [gestores, setGestores] = useState<GestorData[]>([]);
@@ -89,7 +102,7 @@ const GerenciarGestoresEmpresa: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         // Normaliza campos vindos do backend (snake_case -> camelCase)
-        const normalizados: GestorData[] = (data.data || []).map((g: any) => ({
+        const normalizados: GestorData[] = (data.data || []).map((g: GestorBackendData) => ({
           id: g.id,
           nome: g.nome,
           email: g.email,

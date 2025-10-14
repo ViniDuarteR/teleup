@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/useAuth";
 import Header from "../components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,7 +57,7 @@ const LojaRecompensas = () => {
 
 
   // Buscar recompensas disponíveis
-  const buscarRecompensas = async () => {
+  const buscarRecompensas = useCallback(async () => {
     if (!token) return;
 
     try {
@@ -81,10 +81,10 @@ const LojaRecompensas = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
   // Buscar compras do operador
-  const buscarCompras = async () => {
+  const buscarCompras = useCallback(async () => {
     if (!token) return;
 
     try {
@@ -103,7 +103,7 @@ const LojaRecompensas = () => {
     } catch (error) {
       console.error('Erro ao buscar compras:', error);
     }
-  };
+  }, [token]);
 
   // Comprar recompensa
   const comprarRecompensa = async (recompensaId: number) => {
@@ -137,7 +137,7 @@ const LojaRecompensas = () => {
   useEffect(() => {
     buscarRecompensas();
     buscarCompras();
-  }, [token]);
+  }, [token, buscarRecompensas, buscarCompras]);
 
   const getIconeCategoria = (categoria: string) => {
     switch (categoria) {
@@ -199,9 +199,10 @@ const LojaRecompensas = () => {
           return a.preco - b.preco;
         case 'nome':
           return a.nome.localeCompare(b.nome);
-        case 'raridade':
+        case 'raridade': {
           const ordemRaridade = { 'comum': 1, 'raro': 2, 'epico': 3, 'lendario': 4 };
           return ordemRaridade[a.raridade] - ordemRaridade[b.raridade];
+        }
         default:
           return 0;
       }
@@ -228,9 +229,20 @@ const LojaRecompensas = () => {
     );
   }
 
+  // Adaptador para garantir que todas as propriedades necessárias estejam presentes
+  const operadorData = {
+    nome: user.nome || 'Usuário',
+    avatar: user.avatar || '/placeholder.svg',
+    nivel: user.nivel || 1,
+    xp_atual: user.xp_atual || 0,
+    xp_proximo_nivel: user.xp_proximo_nivel || 100,
+    pontos_totais: user.pontos_totais || 0,
+    tempo_online: user.tempo_online || 0
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <Header operador={user} />
+      <Header operador={operadorData} />
       
       <div className="p-6 pt-24">
         <div className="max-w-7xl mx-auto space-y-6">

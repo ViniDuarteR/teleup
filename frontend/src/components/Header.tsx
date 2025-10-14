@@ -10,12 +10,12 @@ import { toast } from "sonner";
 interface HeaderProps {
   operador: {
     nome: string;
-    avatar: string;
-    nivel: number;
-    xp_atual: number;
-    xp_proximo_nivel: number;
-    pontos_totais: number;
-    tempo_online: string;
+    avatar?: string;
+    nivel?: number;
+    xp_atual?: number;
+    xp_proximo_nivel?: number;
+    pontos_totais?: number;
+    tempo_online?: number;
   };
 }
 
@@ -23,7 +23,9 @@ const Header = ({ operador }: HeaderProps) => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const xpPercentage = (operador.xp_atual / operador.xp_proximo_nivel) * 100;
+  const xpPercentage = operador.xp_atual && operador.xp_proximo_nivel 
+    ? (operador.xp_atual / operador.xp_proximo_nivel) * 100 
+    : 0;
 
   const handleLogout = async () => {
     try {
@@ -111,7 +113,7 @@ const Header = ({ operador }: HeaderProps) => {
             </Avatar>
             <div>
               <h3 className="font-semibold text-foreground">{operador.nome || 'Usuário'}</h3>
-              <p className="text-sm text-muted-foreground">Online: {operador.tempo_online || '0 min'}</p>
+              <p className="text-sm text-muted-foreground">Online: {operador.tempo_online ? `${operador.tempo_online} min` : '0 min'}</p>
             </div>
           </div>
 
@@ -119,7 +121,7 @@ const Header = ({ operador }: HeaderProps) => {
           <div className="flex items-center gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-xp text-glow">
-                Nv.{operador.nivel}
+                Nv.{operador.nivel || 1}
               </div>
               <div className="text-xs text-muted-foreground">
                 {operador.pontos_totais?.toLocaleString() || '0'} pts
@@ -128,8 +130,8 @@ const Header = ({ operador }: HeaderProps) => {
             
             <div className="w-48">
               <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                <span>{operador.xp_atual} XP</span>
-                <span>{operador.xp_proximo_nivel} XP</span>
+                <span>{operador.xp_atual || 0} XP</span>
+                <span>{operador.xp_proximo_nivel || 100} XP</span>
               </div>
               <div className="h-3 bg-muted rounded-full overflow-hidden">
                 <div 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Edit, Trash2, Users, Crown, Star, Zap } from 'lucide-react';
 import { toast } from 'sonner';
+import { API_BASE_URL } from '@/lib/api';
 
 interface Gestor {
   id: number;
@@ -39,7 +40,7 @@ const GerenciarGestores = () => {
   
 
   // Buscar gestores
-  const buscarGestores = async () => {
+  const buscarGestores = useCallback(async () => {
     if (!token) return;
 
     try {
@@ -62,7 +63,7 @@ const GerenciarGestores = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token, user?.tipo]);
 
   // Criar gestor
   const criarGestor = async (e: React.FormEvent) => {
@@ -183,7 +184,7 @@ const GerenciarGestores = () => {
 
   useEffect(() => {
     buscarGestores();
-  }, [token]);
+  }, [buscarGestores]);
 
   if (isLoading) {
     return (

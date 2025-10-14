@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import HeaderEmpresa from '@/components/HeaderEmpresa';
+import { EmpresaData } from '@/types';
 import { 
   Building2, 
   BarChart3, 

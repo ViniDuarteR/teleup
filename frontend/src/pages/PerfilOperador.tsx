@@ -107,7 +107,7 @@ const PerfilOperador = () => {
         xp_atual: user.xp_atual || 0,
         xp_proximo_nivel: user.xp_proximo_nivel || 100,
         pontos_totais: user.pontos_totais || 0,
-        tempo_online: user.tempo_online?.toString() || '0'
+        tempo_online: user.tempo_online || 0
       }} />
       
       <div className="p-6 pt-24">

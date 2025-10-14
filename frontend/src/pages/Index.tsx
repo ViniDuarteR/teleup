@@ -28,11 +28,7 @@ const Index = () => {
     visible: { 
       opacity: 1, 
       y: 0,
-      scale: 1,
-      transition: {
-        duration: 0.6,
-        ease: "easeOut"
-      }
+      scale: 1
     }
   };
 
@@ -45,11 +41,7 @@ const Index = () => {
     visible: { 
       opacity: 1, 
       y: 0,
-      scale: 1,
-      transition: {
-        duration: 0.8,
-        ease: "easeOut"
-      }
+      scale: 1
     }
   };
 
@@ -62,11 +54,7 @@ const Index = () => {
     visible: { 
       opacity: 1, 
       y: 0,
-      scale: 1,
-      transition: {
-        duration: 0.7,
-        ease: "easeOut"
-      }
+      scale: 1
     }
   };
   
@@ -79,6 +67,7 @@ const Index = () => {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
+          transition={{ duration: 0.6, ease: "easeOut" }}
         >
           <motion.div className="space-y-4" variants={itemVariants}>
             <motion.h1 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/useAuth";
 import HeaderGestor from "../components/HeaderGestor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,7 +71,7 @@ const MonitorOperadores = () => {
 
 
   // Buscar operadores e métricas
-  const buscarDados = async () => {
+  const buscarDados = useCallback(async () => {
     if (!token) return;
 
     try {
@@ -109,7 +109,7 @@ const MonitorOperadores = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
   // Alterar status do operador
   const alterarStatusOperador = async (operadorId: number, novoStatus: string) => {
@@ -175,7 +175,7 @@ const MonitorOperadores = () => {
     // Atualizar dados a cada 30 segundos
     const interval = setInterval(buscarDados, 30000);
     return () => clearInterval(interval);
-  }, [token]);
+  }, [token, buscarDados]);
 
   const getIconeStatus = (status: string) => {
     switch (status) {
