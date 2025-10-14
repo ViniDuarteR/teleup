@@ -26,7 +26,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, CheckCircle2 } from "lucide-react";
 
 interface OperadorMonitor {
   id: number;
@@ -60,6 +60,8 @@ const MonitorOperadores = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [filtroStatus, setFiltroStatus] = useState<string>('todos');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
+  const [novoOperadorNome, setNovoOperadorNome] = useState('');
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -156,10 +158,20 @@ const MonitorOperadores = () => {
 
       const data = await response.json();
       if (data.success) {
-        toast.success('Operador criado com sucesso!');
+        // Salvar o nome do operador criado para mostrar no popup
+        setNovoOperadorNome(formData.nome);
+        
+        // Fechar o dialog de criação
         setIsDialogOpen(false);
+        
+        // Limpar o formulário
         setFormData({ nome: '', email: '', senha: '', nivel: 1, pa: '', carteira: '' });
+        
+        // Atualizar a lista de operadores
         buscarDados();
+        
+        // Mostrar o popup de sucesso
+        setIsSuccessDialogOpen(true);
       } else {
         toast.error(data.message || 'Erro ao criar operador');
       }
@@ -517,6 +529,45 @@ const MonitorOperadores = () => {
           </div>
         </div>
       </div>
+
+      {/* Popup de Sucesso */}
+      <Dialog open={isSuccessDialogOpen} onOpenChange={setIsSuccessDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <div className="flex flex-col items-center text-center space-y-4 py-6">
+            <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center">
+              <CheckCircle2 className="w-8 h-8 text-success" />
+            </div>
+            
+            <div className="space-y-2">
+              <DialogTitle className="text-xl font-semibold text-foreground">
+                Operador Criado com Sucesso!
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                O operador <span className="font-semibold text-foreground">{novoOperadorNome}</span> foi adicionado à sua equipe com sucesso.
+              </DialogDescription>
+            </div>
+            
+            <div className="flex flex-col space-y-2 w-full">
+              <Button 
+                onClick={() => setIsSuccessDialogOpen(false)}
+                className="btn-gaming w-full"
+              >
+                Continuar Gerenciando Operadores
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setIsSuccessDialogOpen(false);
+                  setIsDialogOpen(true);
+                }}
+                className="w-full"
+              >
+                Criar Outro Operador
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
