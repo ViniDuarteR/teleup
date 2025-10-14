@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/useAuth";
 import Header from "../components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,7 @@ import {
   Target
 } from "lucide-react";
 import { toast } from "sonner";
+import { API_CONFIG } from "@/config/api";
 
 interface Estatisticas {
   total_chamadas: number;
@@ -36,14 +37,14 @@ const PerfilOperador = () => {
   
 
   // Buscar estatísticas do operador
-  const buscarEstatisticas = async () => {
+  const buscarEstatisticas = useCallback(async () => {
     if (!token) return;
 
     try {
       setIsLoading(true);
 
       // Buscar estatísticas de chamadas
-      const statsResponse = await fetch(`${API_BASE_URL}/chamadas/estatisticas?periodo=mes`, {
+      const statsResponse = await fetch(`${API_CONFIG.BASE_URL}/chamadas/estatisticas?periodo=mes`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -68,11 +69,11 @@ const PerfilOperador = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     buscarEstatisticas();
-  }, [token]);
+  }, [buscarEstatisticas]);
 
   if (isLoading) {
     return (
@@ -99,7 +100,15 @@ const PerfilOperador = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header operador={user} />
+      <Header operador={{
+        nome: user.nome,
+        avatar: user.avatar || '',
+        nivel: user.nivel || 1,
+        xp_atual: user.xp_atual || 0,
+        xp_proximo_nivel: user.xp_proximo_nivel || 100,
+        pontos_totais: user.pontos_totais || 0,
+        tempo_online: user.tempo_online?.toString() || '0'
+      }} />
       
       <div className="p-6 pt-24">
         <div className="max-w-6xl mx-auto space-y-6">
