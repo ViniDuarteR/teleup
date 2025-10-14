@@ -66,7 +66,7 @@ const GerenciarRecompensas = () => {
   }>({
     nome: '',
     descricao: '',
-    categoria: 'Itens',
+    categoria: 'Produtos',
     preco: 0,
     tipo: 'item',
     raridade: 'comum',
@@ -309,7 +309,7 @@ const GerenciarRecompensas = () => {
     setFormulario({
       nome: '',
       descricao: '',
-      categoria: 'Itens',
+      categoria: 'Produtos',
       preco: 0,
       tipo: 'item',
       raridade: 'comum',
@@ -378,7 +378,7 @@ const GerenciarRecompensas = () => {
     setFormulario({
       nome: recompensa.nome || '',
       descricao: recompensa.descricao || '',
-      categoria: recompensa.categoria || 'Itens',
+      categoria: recompensa.categoria || 'Produtos',
       preco: recompensa.preco || 0,
       tipo: (recompensa.tipo || 'item') as 'item' | 'beneficio' | 'titulo' | 'avatar',
       raridade: (recompensa.raridade || 'comum') as 'comum' | 'raro' | 'epico' | 'lendario',
@@ -403,13 +403,13 @@ const GerenciarRecompensas = () => {
 
   const getIconeCategoria = (categoria: string) => {
     switch (categoria) {
-      case 'Itens':
+      case 'Produtos':
         return <Gift className="w-4 h-4" />;
-      case 'Benefícios':
+      case 'Servicos':
         return <Zap className="w-4 h-4" />;
-      case 'Títulos':
+      case 'Vouchers':
         return <Crown className="w-4 h-4" />;
-      case 'Avatares':
+      case 'Outros':
         return <Heart className="w-4 h-4" />;
       default:
         return <Gift className="w-4 h-4" />;
@@ -511,10 +511,10 @@ const GerenciarRecompensas = () => {
                           <SelectValue placeholder="Selecione a categoria" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Itens">Itens</SelectItem>
-                          <SelectItem value="Benefícios">Benefícios</SelectItem>
-                          <SelectItem value="Títulos">Títulos</SelectItem>
-                          <SelectItem value="Avatares">Avatares</SelectItem>
+                          <SelectItem value="Produtos">Produtos</SelectItem>
+                          <SelectItem value="Servicos">Serviços</SelectItem>
+                          <SelectItem value="Vouchers">Vouchers</SelectItem>
+                          <SelectItem value="Outros">Outros</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -695,10 +695,10 @@ const GerenciarRecompensas = () => {
                       onChange={(e) => setFormulario({...formulario, categoria: e.target.value})}
                       className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
                     >
-                      <option value="Itens">Itens</option>
-                      <option value="Benefícios">Benefícios</option>
-                      <option value="Títulos">Títulos</option>
-                      <option value="Avatares">Avatares</option>
+                      <option value="Produtos">Produtos</option>
+                      <option value="Servicos">Serviços</option>
+                      <option value="Vouchers">Vouchers</option>
+                      <option value="Outros">Outros</option>
                     </select>
                   </div>
                   
