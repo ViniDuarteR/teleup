@@ -107,7 +107,7 @@ const PainelGestor = () => {
     // Atualizar dados a cada 30 segundos
     const interval = setInterval(buscarDadosGestor, 30000);
     return () => clearInterval(interval);
-  }, [token, buscarDadosGestor]);
+  }, [token]); // Depender apenas do token, não da função
 
   const getIconeStatus = (status: string) => {
     switch (status) {

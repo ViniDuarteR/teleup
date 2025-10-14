@@ -433,13 +433,9 @@ const GerenciarRecompensas = () => {
 
   useEffect(() => {
     buscarRecompensas();
-  }, [buscarRecompensas]);
+  }, [token]); // Depender apenas do token, não da função
 
-  // Debug do estado
-  useEffect(() => {
-    console.log('🔍 [STATE DEBUG] mostrarFormulario:', mostrarFormulario);
-    console.log('🔍 [STATE DEBUG] editando:', editando);
-  }, [mostrarFormulario, editando]);
+  // Debug do estado removido para evitar logs desnecessários
 
   if (isLoading) {
     return (

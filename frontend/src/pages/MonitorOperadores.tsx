@@ -187,7 +187,8 @@ const MonitorOperadores = () => {
     // Atualizar dados a cada 30 segundos
     const interval = setInterval(buscarDados, 30000);
     return () => clearInterval(interval);
-  }, [token, buscarDados]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]); // Depender apenas do token, não da função
 
   const getIconeStatus = (status: string) => {
     switch (status) {
