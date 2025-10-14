@@ -106,11 +106,7 @@ const GerenciarRecompensas = () => {
   }, [token]);
 
   // Salvar recompensa
-  const salvarRecompensa = async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-    }
-    
+  const salvarRecompensa = async () => {
     console.log('🔍 [SALVAR RECOMPENSA] Função chamada');
     console.log('🔍 [SALVAR RECOMPENSA] Botão clicado!');
     console.log('🔍 [SALVAR RECOMPENSA] Token:', token ? 'existe' : 'não existe');
@@ -490,7 +486,7 @@ const GerenciarRecompensas = () => {
                   </DialogDescription>
                 </DialogHeader>
                 
-                <form onSubmit={salvarRecompensa} className="space-y-4">
+                <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="nome">Nome da Recompensa</Label>
@@ -653,7 +649,7 @@ const GerenciarRecompensas = () => {
                     >
                       Cancelar
                     </Button>
-                    <Button type="submit" className="btn-gaming">
+                    <Button type="button" onClick={salvarRecompensa} className="btn-gaming">
                       <Save className="w-4 h-4 mr-2" />
                       {editando ? 'Atualizar Recompensa' : 'Criar Recompensa'}
                     </Button>
