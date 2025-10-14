@@ -15,10 +15,16 @@ import {
 
 const router = express.Router();
 
-// Rotas públicas
+// ========================================
+// ROTAS PÚBLICAS
+// ========================================
+
+// Listar recompensas disponíveis
 router.get('/', getRecompensas);
 
-// Rotas autenticadas
+// ========================================
+// ROTAS AUTENTICADAS
+// ========================================
 router.use(authenticateToken);
 
 // Buscar compras do operador
@@ -27,7 +33,11 @@ router.get('/compras', getCompras);
 // Comprar recompensa
 router.post('/comprar', comprarRecompensa);
 
-// Criar recompensa (apenas gestores)
+// ========================================
+// ROTAS DE GESTÃO (APENAS GESTORES)
+// ========================================
+
+// Criar nova recompensa
 router.post('/', (req: AuthRequest, res: Response, next: NextFunction) => {
   console.log('🔍 [ROUTE] POST / - Rota de criação de recompensa chamada!');
   console.log('🔍 [ROUTE] POST / - Verificando permissões');
@@ -63,7 +73,7 @@ router.post('/', (req: AuthRequest, res: Response, next: NextFunction) => {
   return next();
 }, criarRecompensa);
 
-// Atualizar recompensa (apenas gestores)
+// Atualizar recompensa existente
 router.put('/:id', (req: AuthRequest, res: Response, next: NextFunction) => {
   console.log('🔍 [ROUTE] PUT /:id - Rota chamada');
   console.log('🔍 [ROUTE] PUT /:id - Verificando permissões');
@@ -81,7 +91,7 @@ router.put('/:id', (req: AuthRequest, res: Response, next: NextFunction) => {
   return next();
 }, uploadImagem.single('imagem'), atualizarRecompensa);
 
-// Excluir recompensa (apenas gestores)
+// Excluir recompensa
 router.delete('/:id', (req: AuthRequest, res: Response, next: NextFunction) => {
   if (req.user?.tipo !== 'gestor') {
     return res.status(403).json({
@@ -92,7 +102,7 @@ router.delete('/:id', (req: AuthRequest, res: Response, next: NextFunction) => {
   return next();
 }, excluirRecompensa);
 
-// Toggle disponibilidade (apenas gestores)
+// Alternar disponibilidade da recompensa
 router.patch('/:id/toggle', (req: AuthRequest, res: Response, next: NextFunction) => {
   if (req.user?.tipo !== 'gestor') {
     return res.status(403).json({
