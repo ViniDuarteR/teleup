@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/useAuth";
 import HeaderGestor from "@/components/HeaderGestor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,7 +61,7 @@ const PainelGestor = () => {
 
 
   // Buscar dados do painel gestor
-  const buscarDadosGestor = async () => {
+  const buscarDadosGestor = useCallback(async () => {
     if (!token) return;
 
     try {
@@ -99,7 +99,7 @@ const PainelGestor = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     buscarDadosGestor();
@@ -107,7 +107,7 @@ const PainelGestor = () => {
     // Atualizar dados a cada 30 segundos
     const interval = setInterval(buscarDadosGestor, 30000);
     return () => clearInterval(interval);
-  }, [token]);
+  }, [token, buscarDadosGestor]);
 
   const getIconeStatus = (status: string) => {
     switch (status) {
