@@ -168,13 +168,13 @@ export const logout = async (req: AuthRequest, res: Response<ApiResponse>): Prom
 
     // Desativar sessão
     await pool.execute(
-      'UPDATE sessoes SET ativo = FALSE WHERE token = ?',
+      'UPDATE sessoes SET ativo = FALSE WHERE token = $1',
       [token]
     );
 
     // Atualizar status para offline
     await pool.execute(
-      'UPDATE operadores SET status = ? WHERE id = ?',
+      'UPDATE operadores SET status = $1 WHERE id = $2',
       ['Offline', req.operador.id]
     );
 
@@ -199,7 +199,7 @@ export const getDashboard = async (req: AuthRequest, res: Response<ApiResponse<D
 
     // Buscar dados do operador
     const [operadores] = await pool.execute(
-      'SELECT * FROM operadores WHERE id = ?',
+      'SELECT * FROM operadores WHERE id = $1',
       [operadorId]
     );
 
@@ -216,7 +216,7 @@ export const getDashboard = async (req: AuthRequest, res: Response<ApiResponse<D
     // Buscar metas ativas
     const [metas] = await pool.execute(`
       SELECT * FROM metas 
-      WHERE operador_id = ? AND concluida = FALSE 
+      WHERE operador_id = $1 AND concluida = FALSE 
       AND data_inicio <= CURDATE() AND data_fim >= CURDATE()
       ORDER BY data_inicio DESC
     `, [operadorId]);
@@ -225,7 +225,7 @@ export const getDashboard = async (req: AuthRequest, res: Response<ApiResponse<D
     const [missoes] = await pool.execute(`
       SELECT m.*, pm.progresso_atual, pm.concluida
       FROM missoes m
-      LEFT JOIN progresso_missoes pm ON m.id = pm.missao_id AND pm.operador_id = ?
+      LEFT JOIN progresso_missoes pm ON m.id = pm.missao_id AND pm.operador_id = $1
       WHERE m.ativa = TRUE AND (pm.concluida = FALSE OR pm.concluida IS NULL)
       ORDER BY m.tipo, m.data_inicio
     `, [operadorId]);
@@ -235,7 +235,7 @@ export const getDashboard = async (req: AuthRequest, res: Response<ApiResponse<D
       SELECT c.*, oc.data_desbloqueio
       FROM conquistas c
       INNER JOIN operador_conquistas oc ON c.id = oc.conquista_id
-      WHERE oc.operador_id = ?
+      WHERE oc.operador_id = $1
       ORDER BY oc.data_desbloqueio DESC
       LIMIT 5
     `, [operadorId]);
@@ -248,7 +248,7 @@ export const getDashboard = async (req: AuthRequest, res: Response<ApiResponse<D
         COALESCE(AVG(satisfacao_cliente), 0) as satisfacao_media,
         COALESCE(SUM(CASE WHEN resolvida = TRUE THEN 1 ELSE 0 END), 0) as resolucoes
       FROM chamadas 
-      WHERE operador_id = ? AND DATE(inicio_chamada) = CURDATE()
+      WHERE operador_id = $1 AND DATE(inicio_chamada) = CURDATE()
     `, [operadorId]);
 
     const estatisticas = (statsHoje as any[])[0];
@@ -314,7 +314,7 @@ export const updateStatus = async (req: AuthRequest, res: Response<ApiResponse<{
     }
 
     await pool.execute(
-      'UPDATE operadores SET status = ? WHERE id = ?',
+      'UPDATE operadores SET status = $1 WHERE id = $2',
       [status, req.operador.id]
     );
 

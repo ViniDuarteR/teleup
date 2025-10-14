@@ -14,7 +14,7 @@ export const getMissoes = async (req: AuthRequest, res: Response<ApiResponse<any
         COALESCE(pm.concluida, FALSE) as concluida,
         pm.data_inicio, pm.data_conclusao
       FROM missoes m
-      LEFT JOIN progresso_missoes pm ON m.id = pm.missao_id AND pm.operador_id = ?
+      LEFT JOIN progresso_missoes pm ON m.id = pm.missao_id AND pm.operador_id = $1
       WHERE m.ativa = TRUE
       ORDER BY m.tipo, m.data_criacao
     `, [operadorId]);
@@ -44,7 +44,7 @@ export const getConquistas = async (req: AuthRequest, res: Response<ApiResponse<
         COALESCE(oc.data_desbloqueio, NULL) as data_desbloqueio,
         CASE WHEN oc.operador_id IS NOT NULL THEN TRUE ELSE FALSE END as desbloqueada
       FROM conquistas c
-      LEFT JOIN operador_conquistas oc ON c.id = oc.conquista_id AND oc.operador_id = ?
+      LEFT JOIN operador_conquistas oc ON c.id = oc.conquista_id AND oc.operador_id = $1
       WHERE c.ativa = TRUE
       ORDER BY oc.data_desbloqueio DESC, c.nome
     `, [operadorId]);
@@ -72,7 +72,7 @@ export const verificarConquistas = async (req: AuthRequest, res: Response<ApiRes
     // Buscar conquistas não desbloqueadas
     const [conquistas] = await pool.execute(`
       SELECT c.* FROM conquistas c
-      LEFT JOIN operador_conquistas oc ON c.id = oc.conquista_id AND oc.operador_id = ?
+      LEFT JOIN operador_conquistas oc ON c.id = oc.conquista_id AND oc.operador_id = $1
       WHERE c.ativa = TRUE AND oc.operador_id IS NULL
     `, [operadorId]);
 
@@ -84,11 +84,11 @@ export const verificarConquistas = async (req: AuthRequest, res: Response<ApiRes
         COALESCE(AVG(satisfacao_cliente), 0) as satisfacao_media,
         COALESCE(SUM(CASE WHEN resolvida = TRUE THEN 1 ELSE 0 END), 0) as total_resolucoes
       FROM chamadas 
-      WHERE operador_id = ?
+      WHERE operador_id = $1
     `, [operadorId]);
 
     const [operador] = await pool.execute(
-      'SELECT pontos_totais, nivel FROM operadores WHERE id = ?',
+      'SELECT pontos_totais, nivel FROM operadores WHERE id = $1',
       [operadorId]
     );
 
@@ -135,14 +135,14 @@ export const verificarConquistas = async (req: AuthRequest, res: Response<ApiRes
       if (desbloquear) {
         // Desbloquear conquista
         await pool.execute(
-          'INSERT INTO operador_conquistas (operador_id, conquista_id) VALUES (?, ?)',
+          'INSERT INTO operador_conquistas (operador_id, conquista_id) VALUES ($1, $2)',
           [operadorId, conquista.id]
         );
 
         // Adicionar pontos da conquista
         if (conquista.pontos_recompensa > 0) {
           await pool.execute(
-            'UPDATE operadores SET pontos_totais = pontos_totais + ? WHERE id = ?',
+            'UPDATE operadores SET pontos_totais = pontos_totais + $1 WHERE id = $2',
             [conquista.pontos_recompensa, operadorId]
           );
         }
@@ -221,26 +221,26 @@ export const getEstatisticasGamificacao = async (req: AuthRequest, res: Response
 
     // Buscar dados do operador
     const [operador] = await pool.execute(
-      'SELECT nivel, xp_atual, xp_proximo_nivel, pontos_totais FROM operadores WHERE id = ?',
+      'SELECT nivel, xp_atual, xp_proximo_nivel, pontos_totais FROM operadores WHERE id = $1',
       [operadorId]
     );
 
     // Buscar missões concluídas
     const [missoesConcluidas] = await pool.execute(`
       SELECT COUNT(*) as total FROM progresso_missoes 
-      WHERE operador_id = ? AND concluida = TRUE
+      WHERE operador_id = $1 AND concluida = TRUE
     `, [operadorId]);
 
     // Buscar conquistas desbloqueadas
     const [conquistasDesbloqueadas] = await pool.execute(`
       SELECT COUNT(*) as total FROM operador_conquistas 
-      WHERE operador_id = ?
+      WHERE operador_id = $1
     `, [operadorId]);
 
     // Buscar posição no ranking
     const [posicaoRanking] = await pool.execute(`
       SELECT posicao FROM ranking 
-      WHERE operador_id = ?
+      WHERE operador_id = $1
     `, [operadorId]);
 
     const dados = (operador as any[])[0];

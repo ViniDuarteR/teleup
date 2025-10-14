@@ -52,32 +52,14 @@ const pgPool = new Pool(
       }
 );
 
-// Compat layer: converte placeholders '?' -> '$1, $2, ...'
-function toPgParams(query: string, params: any[] = []): { text: string; values: any[] } {
-  let index = 0;
-  let text = query.replace(/\?/g, () => `$${++index}`);
-
-  // Normalizações simples MySQL -> Postgres
-  text = text
-    .replace(/`/g, '"')                 // backticks -> aspas (se houver)
-    .replace(/=\s*1(\b)/g, '= TRUE$1')  // comparações booleanas
-    .replace(/=\s*0(\b)/g, '= FALSE$1')
-    .replace(/TINYINT\(1\)/gi, 'BOOLEAN');
-
-  return { text, values: params };
-}
-
-// API compatível com mysql2.execute
+// API PostgreSQL nativa
 export const pool = {
   async execute<T = any>(query: string, params: any[] = []): Promise<[T[], any]> {
-    const { text, values } = toPgParams(query, params);
-    const result = await pgPool.query(text, values);
-    // Retorna [rows, fields] no formato aproximado do mysql2
+    const result = await pgPool.query(query, params);
     return [result.rows as unknown as T[], result.fields];
   },
   async query<T = any>(query: string, params: any[] = []): Promise<T[]> {
-    const { text, values } = toPgParams(query, params);
-    const result = await pgPool.query(text, values);
+    const result = await pgPool.query(query, params);
     return result.rows as unknown as T[];
   },
   get native() {

@@ -136,7 +136,7 @@ export const listarGestores = async (req: any, res: Response): Promise<void> => 
     
     // Buscar empresa do gestor logado
     const [empresaResult] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = ?',
+      'SELECT empresa_id FROM gestores WHERE id = $1',
       [gestorId]
     );
     
@@ -155,7 +155,7 @@ export const listarGestores = async (req: any, res: Response): Promise<void> => 
     const [gestores] = await pool.execute(
       `SELECT id, nome, email, status, avatar, data_criacao, data_atualizacao
        FROM gestores 
-       WHERE empresa_id = ? 
+       WHERE empresa_id = $1 
        ORDER BY nome`,
       [empresaId]
     );
@@ -187,7 +187,7 @@ export const criarGestor = async (req: any, res: Response): Promise<void> => {
 
     // Buscar empresa do gestor logado
     const [empresaResult] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = ?',
+      'SELECT empresa_id FROM gestores WHERE id = $1',
       [gestorId]
     );
     
@@ -204,7 +204,7 @@ export const criarGestor = async (req: any, res: Response): Promise<void> => {
 
     // Verificar se email já existe
     const [emailExists] = await pool.execute(
-      'SELECT id FROM gestores WHERE email = ? AND empresa_id = ?',
+      'SELECT id FROM gestores WHERE email = $1 AND empresa_id = $2',
       [email, empresaId]
     );
 
@@ -251,12 +251,12 @@ export const atualizarGestor = async (req: any, res: Response): Promise<void> =>
 
     // Verificar se o gestor pertence à mesma empresa
     const [gestorResult] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = ?',
+      'SELECT empresa_id FROM gestores WHERE id = $1',
       [id]
     );
     
     const [currentGestorResult] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = ?',
+      'SELECT empresa_id FROM gestores WHERE id = $1',
       [gestorId]
     );
 
@@ -281,7 +281,7 @@ export const atualizarGestor = async (req: any, res: Response): Promise<void> =>
 
     // Atualizar gestor
     await pool.execute(
-      'UPDATE gestores SET nome = ?, email = ?, status = ? WHERE id = ?',
+      'UPDATE gestores SET nome = $1, email = $2, status = $3 WHERE id = $4',
       [nome, email, status, id]
     );
 
@@ -316,12 +316,12 @@ export const excluirGestor = async (req: any, res: Response): Promise<void> => {
 
     // Verificar se o gestor pertence à mesma empresa
     const [gestorResult] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = ?',
+      'SELECT empresa_id FROM gestores WHERE id = $1',
       [id]
     );
     
     const [currentGestorResult] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = ?',
+      'SELECT empresa_id FROM gestores WHERE id = $1',
       [gestorId]
     );
 
@@ -345,7 +345,7 @@ export const excluirGestor = async (req: any, res: Response): Promise<void> => {
     }
 
     // Excluir gestor
-    await pool.execute('DELETE FROM gestores WHERE id = ?', [id]);
+    await pool.execute('DELETE FROM gestores WHERE id = $1', [id]);
 
     res.json({
       success: true,
@@ -368,7 +368,7 @@ export const logoutGestor = async (req: any, res: Response): Promise<void> => {
     
     if (token) {
       await pool.execute(
-        'UPDATE sessoes SET ativo = FALSE WHERE token = ?',
+        'UPDATE sessoes SET ativo = FALSE WHERE token = $1',
         [token]
       );
     }
@@ -398,7 +398,7 @@ export const getOperadoresGerenciados = async (req: any, res: Response): Promise
               o.data_criacao, o.data_atualizacao
        FROM operadores o
        INNER JOIN operador_gestor og ON o.id = og.operador_id
-       WHERE og.gestor_id = ? AND og.ativo = TRUE
+       WHERE og.gestor_id = $1 AND og.ativo = TRUE
        ORDER BY o.pontos_totais DESC`,
       [gestorId]
     );
@@ -424,7 +424,7 @@ export const atribuirOperador = async (req: any, res: Response): Promise<void> =
 
     // Verificar se o operador existe
     const [operadorResult] = await pool.execute(
-      'SELECT id FROM operadores WHERE id = ?',
+      'SELECT id FROM operadores WHERE id = $1',
       [operadorId]
     );
 
@@ -438,7 +438,7 @@ export const atribuirOperador = async (req: any, res: Response): Promise<void> =
 
     // Verificar se já está atribuído
     const [atribuicaoResult] = await pool.execute(
-      'SELECT id FROM operador_gestor WHERE operador_id = ? AND gestor_id = ? AND ativo = TRUE',
+      'SELECT id FROM operador_gestor WHERE operador_id = $1 AND gestor_id = $2 AND ativo = TRUE',
       [operadorId, gestorId]
     );
 
@@ -452,7 +452,7 @@ export const atribuirOperador = async (req: any, res: Response): Promise<void> =
 
     // Atribuir operador ao gestor
     await pool.execute(
-      'INSERT INTO operador_gestor (operador_id, gestor_id, data_atribuicao, ativo) VALUES (?, ?, NOW(), TRUE)',
+      'INSERT INTO operador_gestor (operador_id, gestor_id, data_atribuicao, ativo) VALUES ($1, $2, NOW(), TRUE)',
       [operadorId, gestorId]
     );
 
@@ -478,7 +478,7 @@ export const removerOperador = async (req: any, res: Response): Promise<void> =>
 
     // Remover atribuição
     await pool.execute(
-      'UPDATE operador_gestor SET ativo = FALSE WHERE operador_id = ? AND gestor_id = ?',
+      'UPDATE operador_gestor SET ativo = FALSE WHERE operador_id = $1 AND gestor_id = $2',
       [operadorId, gestorId]
     );
 

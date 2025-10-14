@@ -12,7 +12,7 @@ export const listarUsuarios = async (req: AuthRequest, res: Response<ApiResponse
       
       // Buscar empresa do gestor
       const [gestorEmpresa] = await pool.execute(
-        'SELECT empresa_id FROM gestores WHERE id = ?',
+        'SELECT empresa_id FROM gestores WHERE id = $1',
         [gestorId]
       );
       
@@ -32,7 +32,7 @@ export const listarUsuarios = async (req: AuthRequest, res: Response<ApiResponse
         `SELECT id, nome, email, nivel, xp_atual, xp_proximo_nivel, pontos_totais, 
                 status, avatar, tempo_online, data_criacao, data_atualizacao, pa, carteira
          FROM operadores 
-         WHERE empresa_id = ?
+         WHERE empresa_id = $1
          ORDER BY pontos_totais DESC`,
         [empresaId]
       );
@@ -49,7 +49,7 @@ export const listarUsuarios = async (req: AuthRequest, res: Response<ApiResponse
     
     // Buscar empresa do operador logado
     const [empresaResult] = await pool.execute(
-      'SELECT empresa_id FROM operadores WHERE id = ?',
+      'SELECT empresa_id FROM operadores WHERE id = $1',
       [operadorId]
     );
     
@@ -69,7 +69,7 @@ export const listarUsuarios = async (req: AuthRequest, res: Response<ApiResponse
       `SELECT id, nome, email, nivel, xp_atual, xp_proximo_nivel, pontos_totais, 
               status, avatar, tempo_online, data_criacao, data_atualizacao, pa, carteira
        FROM operadores 
-       WHERE empresa_id = ? 
+       WHERE empresa_id = $1 
        ORDER BY pontos_totais DESC`,
       [empresaId]
     );
@@ -98,7 +98,7 @@ export const criarUsuario = async (req: AuthRequest, res: Response<ApiResponse<{
     if (req.operador.tipo === 'operador') {
       const operadorId = req.operador.id;
       const [empresaResult] = await pool.execute(
-        'SELECT empresa_id FROM operadores WHERE id = ?',
+        'SELECT empresa_id FROM operadores WHERE id = $1',
         [operadorId]
       );
       
@@ -110,7 +110,7 @@ export const criarUsuario = async (req: AuthRequest, res: Response<ApiResponse<{
 
     // Verificar se email já existe
     const [emailExists] = await pool.execute(
-      'SELECT id FROM operadores WHERE email = ? AND empresa_id = ?',
+      'SELECT id FROM operadores WHERE email = $1 AND empresa_id = $2',
       [email, empresaId]
     );
 
@@ -160,7 +160,7 @@ export const atualizarUsuario = async (req: AuthRequest, res: Response<ApiRespon
 
     // Buscar empresa do operador logado
     const [empresaResult] = await pool.execute(
-      'SELECT empresa_id FROM operadores WHERE id = ?',
+      'SELECT empresa_id FROM operadores WHERE id = $1',
       [operadorId]
     );
     
@@ -177,7 +177,7 @@ export const atualizarUsuario = async (req: AuthRequest, res: Response<ApiRespon
 
     // Verificar se o usuário pertence à mesma empresa
     const [usuarioResult] = await pool.execute(
-      'SELECT id FROM operadores WHERE id = ? AND empresa_id = ?',
+      'SELECT id FROM operadores WHERE id = $1 AND empresa_id = $2',
       [id, empresaId]
     );
 
@@ -192,7 +192,7 @@ export const atualizarUsuario = async (req: AuthRequest, res: Response<ApiRespon
     // Verificar se email já existe (exceto para o próprio usuário)
     if (email) {
       const [emailExists] = await pool.execute(
-        'SELECT id FROM operadores WHERE email = ? AND empresa_id = ? AND id != ?',
+        'SELECT id FROM operadores WHERE email = $1 AND empresa_id = $2 AND id != $3',
         [email, empresaId, id]
       );
 
@@ -273,7 +273,7 @@ export const excluirUsuario = async (req: AuthRequest, res: Response<ApiResponse
 
     // Buscar empresa do operador logado
     const [empresaResult] = await pool.execute(
-      'SELECT empresa_id FROM operadores WHERE id = ?',
+      'SELECT empresa_id FROM operadores WHERE id = $1',
       [operadorId]
     );
     
@@ -290,7 +290,7 @@ export const excluirUsuario = async (req: AuthRequest, res: Response<ApiResponse
 
     // Verificar se o usuário pertence à mesma empresa
     const [usuarioResult] = await pool.execute(
-      'SELECT id FROM operadores WHERE id = ? AND empresa_id = ?',
+      'SELECT id FROM operadores WHERE id = $1 AND empresa_id = $2',
       [id, empresaId]
     );
 
@@ -303,7 +303,7 @@ export const excluirUsuario = async (req: AuthRequest, res: Response<ApiResponse
     }
 
     // Excluir usuário (cascade vai excluir dados relacionados)
-    await pool.execute('DELETE FROM operadores WHERE id = ?', [id]);
+    await pool.execute('DELETE FROM operadores WHERE id = $1', [id]);
 
     res.json({
       success: true,
@@ -327,7 +327,7 @@ export const redefinirSenha = async (req: AuthRequest, res: Response<ApiResponse
 
     // Buscar empresa do operador logado
     const [empresaResult] = await pool.execute(
-      'SELECT empresa_id FROM operadores WHERE id = ?',
+      'SELECT empresa_id FROM operadores WHERE id = $1',
       [operadorId]
     );
     
@@ -344,7 +344,7 @@ export const redefinirSenha = async (req: AuthRequest, res: Response<ApiResponse
 
     // Verificar se o usuário pertence à mesma empresa
     const [usuarioResult] = await pool.execute(
-      'SELECT id FROM operadores WHERE id = ? AND empresa_id = ?',
+      'SELECT id FROM operadores WHERE id = $1 AND empresa_id = $2',
       [id, empresaId]
     );
 
@@ -361,7 +361,7 @@ export const redefinirSenha = async (req: AuthRequest, res: Response<ApiResponse
 
     // Atualizar senha
     await pool.execute(
-      'UPDATE operadores SET senha = ?, data_atualizacao = CURRENT_TIMESTAMP WHERE id = ?',
+      'UPDATE operadores SET senha = $1, data_atualizacao = CURRENT_TIMESTAMP WHERE id = $2',
       [senhaHash, id]
     );
 

@@ -27,7 +27,7 @@ export const iniciarChamada = async (req: AuthRequest, res: Response<ApiResponse
 
     // Atualizar status do operador
     await pool.execute(
-      'UPDATE operadores SET status = ? WHERE id = ?',
+      'UPDATE operadores SET status = $1 WHERE id = $2',
       ['Em Chamada', operadorId]
     );
 
@@ -90,13 +90,13 @@ export const finalizarChamada = async (req: AuthRequest, res: Response<ApiRespon
 
     // Atualizar pontos do operador
     await pool.execute(
-      'UPDATE operadores SET pontos_totais = pontos_totais + ? WHERE id = ?',
+      'UPDATE operadores SET pontos_totais = pontos_totais + $1 WHERE id = $2',
       [pontosGanhos, operadorId]
     );
 
     // Atualizar status do operador
     await pool.execute(
-      'UPDATE operadores SET status = ? WHERE id = ?',
+      'UPDATE operadores SET status = $1 WHERE id = $2',
       ['Aguardando Chamada', operadorId]
     );
 
@@ -148,7 +148,7 @@ export const getHistorico = async (req: AuthRequest, res: Response<ApiResponse<{
       FROM chamadas 
       ${whereClause}
       ORDER BY inicio_chamada DESC
-      LIMIT ? OFFSET ?
+      LIMIT $1 OFFSET $2
     `, [...params, parseInt(limite as string), parseInt(offset as string)]);
 
     // Buscar total de registros para paginação
@@ -251,7 +251,7 @@ const verificarMissoes = async (operadorId: number, tipo: string, valor: number)
     const [missoes] = await pool.execute(`
       SELECT m.*, pm.progresso_atual, pm.concluida
       FROM missoes m
-      LEFT JOIN progresso_missoes pm ON m.id = pm.missao_id AND pm.operador_id = ?
+      LEFT JOIN progresso_missoes pm ON m.id = pm.missao_id AND pm.operador_id = $1
       WHERE m.ativa = TRUE AND (pm.concluida = FALSE OR pm.concluida IS NULL)
     `, [operadorId]);
 
@@ -268,20 +268,20 @@ const verificarMissoes = async (operadorId: number, tipo: string, valor: number)
         if (missao.concluida) {
           // Atualizar progresso
           await pool.execute(
-            'UPDATE progresso_missoes SET progresso_atual = ? WHERE operador_id = ? AND missao_id = ?',
+            'UPDATE progresso_missoes SET progresso_atual = $1 WHERE operador_id = $2 AND missao_id = $3',
             [novoProgresso, operadorId, missao.id]
           );
         } else {
           // Criar ou atualizar registro
           await pool.execute(`
             INSERT INTO progresso_missoes (operador_id, missao_id, progresso_atual, concluida, data_conclusao)
-            VALUES (?, ?, ?, TRUE, NOW())
-            ON DUPLICATE KEY UPDATE progresso_atual = ?, concluida = TRUE, data_conclusao = NOW()
+            VALUES ($1, $2, $3, TRUE, NOW())
+            ON DUPLICATE KEY UPDATE progresso_atual = $4, concluida = TRUE, data_conclusao = NOW()
           `, [operadorId, missao.id, novoProgresso, novoProgresso]);
 
           // Adicionar pontos da missão
           await pool.execute(
-            'UPDATE operadores SET pontos_totais = pontos_totais + ? WHERE id = ?',
+            'UPDATE operadores SET pontos_totais = pontos_totais + $1 WHERE id = $2',
             [missao.pontos_recompensa, operadorId]
           );
         }
@@ -289,8 +289,8 @@ const verificarMissoes = async (operadorId: number, tipo: string, valor: number)
         // Atualizar progresso
         await pool.execute(`
           INSERT INTO progresso_missoes (operador_id, missao_id, progresso_atual, concluida)
-          VALUES (?, ?, ?, FALSE)
-          ON DUPLICATE KEY UPDATE progresso_atual = ?
+          VALUES ($1, $2, $3, FALSE)
+          ON DUPLICATE KEY UPDATE progresso_atual = $4
         `, [operadorId, missao.id, novoProgresso, novoProgresso]);
       }
     }

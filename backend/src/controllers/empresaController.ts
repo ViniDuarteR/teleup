@@ -260,7 +260,7 @@ export const listarGestoresEmpresa = async (req: AuthRequest, res: Response<ApiR
     }
 
     const [gestores] = await pool.execute(
-      'SELECT id, nome, email, status, avatar, data_criacao, data_atualizacao FROM gestores WHERE empresa_id = ?',
+      'SELECT id, nome, email, status, avatar, data_criacao, data_atualizacao FROM gestores WHERE empresa_id = $1',
       [empresaId]
     );
 
@@ -347,7 +347,7 @@ export const listarOperadoresEmpresa = async (req: AuthRequest, res: Response<Ap
        FROM operadores o
        LEFT JOIN operador_gestor og ON o.id = og.operador_id
        LEFT JOIN gestores g ON og.gestor_id = g.id
-       WHERE o.empresa_id = ?
+       WHERE o.empresa_id = $1
        ORDER BY o.pontos_totais DESC`,
       [empresaId]
     );
@@ -382,7 +382,7 @@ export const atualizarGestorEmpresa = async (req: AuthRequest, res: Response<Api
 
     // Verificar se o gestor pertence à empresa
     const [gestorExists] = await pool.execute(
-      'SELECT id FROM gestores WHERE id = ? AND empresa_id = ?',
+      'SELECT id FROM gestores WHERE id = $1 AND empresa_id = $2',
       [id, empresaId]
     );
 
@@ -397,7 +397,7 @@ export const atualizarGestorEmpresa = async (req: AuthRequest, res: Response<Api
     // Verificar se email já existe em outro gestor
     if (email) {
       const [emailExists] = await pool.execute(
-        'SELECT id FROM gestores WHERE email = ? AND id != ?',
+        'SELECT id FROM gestores WHERE email = $1 AND id != $2',
         [email, id]
       );
 
@@ -480,7 +480,7 @@ export const excluirGestorEmpresa = async (req: AuthRequest, res: Response<ApiRe
 
     // Verificar se o gestor pertence à empresa
     const [gestorExists] = await pool.execute(
-      'SELECT id FROM gestores WHERE id = ? AND empresa_id = ?',
+      'SELECT id FROM gestores WHERE id = $1 AND empresa_id = $2',
       [id, empresaId]
     );
 
@@ -494,7 +494,7 @@ export const excluirGestorEmpresa = async (req: AuthRequest, res: Response<ApiRe
 
     // Verificar se o gestor tem operadores atribuídos
     const [operadoresAtribuidos] = await pool.execute(
-      'SELECT COUNT(*) as total FROM operador_gestor WHERE gestor_id = ?',
+      'SELECT COUNT(*) as total FROM operador_gestor WHERE gestor_id = $1',
       [id]
     );
 
@@ -508,7 +508,7 @@ export const excluirGestorEmpresa = async (req: AuthRequest, res: Response<ApiRe
 
     // Excluir gestor
     await pool.execute(
-      'DELETE FROM gestores WHERE id = ? AND empresa_id = ?',
+      'DELETE FROM gestores WHERE id = $1 AND empresa_id = $2',
       [id, empresaId]
     );
 
@@ -540,12 +540,12 @@ export const getDashboardEmpresa = async (req: AuthRequest, res: Response<ApiRes
 
     // Buscar estatísticas da empresa
     const [totalGestores] = await pool.execute(
-      'SELECT COUNT(*) as total FROM gestores WHERE empresa_id = ?',
+      'SELECT COUNT(*) as total FROM gestores WHERE empresa_id = $1',
       [empresaId]
     );
 
     const [totalOperadores] = await pool.execute(
-      'SELECT COUNT(*) as total FROM operadores WHERE empresa_id = ?',
+      'SELECT COUNT(*) as total FROM operadores WHERE empresa_id = $1',
       [empresaId]
     );
 
@@ -555,7 +555,7 @@ export const getDashboardEmpresa = async (req: AuthRequest, res: Response<ApiRes
     );
 
     const [totalPontos] = await pool.execute(
-      'SELECT COALESCE(SUM(pontos_totais), 0) as total FROM operadores WHERE empresa_id = ?',
+      'SELECT COALESCE(SUM(pontos_totais), 0) as total FROM operadores WHERE empresa_id = $1',
       [empresaId]
     );
 

@@ -164,29 +164,42 @@ router.get('/operadores', async (req: AuthRequest, res) => {
 // Rota para criar novo operador
 router.post('/operadores', async (req: AuthRequest, res) => {
   try {
+    console.log('🔍 [GESTOR CREATE] Iniciando criação de operador');
+    console.log('🔍 [GESTOR CREATE] Body recebido:', req.body);
+    
     const { nome, email, senha, nivel = 1, pa = '', carteira = '' } = req.body;
     const gestorId = req.operador?.id;
     
+    console.log('🔍 [GESTOR CREATE] Gestor ID:', gestorId);
+    console.log('🔍 [GESTOR CREATE] Dados extraídos:', { nome, email, nivel, pa, carteira });
+    
     if (!gestorId) {
+      console.log('❌ [GESTOR CREATE] Gestor não autenticado');
       return res.status(401).json({ success: false, message: 'Gestor não autenticado' });
     }
 
     if (!nome || !email || !senha) {
+      console.log('❌ [GESTOR CREATE] Dados obrigatórios faltando');
       return res.status(400).json({ success: false, message: 'Nome, email e senha são obrigatórios' });
     }
 
     // Buscar empresa do gestor
+    console.log('🔍 [GESTOR CREATE] Buscando empresa do gestor...');
     const [gestorEmpresa] = await pool.execute(
       'SELECT empresa_id FROM gestores WHERE id = $1',
       [gestorId]
     );
     
     const empresa = gestorEmpresa as any[];
+    console.log('🔍 [GESTOR CREATE] Empresa encontrada:', empresa);
+    
     if (empresa.length === 0) {
+      console.log('❌ [GESTOR CREATE] Empresa do gestor não encontrada');
       return res.status(404).json({ success: false, message: 'Empresa do gestor não encontrada' });
     }
 
     const empresaId = empresa[0].empresa_id;
+    console.log('🔍 [GESTOR CREATE] Empresa ID:', empresaId);
 
     // Verificar se email já existe
     const [emailExists] = await pool.execute(
@@ -214,13 +227,16 @@ router.post('/operadores', async (req: AuthRequest, res) => {
     );
 
     const insertResult = result as any;
+    console.log('✅ [GESTOR CREATE] Operador criado com sucesso, ID:', insertResult.insertId);
+    
     return res.status(201).json({
       success: true,
       message: 'Operador criado com sucesso',
       data: { id: insertResult.insertId }
     });
-  } catch (error) {
-    console.error('Erro ao criar operador:', error);
+  } catch (error: any) {
+    console.error('❌ [GESTOR CREATE] Erro ao criar operador:', error);
+    console.error('❌ [GESTOR CREATE] Stack trace:', error?.stack);
     return res.status(500).json({ success: false, message: 'Erro interno do servidor' });
   }
 });

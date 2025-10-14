@@ -97,7 +97,7 @@ export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
 
     // Buscar informações da recompensa
     const [recompensaRows] = await pool.execute(
-      'SELECT * FROM recompensas WHERE id = ? AND disponivel = true',
+      'SELECT * FROM recompensas WHERE id = $1 AND disponivel = true',
       [recompensa_id]
     );
     
@@ -112,7 +112,7 @@ export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
     
     // Verificar se já possui a recompensa
     const [compraExistente] = await pool.execute(
-      'SELECT id FROM compras WHERE operador_id = ? AND recompensa_id = ?',
+      'SELECT id FROM compras WHERE operador_id = $1 AND recompensa_id = $2',
       [operadorId, recompensa_id]
     );
     
@@ -125,7 +125,7 @@ export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
     
     // Buscar pontos do operador
     const [operadorRows] = await pool.execute(
-      'SELECT pontos_totais FROM operadores WHERE id = ?',
+      'SELECT pontos_totais FROM operadores WHERE id = $1',
       [operadorId]
     );
     
@@ -161,14 +161,14 @@ export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
     
     // Deduzir pontos do operador
     await pool.execute(
-      'UPDATE operadores SET pontos_totais = pontos_totais - ? WHERE id = ?',
+      'UPDATE operadores SET pontos_totais = pontos_totais - $1 WHERE id = $2',
       [recompensa.preco, operadorId]
     );
     
     // Atualizar quantidade restante se aplicável
     if (recompensa.quantidade_restante !== null) {
       await pool.execute(
-        'UPDATE recompensas SET quantidade_restante = quantidade_restante - 1 WHERE id = ?',
+        'UPDATE recompensas SET quantidade_restante = quantidade_restante - 1 WHERE id = $1',
         [recompensa_id]
       );
     }
