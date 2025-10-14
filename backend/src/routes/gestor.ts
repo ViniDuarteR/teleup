@@ -59,16 +59,16 @@ router.get('/metricas-equipe', async (req: AuthRequest, res) => {
 
     const [chamadasAtivas] = await pool.execute(
       'SELECT COUNT(*) as ativas FROM chamadas WHERE status = $1',
-      ['Ativa']
+      ['Em Andamento']
     );
 
     const [chamadasHoje] = await pool.execute(
-      'SELECT COUNT(*) as hoje FROM chamadas WHERE DATE(data_inicio) = CURRENT_DATE',
+      'SELECT COUNT(*) as hoje FROM chamadas WHERE DATE(inicio_chamada) = CURRENT_DATE',
       []
     );
 
     const [satisfacaoMedia] = await pool.execute(
-      'SELECT COALESCE(AVG(nota_satisfacao), 0) as media FROM chamadas WHERE nota_satisfacao IS NOT NULL',
+      'SELECT COALESCE(AVG(satisfacao_cliente), 0) as media FROM chamadas WHERE satisfacao_cliente IS NOT NULL',
       []
     );
 
@@ -98,9 +98,12 @@ router.get('/metricas-equipe', async (req: AuthRequest, res) => {
 // Rota para listar operadores
 router.get('/operadores', async (req: AuthRequest, res) => {
   try {
+    console.log('🔍 [GESTOR OPERADORES] Iniciando busca de operadores');
     const gestorId = req.operador?.id;
+    console.log('🔍 [GESTOR OPERADORES] Gestor ID:', gestorId);
     
     if (!gestorId) {
+      console.log('❌ [GESTOR OPERADORES] Gestor não autenticado');
       return res.status(401).json({ success: false, message: 'Gestor não autenticado' });
     }
 
@@ -118,6 +121,7 @@ router.get('/operadores', async (req: AuthRequest, res) => {
     const empresaId = empresa[0].empresa_id;
 
     // Buscar operadores da empresa com métricas
+    console.log('🔍 [GESTOR OPERADORES] Buscando operadores da empresa...');
     const [operadores] = await pool.execute(
       `SELECT 
          o.id, 
@@ -135,15 +139,17 @@ router.get('/operadores', async (req: AuthRequest, res) => {
          SELECT 
            operador_id,
            COUNT(*) as chamadas_hoje,
-           AVG(nota_satisfacao) as satisfacao_media
+           AVG(satisfacao_cliente) as satisfacao_media
          FROM chamadas 
-         WHERE DATE(data_inicio) = CURRENT_DATE
+         WHERE DATE(inicio_chamada) = CURRENT_DATE
          GROUP BY operador_id
        ) c ON o.id = c.operador_id
        WHERE o.empresa_id = $1
        ORDER BY o.pontos_totais DESC`,
       [empresaId]
     );
+    
+    console.log('🔍 [GESTOR OPERADORES] Operadores encontrados:', (operadores as any[]).length);
 
     return res.json({
       success: true,
