@@ -309,7 +309,7 @@ export const criarGestorEmpresa = async (req: AuthRequest, res: Response<ApiResp
 
     const [result] = await pool.execute(
       'INSERT INTO gestores (nome, email, senha, status, avatar, empresa_id) VALUES ($1, $2, $3, $4, $5, $6)',
-      [nome, email, senhaHash, 'Ativo', 'avatar_gestor.png', empresaId]
+      [nome, email, senhaHash, 'Ativo', 'avatar1.png', empresaId]
     );
 
     const insertResult = result as any;

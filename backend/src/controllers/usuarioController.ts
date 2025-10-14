@@ -98,8 +98,20 @@ export const criarUsuario = async (req: AuthRequest, res: Response<ApiResponse<{
     
     let empresaId = 1; // Default empresa ID
     
-    // Se for operador, buscar empresa do operador logado
-    if (req.operador.tipo === 'operador') {
+    // Se for gestor, buscar empresa do gestor logado
+    if (req.operador.tipo === 'gestor') {
+      const gestorId = req.operador.id;
+      const [empresaResult] = await pool.execute(
+        'SELECT empresa_id FROM gestores WHERE id = $1',
+        [gestorId]
+      );
+      
+      const empresa = empresaResult as any[];
+      if (empresa.length > 0) {
+        empresaId = empresa[0].empresa_id;
+      }
+    } else if (req.operador.tipo === 'operador') {
+      // Se for operador, buscar empresa do operador logado
       const operadorId = req.operador.id;
       const [empresaResult] = await pool.execute(
         'SELECT empresa_id FROM operadores WHERE id = $1',
@@ -136,9 +148,9 @@ export const criarUsuario = async (req: AuthRequest, res: Response<ApiResponse<{
     console.log('🔍 [USUARIO CREATE] Inserindo operador no banco...');
     const [result] = await pool.execute(
       `INSERT INTO operadores (nome, email, senha, nivel, xp_atual, xp_proximo_nivel, 
-                              pontos_totais, status, avatar, tempo_online, empresa_id, pa, carteira)
-       VALUES ($1, $2, $3, $4, 0, $5, 0, 'Aguardando Chamada', 'avatar1.png', 0, $6, $7, $8) RETURNING id`,
-      [nome, email, senhaHash, nivel, xpProximoNivel, empresaId, pa, carteira]
+                              pontos_totais, status, avatar, tempo_online, empresa_id, gestor_id, pa, carteira)
+       VALUES ($1, $2, $3, $4, 0, $5, 0, 'Aguardando Chamada', 'avatar1.png', 0, $6, $7, $8, $9) RETURNING id`,
+      [nome, email, senhaHash, nivel, xpProximoNivel, empresaId, req.operador.id, pa, carteira]
     );
 
     const insertResult = result as any;

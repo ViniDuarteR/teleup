@@ -67,8 +67,8 @@ app.use('/uploads', express.static('uploads'));
 app.use('/uploads/empresas', express.static('uploads/empresas'));
 
 // Rota específica para avatares de gestores
-app.get('/avatar_gestor.png', (req, res) => {
-  res.sendFile('avatar_gestor.png', { root: 'uploads' });
+app.get('/avatar1.png', (req, res) => {
+  res.sendFile('avatar1.png', { root: 'uploads' });
 });
 
 // CORS configurado para reduzir alertas de segurança
