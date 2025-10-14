@@ -164,17 +164,25 @@ router.get('/operadores', async (req: AuthRequest, res) => {
 // Rota para criar novo operador
 router.post('/operadores', async (req: AuthRequest, res) => {
   try {
+    console.log('🔍 [GESTOR OPERADORES] Criar operador chamado');
+    console.log('🔍 [GESTOR OPERADORES] Body:', req.body);
+    console.log('🔍 [GESTOR OPERADORES] Gestor ID:', req.operador?.id);
+    
     const { nome, email, senha, nivel = 1, pa = '', carteira = '' } = req.body;
     const gestorId = req.operador?.id;
     
     if (!gestorId) {
+      console.log('❌ [GESTOR OPERADORES] Gestor não autenticado');
       return res.status(401).json({ success: false, message: 'Gestor não autenticado' });
     }
 
     if (!nome || !email || !senha) {
+      console.log('❌ [GESTOR OPERADORES] Dados obrigatórios faltando:', { nome: !!nome, email: !!email, senha: !!senha });
       return res.status(400).json({ success: false, message: 'Nome, email e senha são obrigatórios' });
     }
 
+    console.log('🔍 [GESTOR OPERADORES] Dados validados, buscando empresa do gestor...');
+    
     // Buscar empresa do gestor
     const [gestorEmpresa] = await pool.execute(
       'SELECT empresa_id FROM gestores WHERE id = $1',
@@ -182,42 +190,55 @@ router.post('/operadores', async (req: AuthRequest, res) => {
     );
     
     const empresa = gestorEmpresa as any[];
+    console.log('🔍 [GESTOR OPERADORES] Empresa encontrada:', empresa);
+    
     if (empresa.length === 0) {
+      console.log('❌ [GESTOR OPERADORES] Empresa do gestor não encontrada');
       return res.status(404).json({ success: false, message: 'Empresa do gestor não encontrada' });
     }
 
     const empresaId = empresa[0].empresa_id;
+    console.log('🔍 [GESTOR OPERADORES] Empresa ID:', empresaId);
 
     // Verificar se email já existe
+    console.log('🔍 [GESTOR OPERADORES] Verificando se email já existe...');
     const [emailExists] = await pool.execute(
       'SELECT id FROM operadores WHERE email = $1 AND empresa_id = $2',
       [email, empresaId]
     );
 
+    console.log('🔍 [GESTOR OPERADORES] Email exists result:', emailExists);
+    
     if ((emailExists as any[]).length > 0) {
+      console.log('❌ [GESTOR OPERADORES] Email já cadastrado');
       return res.status(400).json({ success: false, message: 'Email já cadastrado nesta empresa' });
     }
 
     // Hash da senha
+    console.log('🔍 [GESTOR OPERADORES] Fazendo hash da senha...');
     const bcrypt = require('bcryptjs');
     const senhaHash = await bcrypt.hash(senha, 10);
-
-    // Calcular XP necessário para o próximo nível
-    const xpProximoNivel = nivel * 100;
+    console.log('✅ [GESTOR OPERADORES] Senha hasheada com sucesso');
 
     // Inserir novo operador
+    console.log('🔍 [GESTOR OPERADORES] Inserindo operador no banco...');
     const [result] = await pool.execute(
-      `INSERT INTO operadores (nome, email, senha, nivel, xp_atual, xp_proximo_nivel, 
+      `INSERT INTO operadores (nome, email, senha, nivel, xp, 
                               pontos_totais, status, avatar, tempo_online, empresa_id, pa, carteira)
-       VALUES ($1, $2, $3, $4, 0, $5, 0, 'Aguardando Chamada', 'avatar1.png', 0, $6, $7, $8)`,
-      [nome, email, senhaHash, nivel, xpProximoNivel, empresaId, pa, carteira]
+       VALUES ($1, $2, $3, $4, 0, 0, 'Aguardando Chamada', 'avatar1.png', 0, $5, $6, $7) RETURNING id`,
+      [nome, email, senhaHash, nivel, empresaId, pa, carteira]
     );
 
-    const insertResult = result as any;
+    console.log('🔍 [GESTOR OPERADORES] Resultado da inserção:', result);
+    const insertResult = result as any[];
+    const novoOperadorId = insertResult[0].id;
+    
+    console.log('✅ [GESTOR OPERADORES] Operador criado com ID:', novoOperadorId);
+    
     return res.status(201).json({
       success: true,
       message: 'Operador criado com sucesso',
-      data: { id: insertResult.insertId }
+      data: { id: novoOperadorId }
     });
   } catch (error) {
     console.error('Erro ao criar operador:', error);
