@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,7 +51,7 @@ const GerenciarUsuarios = () => {
   
 
   // Buscar usuários
-  const buscarUsuarios = async () => {
+  const buscarUsuarios = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/usuarios`, {
         headers: {
@@ -71,11 +71,11 @@ const GerenciarUsuarios = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     buscarUsuarios();
-  }, []);
+  }, [buscarUsuarios]);
 
   // Criar usuário
   const criarUsuario = async (e: React.FormEvent) => {
@@ -199,7 +199,9 @@ const GerenciarUsuarios = () => {
       email: usuario.email,
       senha: '',
       nivel: usuario.nivel,
-      status: usuario.status
+      status: usuario.status,
+      pa: usuario.pa || '',
+      carteira: usuario.carteira || ''
     });
     setIsEditDialogOpen(true);
   };
