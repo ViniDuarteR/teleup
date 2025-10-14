@@ -262,7 +262,7 @@ const PainelGestor = () => {
                 <CardContent className="p-6 text-center">
                   <Star className="w-8 h-8 text-warning mx-auto mb-3" />
                   <div className="text-3xl font-bold text-foreground mb-1">
-                    {metricas?.satisfacao_media_geral?.toFixed(1) || '0.0'}
+                    {metricas?.satisfacao_media_geral && !isNaN(metricas.satisfacao_media_geral) ? metricas.satisfacao_media_geral.toFixed(1) : '0.0'}
                   </div>
                   <div className="text-sm text-muted-foreground">Satisfação Média</div>
                 </CardContent>
@@ -414,9 +414,9 @@ const PainelGestor = () => {
                         </Badge>
                         
                         <div className="text-right">
-                          <div className="font-semibold">{operador.chamadas_hoje} chamadas</div>
+                          <div className="font-semibold">{operador.chamadas_hoje || 0} chamadas</div>
                           <div className="text-sm text-muted-foreground">
-                            {operador.satisfacao_media?.toFixed(1) || '0.0'} ⭐
+                            {operador.satisfacao_media && !isNaN(operador.satisfacao_media) ? operador.satisfacao_media.toFixed(1) : '0.0'} ⭐
                           </div>
                         </div>
                       </div>
