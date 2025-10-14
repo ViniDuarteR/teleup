@@ -53,7 +53,7 @@ const GridMetas = ({ metas }: GridMetasProps) => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {metas.map((meta) => {
         const Icon = getIcon(meta.icone);
-        const percentage = (meta.atual / meta.meta) * 100;
+        const percentage = meta.meta > 0 ? (meta.atual / meta.meta) * 100 : 0;
         const isCompleted = percentage >= 100;
         
         return (
@@ -94,9 +94,9 @@ const GridMetas = ({ metas }: GridMetasProps) => {
                   />
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>{percentage?.toFixed(0) || '0'}% completo</span>
+                  <span>{isNaN(percentage) ? '0' : percentage.toFixed(0)}% completo</span>
                   <span className={isCompleted ? 'text-success font-semibold' : ''}>
-                    {isCompleted ? 'META ATINGIDA!' : `Faltam ${meta.meta - meta.atual}`}
+                    {isCompleted ? 'META ATINGIDA!' : `Faltam ${Math.max(0, meta.meta - meta.atual)}`}
                   </span>
                 </div>
               </div>

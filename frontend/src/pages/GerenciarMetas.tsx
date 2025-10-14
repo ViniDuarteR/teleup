@@ -263,6 +263,7 @@ const GerenciarMetas = () => {
   };
 
   const calcularProgresso = (atual: number, meta: number) => {
+    if (meta <= 0) return 0;
     return Math.min((atual / meta) * 100, 100);
   };
 
