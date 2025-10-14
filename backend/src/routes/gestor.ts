@@ -224,9 +224,9 @@ router.post('/operadores', async (req: AuthRequest, res) => {
     // Inserir novo operador
     const [result] = await pool.execute(
       `INSERT INTO operadores (nome, email, senha, nivel, xp_atual, xp_proximo_nivel, 
-                              pontos_totais, status, avatar, tempo_online, empresa_id, pa, carteira)
-       VALUES ($1, $2, $3, $4, 0, $5, 0, 'Aguardando Chamada', 'avatar1.png', 0, $6, $7, $8) RETURNING id`,
-      [nome, email, senhaHash, nivel, xpProximoNivel, empresaId, pa, carteira]
+                              pontos_totais, status, avatar, tempo_online, empresa_id, gestor_id, pa, carteira)
+       VALUES ($1, $2, $3, $4, 0, $5, 0, 'Aguardando Chamada', 'avatar1.png', 0, $6, $7, $8, $9) RETURNING id`,
+      [nome, email, senhaHash, nivel, xpProximoNivel, empresaId, gestorId, pa, carteira]
     );
 
     const insertResult = result as any;
