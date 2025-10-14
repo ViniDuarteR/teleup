@@ -73,22 +73,14 @@ app.get('/avatar_gestor.png', (req, res) => {
 
 // CORS configurado para reduzir alertas de segurança
 app.use((req, res, next) => {
-  // Permitir apenas domínios específicos (não usar *)
-  const allowedOrigins = [
-    'https://teleupvercelapp.vercel.app',
-    'https://teleupvercelapp-hwe0q2t4f-euhttls-projects.vercel.app',
-    'https://teleupvercelapp-2t1rut8dl-euhttls-projects.vercel.app',
-    'https://teleupvercelapp-7fvxvisk1-euhttls-projects.vercel.app',
-    'https://teleupvercelapp-f2qck1yrp-euhttls-projects.vercel.app',
-    'http://localhost:3000',
-    'http://localhost:5173'
-  ];
-  
+  // Log da origem para debug
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin as string)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
+  console.log(`🌐 [CORS] Origin recebida: ${origin}`);
+  console.log(`🌐 [CORS] Método: ${req.method}`);
+  console.log(`🌐 [CORS] Path: ${req.path}`);
   
+  // Permitir todas as origens temporariamente para debug
+  res.header('Access-Control-Allow-Origin', origin || '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -100,6 +92,7 @@ app.use((req, res, next) => {
   
   // Responder a requisições OPTIONS (preflight)
   if (req.method === 'OPTIONS') {
+    console.log(`🌐 [CORS] Respondendo OPTIONS para ${req.path}`);
     res.sendStatus(200);
     return;
   }
@@ -109,9 +102,13 @@ app.use((req, res, next) => {
 
 // Middleware de logging reduzido
 app.use((req, res, next) => {
-  // Log apenas para rotas importantes
-  if (req.path.includes('/api/auth') || req.path.includes('/api/empresa-auth')) {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  // Log para todas as rotas de API para debug
+  if (req.path.startsWith('/api/')) {
+    console.log(`📡 [API] ${new Date().toISOString()} - ${req.method} ${req.path}`);
+    console.log(`📡 [API] Headers:`, req.headers);
+    if (req.body && Object.keys(req.body).length > 0) {
+      console.log(`📡 [API] Body:`, req.body);
+    }
   }
   next();
 });
