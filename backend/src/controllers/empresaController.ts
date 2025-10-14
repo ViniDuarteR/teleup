@@ -259,10 +259,23 @@ export const listarGestoresEmpresa = async (req: AuthRequest, res: Response<ApiR
       return;
     }
 
-    const [gestores] = await pool.execute(
-      'SELECT id, nome, email, status, avatar, data_criacao, data_atualizacao FROM gestores WHERE empresa_id = $1',
-      [empresaId]
-    );
+    const [gestores] = await pool.execute(`
+      SELECT 
+        g.id, 
+        g.nome, 
+        g.email, 
+        g.status, 
+        g.avatar, 
+        g.data_criacao, 
+        g.data_atualizacao,
+        g.data_ultimo_login,
+        COALESCE(COUNT(o.id), 0) as total_operadores
+      FROM gestores g
+      LEFT JOIN operadores o ON o.empresa_id = g.empresa_id
+      WHERE g.empresa_id = $1
+      GROUP BY g.id, g.nome, g.email, g.status, g.avatar, g.data_criacao, g.data_atualizacao, g.data_ultimo_login
+      ORDER BY g.data_criacao DESC
+    `, [empresaId]);
 
     res.json({
       success: true,
