@@ -37,16 +37,33 @@ BEGIN
   END IF;
 END$$;
 
--- Inserir algumas metas de exemplo
-INSERT INTO metas (operador_id, tipo_meta, valor_meta, periodo, data_inicio, data_fim, pontos_recompensa) VALUES
-(1, 'Chamadas Atendidas', 20, 'Diario', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day', 50),
-(1, 'Tempo de Conversa', 240, 'Diario', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day', 30),
-(1, 'Satisfacao Cliente', 4.5, 'Diario', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day', 100),
-(2, 'Chamadas Atendidas', 25, 'Diario', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day', 50),
-(2, 'Tempo de Conversa', 300, 'Diario', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day', 30),
-(3, 'Chamadas Atendidas', 15, 'Diario', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day', 50),
-(3, 'Resolucoes', 10, 'Diario', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day', 75)
-ON CONFLICT DO NOTHING;
+-- Inserir algumas metas de exemplo apenas se existirem operadores
+DO $$
+DECLARE
+    operador_record RECORD;
+    operador_count INTEGER;
+BEGIN
+    -- Verificar se existem operadores
+    SELECT COUNT(*) INTO operador_count FROM operadores;
+    
+    IF operador_count > 0 THEN
+        -- Inserir metas para os primeiros 3 operadores existentes
+        FOR operador_record IN 
+            SELECT id FROM operadores ORDER BY id LIMIT 3
+        LOOP
+            -- Inserir metas para este operador
+            INSERT INTO metas (operador_id, tipo_meta, valor_meta, periodo, data_inicio, data_fim, pontos_recompensa) VALUES
+            (operador_record.id, 'Chamadas Atendidas', 20, 'Diario', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day', 50),
+            (operador_record.id, 'Tempo de Conversa', 240, 'Diario', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day', 30),
+            (operador_record.id, 'Satisfacao Cliente', 4.5, 'Diario', CURRENT_DATE, CURRENT_DATE + INTERVAL '1 day', 100)
+            ON CONFLICT DO NOTHING;
+        END LOOP;
+        
+        RAISE NOTICE 'Metas de exemplo inseridas para % operadores', operador_count;
+    ELSE
+        RAISE NOTICE 'Nenhum operador encontrado. Metas de exemplo não foram inseridas.';
+    END IF;
+END$$;
 
 -- Comentários para documentação
 COMMENT ON TABLE metas IS 'Tabela para armazenar metas dos operadores';
