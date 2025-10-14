@@ -22,6 +22,11 @@ import {
   EyeOff
 } from "lucide-react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus } from "lucide-react";
 
 interface OperadorMonitor {
   id: number;
@@ -54,6 +59,15 @@ const MonitorOperadores = () => {
   const [metricas, setMetricas] = useState<MetricasGerais | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [filtroStatus, setFiltroStatus] = useState<string>('todos');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    nome: '',
+    email: '',
+    senha: '',
+    nivel: 1,
+    pa: '',
+    carteira: ''
+  });
 
 
   // Buscar operadores e métricas
@@ -121,6 +135,36 @@ const MonitorOperadores = () => {
       }
     } catch (error) {
       console.error('Erro ao alterar status:', error);
+      toast.error('Erro ao conectar com o servidor');
+    }
+  };
+
+  // Criar novo operador
+  const criarOperador = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/gestor/operadores`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Operador criado com sucesso!');
+        setIsDialogOpen(false);
+        setFormData({ nome: '', email: '', senha: '', nivel: 1, pa: '', carteira: '' });
+        buscarDados();
+      } else {
+        toast.error(data.message || 'Erro ao criar operador');
+      }
+    } catch (error) {
+      console.error('Erro ao criar operador:', error);
       toast.error('Erro ao conectar com o servidor');
     }
   };
@@ -216,6 +260,109 @@ const MonitorOperadores = () => {
                 <option value="Em Pausa">Em Pausa</option>
                 <option value="Offline">Offline</option>
               </select>
+              
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="btn-gaming">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Novo Operador
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Criar Novo Operador</DialogTitle>
+                    <DialogDescription>
+                      Adicione um novo operador à sua equipe
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <form onSubmit={criarOperador} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="nome">Nome Completo</Label>
+                      <Input
+                        id="nome"
+                        value={formData.nome}
+                        onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="senha">Senha</Label>
+                      <Input
+                        id="senha"
+                        type="password"
+                        value={formData.senha}
+                        onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="nivel">Nível Inicial</Label>
+                      <Select 
+                        value={formData.nivel.toString()} 
+                        onValueChange={(value) => setFormData({ ...formData, nivel: parseInt(value) })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o nível" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Nível 1 - Iniciante</SelectItem>
+                          <SelectItem value="2">Nível 2 - Intermediário</SelectItem>
+                          <SelectItem value="3">Nível 3 - Avançado</SelectItem>
+                          <SelectItem value="4">Nível 4 - Especialista</SelectItem>
+                          <SelectItem value="5">Nível 5 - Master</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="pa">PA (Opcional)</Label>
+                      <Input
+                        id="pa"
+                        value={formData.pa}
+                        onChange={(e) => setFormData({ ...formData, pa: e.target.value })}
+                        placeholder="Código PA do operador"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="carteira">Carteira (Opcional)</Label>
+                      <Input
+                        id="carteira"
+                        value={formData.carteira}
+                        onChange={(e) => setFormData({ ...formData, carteira: e.target.value })}
+                        placeholder="Número da carteira"
+                      />
+                    </div>
+                    
+                    <div className="flex justify-end space-x-2 pt-4">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setIsDialogOpen(false)}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button type="submit" className="btn-gaming">
+                        Criar Operador
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
               
               <Button onClick={buscarDados} variant="outline">
                 <Activity className="w-4 h-4 mr-2" />

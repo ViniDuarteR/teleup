@@ -155,6 +155,70 @@ router.get('/operadores', async (req: AuthRequest, res) => {
   }
 });
 
+// Rota para criar novo operador
+router.post('/operadores', async (req: AuthRequest, res) => {
+  try {
+    const { nome, email, senha, nivel = 1, pa = '', carteira = '' } = req.body;
+    const gestorId = req.operador?.id;
+    
+    if (!gestorId) {
+      return res.status(401).json({ success: false, message: 'Gestor não autenticado' });
+    }
+
+    if (!nome || !email || !senha) {
+      return res.status(400).json({ success: false, message: 'Nome, email e senha são obrigatórios' });
+    }
+
+    // Buscar empresa do gestor
+    const [gestorEmpresa] = await pool.execute(
+      'SELECT empresa_id FROM gestores WHERE id = $1',
+      [gestorId]
+    );
+    
+    const empresa = gestorEmpresa as any[];
+    if (empresa.length === 0) {
+      return res.status(404).json({ success: false, message: 'Empresa do gestor não encontrada' });
+    }
+
+    const empresaId = empresa[0].empresa_id;
+
+    // Verificar se email já existe
+    const [emailExists] = await pool.execute(
+      'SELECT id FROM operadores WHERE email = $1 AND empresa_id = $2',
+      [email, empresaId]
+    );
+
+    if ((emailExists as any[]).length > 0) {
+      return res.status(400).json({ success: false, message: 'Email já cadastrado nesta empresa' });
+    }
+
+    // Hash da senha
+    const bcrypt = require('bcryptjs');
+    const senhaHash = await bcrypt.hash(senha, 10);
+
+    // Calcular XP necessário para o próximo nível
+    const xpProximoNivel = nivel * 100;
+
+    // Inserir novo operador
+    const [result] = await pool.execute(
+      `INSERT INTO operadores (nome, email, senha, nivel, xp_atual, xp_proximo_nivel, 
+                              pontos_totais, status, avatar, tempo_online, empresa_id, pa, carteira)
+       VALUES ($1, $2, $3, $4, 0, $5, 0, 'Aguardando Chamada', 'avatar1.png', 0, $6, $7, $8)`,
+      [nome, email, senhaHash, nivel, xpProximoNivel, empresaId, pa, carteira]
+    );
+
+    const insertResult = result as any;
+    return res.status(201).json({
+      success: true,
+      message: 'Operador criado com sucesso',
+      data: { id: insertResult.insertId }
+    });
+  } catch (error) {
+    console.error('Erro ao criar operador:', error);
+    return res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+  }
+});
+
 // Rota para alterar status do operador
 router.patch('/operador/:id/status', async (req: AuthRequest, res) => {
   try {
