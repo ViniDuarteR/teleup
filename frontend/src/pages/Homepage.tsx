@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
+import { motion } from 'framer-motion';
 import { 
   Phone, 
   Users, 
@@ -22,6 +23,53 @@ const Homepage = () => {
   const location = useLocation();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Variantes de animação
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { 
+      opacity: 0, 
+      y: 30,
+      scale: 0.95
+    },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      scale: 1
+    }
+  };
+
+  const slideInVariants = {
+    hidden: { 
+      opacity: 0, 
+      x: -50
+    },
+    visible: { 
+      opacity: 1, 
+      x: 0
+    }
+  };
+
+  const slideUpVariants = {
+    hidden: { 
+      opacity: 0, 
+      y: 50
+    },
+    visible: { 
+      opacity: 1, 
+      y: 0
+    }
+  };
 
   useEffect(() => {
     if (location.state?.showSuccess) {
@@ -150,14 +198,24 @@ const Homepage = () => {
       )}
 
       {/* Hero Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <motion.section 
+        className="py-20 px-4 sm:px-6 lg:px-8"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
         <div className="max-w-7xl mx-auto text-center">
-          <Badge variant="secondary" className="mb-4 px-4 py-2">
-            <Star className="w-4 h-4 mr-2" />
-            Solução #1 em Gamificação para Call Centers
-          </Badge>
+          <motion.div variants={slideUpVariants}>
+            <Badge variant="secondary" className="mb-4 px-4 py-2">
+              <Star className="w-4 h-4 mr-2" />
+              Solução #1 em Gamificação para Call Centers
+            </Badge>
+          </motion.div>
           
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+          <motion.h1 
+            className="text-5xl md:text-6xl font-bold text-gray-900 mb-6"
+            variants={slideUpVariants}
+          >
             Transforme seu{' '}
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Call Center
@@ -167,14 +225,20 @@ const Homepage = () => {
             <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
               Gamificada
             </span>
-          </h1>
+          </motion.h1>
           
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <motion.p 
+            className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto"
+            variants={slideUpVariants}
+          >
             Aumente a produtividade, reduza o turnover e motive sua equipe com nosso sistema 
             completo de gamificação para telecomunicações. Resultados garantidos em 30 dias.
-          </p>
+          </motion.p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+          <motion.div 
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
+            variants={itemVariants}
+          >
             <Link to="/cadastro-empresa">
               <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-8 py-4 text-lg">
                 Começar Gratuitamente
@@ -186,30 +250,39 @@ const Homepage = () => {
                 Já tenho conta
               </Button>
             </Link>
-          </div>
+          </motion.div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="text-center">
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto"
+            variants={containerVariants}
+          >
+            <motion.div className="text-center" variants={itemVariants}>
               <div className="text-4xl font-bold text-blue-600 mb-2">100%</div>
               <div className="text-gray-600">Sistema Gamificado</div>
-            </div>
-            <div className="text-center">
+            </motion.div>
+            <motion.div className="text-center" variants={itemVariants}>
               <div className="text-4xl font-bold text-green-600 mb-2">24/7</div>
               <div className="text-gray-600">Suporte Disponível</div>
-            </div>
-            <div className="text-center">
+            </motion.div>
+            <motion.div className="text-center" variants={itemVariants}>
               <div className="text-4xl font-bold text-purple-600 mb-2">R$ 0</div>
               <div className="text-gray-600">Custo Inicial</div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white">
+      <motion.section 
+        className="py-20 bg-white"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.3 }}
+        variants={containerVariants}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <motion.div className="text-center mb-16" variants={slideUpVariants}>
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
               Por que escolher o TeleUp?
             </h2>
@@ -217,92 +290,153 @@ const Homepage = () => {
               Nossa plataforma foi desenvolvida especificamente para call centers, 
               com foco em resultados mensuráveis e experiência do usuário.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            variants={containerVariants}
+          >
             {features.map((feature, index) => (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <CardHeader>
-                  <div className="flex items-center space-x-4">
-                    {feature.icon}
-                    <CardTitle className="text-xl">{feature.title}</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-white-600">
-                    {feature.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
+              <motion.div
+                key={index}
+                variants={itemVariants}
+                whileHover={{ 
+                  scale: 1.05,
+                  transition: { duration: 0.2 }
+                }}
+              >
+                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <CardHeader>
+                    <div className="flex items-center space-x-4">
+                      {feature.icon}
+                      <CardTitle className="text-xl">{feature.title}</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-white-600">
+                      {feature.description}
+                    </CardDescription>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Benefits Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
+      <motion.section 
+        className="py-20 bg-gradient-to-r from-blue-600 to-purple-600"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.3 }}
+        variants={containerVariants}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold text-white mb-8">
+          <motion.h2 
+            className="text-4xl font-bold text-white mb-8"
+            variants={slideUpVariants}
+          >
             Resultados Comprovados
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          </motion.h2>
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto"
+            variants={containerVariants}
+          >
             {benefits.map((benefit, index) => (
-              <div key={index} className="flex items-center space-x-3 text-white">
+              <motion.div 
+                key={index} 
+                className="flex items-center space-x-3 text-white"
+                variants={slideInVariants}
+              >
                 <CheckCircle className="w-6 h-6 text-green-300 flex-shrink-0" />
                 <span className="text-lg">{benefit}</span>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-gray-50">
+      <motion.section 
+        className="py-20 bg-gray-50"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.3 }}
+        variants={containerVariants}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <motion.div className="text-center mb-16" variants={slideUpVariants}>
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
               O que nossos clientes dizem
             </h2>
             <p className="text-xl text-gray-600">
               Empresas de todos os tamanhos já transformaram seus call centers com o TeleUp
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 gap-8"
+            variants={containerVariants}
+          >
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-0 shadow-lg">
-                <CardContent className="p-8">
-                  <div className="flex items-center space-x-1 mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                  <p className="text-white-700 mb-6 text-lg italic">
-                    "{testimonial.content}"
-                  </p>
-                  <div>
-                    <div className="font-semibold text-gray-900">{testimonial.name}</div>
-                    <div className="text-blue-600">{testimonial.role}</div>
-                    <div className="text-blue-600 font-medium">{testimonial.company}</div>
-                  </div>
-                </CardContent>
-              </Card>
+              <motion.div
+                key={index}
+                variants={itemVariants}
+                whileHover={{ 
+                  scale: 1.02,
+                  transition: { duration: 0.2 }
+                }}
+              >
+                <Card className="border-0 shadow-lg">
+                  <CardContent className="p-8">
+                    <div className="flex items-center space-x-1 mb-4">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                      ))}
+                    </div>
+                    <p className="text-white-700 mb-6 text-lg italic">
+                      "{testimonial.content}"
+                    </p>
+                    <div>
+                      <div className="font-semibold text-gray-900">{testimonial.name}</div>
+                      <div className="text-blue-600">{testimonial.role}</div>
+                      <div className="text-blue-600 font-medium">{testimonial.company}</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-white">
+      <motion.section 
+        className="py-20 bg-white"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.3 }}
+        variants={containerVariants}
+      >
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-gray-900 mb-6">
+          <motion.h2 
+            className="text-4xl font-bold text-gray-900 mb-6"
+            variants={slideUpVariants}
+          >
             Pronto para transformar seu call center?
-          </h2>
-          <p className="text-xl text-gray-600 mb-8">
+          </motion.h2>
+          <motion.p 
+            className="text-xl text-gray-600 mb-8"
+            variants={slideUpVariants}
+          >
             Junte-se a centenas de empresas que já aumentaram sua produtividade com o TeleUp.
             Comece gratuitamente hoje mesmo.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          </motion.p>
+          <motion.div 
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+            variants={itemVariants}
+          >
             <Link to="/cadastro-empresa">
               <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-8 py-4 text-lg">
                 Começar Agora
@@ -315,9 +449,9 @@ const Homepage = () => {
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
