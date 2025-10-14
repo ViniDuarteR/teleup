@@ -88,39 +88,30 @@ export const listarUsuarios = async (req: AuthRequest, res: Response<ApiResponse
 };
 
 // Criar novo usuário
-export const criarUsuario = async (req: AuthRequest, res: Response<ApiResponse<{ id: number }>>): Promise<void> => {
+export const criarUsuario = async (req: Request, res: Response<ApiResponse<{ id: number }>>): Promise<void> => {
   try {
     console.log('🔍 [USUARIO CREATE] Iniciando criação de usuário');
     console.log('🔍 [USUARIO CREATE] Body recebido:', req.body);
     
-    const { nome, email, senha, nivel = 1, pa = '', carteira = '' } = req.body;
-    console.log('🔍 [USUARIO CREATE] Dados extraídos:', { nome, email, nivel, pa, carteira });
+    const { nome, email, senha, nivel = 1, pa = '', carteira = '', empresa_id } = req.body;
+    console.log('🔍 [USUARIO CREATE] Dados extraídos:', { nome, email, nivel, pa, carteira, empresa_id });
     
-    let empresaId = 1; // Default empresa ID
+    // Validar campos obrigatórios
+    if (!nome || !email || !senha) {
+      res.status(400).json({
+        success: false,
+        message: 'Nome, email e senha são obrigatórios'
+      });
+      return;
+    }
     
-    // Se for gestor, buscar empresa do gestor logado
-    if (req.operador.tipo === 'gestor') {
-      const gestorId = req.operador.id;
-      const [empresaResult] = await pool.execute(
-        'SELECT empresa_id FROM gestores WHERE id = $1',
-        [gestorId]
-      );
-      
-      const empresa = empresaResult as any[];
-      if (empresa.length > 0) {
-        empresaId = empresa[0].empresa_id;
-      }
-    } else if (req.operador.tipo === 'operador') {
-      // Se for operador, buscar empresa do operador logado
-      const operadorId = req.operador.id;
-      const [empresaResult] = await pool.execute(
-        'SELECT empresa_id FROM operadores WHERE id = $1',
-        [operadorId]
-      );
-      
-      const empresa = empresaResult as any[];
-      if (empresa.length > 0) {
-        empresaId = empresa[0].empresa_id;
+    let empresaId = empresa_id || 1; // Usar empresa_id do body ou default
+    
+    // Se não foi fornecida empresa_id, usar a primeira empresa disponível
+    if (!empresa_id) {
+      const [empresas] = await pool.execute('SELECT id FROM empresas LIMIT 1');
+      if ((empresas as any[]).length > 0) {
+        empresaId = (empresas as any[])[0].id;
       }
     }
 
@@ -149,8 +140,8 @@ export const criarUsuario = async (req: AuthRequest, res: Response<ApiResponse<{
     const [result] = await pool.execute(
       `INSERT INTO operadores (nome, email, senha, nivel, xp_atual, xp_proximo_nivel, 
                               pontos_totais, status, avatar, tempo_online, empresa_id, gestor_id, pa, carteira)
-       VALUES ($1, $2, $3, $4, 0, $5, 0, 'Aguardando Chamada', 'avatar1.png', 0, $6, $7, $8, $9) RETURNING id`,
-      [nome, email, senhaHash, nivel, xpProximoNivel, empresaId, req.operador.id, pa, carteira]
+       VALUES ($1, $2, $3, $4, 0, $5, 0, 'Aguardando Chamada', 'avatar1.png', 0, $6, NULL, $7, $8) RETURNING id`,
+      [nome, email, senhaHash, nivel, xpProximoNivel, empresaId, pa, carteira]
     );
 
     const insertResult = result as any;

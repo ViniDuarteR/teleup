@@ -10,7 +10,10 @@ import { authenticateToken, requireGestor } from '../middleware/auth';
 
 const router = express.Router();
 
-// Todas as rotas precisam de autenticação
+// Criar novo usuário (SEM autenticação - para cadastro inicial)
+router.post('/', criarUsuario as any);
+
+// Todas as outras rotas precisam de autenticação
 router.use(authenticateToken as any);
 
 // Rotas que precisam de permissão de gestor
@@ -18,9 +21,6 @@ router.use(requireGestor as any);
 
 // Listar usuários da empresa
 router.get('/', listarUsuarios as any);
-
-// Criar novo usuário
-router.post('/', criarUsuario as any);
 
 // Atualizar usuário
 router.put('/:id', atualizarUsuario as any);
