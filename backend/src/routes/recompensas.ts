@@ -39,12 +39,18 @@ router.post('/', (req: AuthRequest, res: Response, next: NextFunction) => {
 
 // Atualizar recompensa (apenas gestores)
 router.put('/:id', (req: AuthRequest, res: Response, next: NextFunction) => {
+  console.log('🔍 [ROUTE] PUT /:id - Verificando permissões');
+  console.log('🔍 [ROUTE] User:', req.user);
+  console.log('🔍 [ROUTE] User tipo:', req.user?.tipo);
+  
   if (req.user?.tipo !== 'gestor') {
+    console.log('❌ [ROUTE] Acesso negado - não é gestor');
     return res.status(403).json({
       success: false,
       message: 'Acesso negado. Apenas gestores podem editar recompensas.'
     });
   }
+  console.log('✅ [ROUTE] Permissão concedida, prosseguindo...');
   return next();
 }, uploadImagem.single('imagem'), atualizarRecompensa);
 

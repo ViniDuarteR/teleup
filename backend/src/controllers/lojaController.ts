@@ -156,12 +156,12 @@ export const criarRecompensa = async (req: AuthRequest, res: Response) => {
 
     const [result] = await pool.execute(
       `INSERT INTO recompensas (titulo, descricao, categoria, preco, tipo, raridade, imagem, disponivel, quantidade_restante)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
       [nome, descricao, categoria, parseInt(preco), tipo, raridade, caminhoImagem, disponivel !== false ? 1 : 0, quantidade_restante ? parseInt(quantidade_restante) : null]
     );
 
     const novaRecompensa = {
-      id: (result as any).insertId,
+      id: (result as any[])[0].id,
       nome,
       descricao,
       categoria,
@@ -229,15 +229,18 @@ export const atualizarRecompensa = async (req: AuthRequest, res: Response) => {
     }
 
     const [result] = await pool.execute(query, params);
+    console.log('🔍 [BACKEND] Update result:', result);
 
-    if ((result as any).affectedRows === 0) {
+    // PostgreSQL retorna rowCount em vez de affectedRows
+    if ((result as any).rowCount === 0) {
+      console.log('❌ [BACKEND] Nenhuma linha afetada');
       return res.status(404).json({
         success: false,
         message: 'Recompensa não encontrada'
       });
     }
 
-    return res.json({
+    const responseData = {
       success: true,
       message: 'Recompensa atualizada com sucesso!',
       data: {
@@ -252,7 +255,10 @@ export const atualizarRecompensa = async (req: AuthRequest, res: Response) => {
         disponivel: disponivel !== false,
         quantidade_restante: quantidade_restante ? parseInt(quantidade_restante) : null
       }
-    });
+    };
+    
+    console.log('✅ [BACKEND] Enviando resposta de sucesso:', responseData);
+    return res.json(responseData);
   } catch (error) {
     console.error('Erro ao atualizar recompensa:', error);
     return res.status(500).json({
@@ -272,7 +278,7 @@ export const excluirRecompensa = async (req: AuthRequest, res: Response) => {
       [parseInt(id)]
     );
 
-    if ((result as any).affectedRows === 0) {
+    if ((result as any).rowCount === 0) {
       return res.status(404).json({
         success: false,
         message: 'Recompensa não encontrada'
@@ -303,7 +309,7 @@ export const toggleDisponibilidade = async (req: AuthRequest, res: Response) => 
       [disponivel ? 1 : 0, parseInt(id)]
     );
 
-    if ((result as any).affectedRows === 0) {
+    if ((result as any).rowCount === 0) {
       return res.status(404).json({
         success: false,
         message: 'Recompensa não encontrada'
