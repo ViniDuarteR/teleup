@@ -4,18 +4,29 @@ import path from 'path';
 // Configuração do multer para upload de imagens
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../../uploads/recompensas');
-    // Criar diretório se não existir
-    const fs = require('fs');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    try {
+      const uploadDir = path.join(__dirname, '../../uploads/recompensas');
+      console.log('🔍 [UPLOAD] Tentando salvar em:', uploadDir);
+      
+      // Criar diretório se não existir
+      const fs = require('fs');
+      if (!fs.existsSync(uploadDir)) {
+        console.log('🔧 [UPLOAD] Criando diretório:', uploadDir);
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    } catch (error) {
+      console.error('❌ [UPLOAD] Erro ao configurar destino:', error);
+      // Em caso de erro, usar diretório temporário
+      cb(null, '/tmp');
     }
-    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     // Gerar nome único para o arquivo
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    const filename = file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname);
+    console.log('🔍 [UPLOAD] Nome do arquivo gerado:', filename);
+    cb(null, filename);
   }
 });
 

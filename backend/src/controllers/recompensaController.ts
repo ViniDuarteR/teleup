@@ -259,8 +259,15 @@ export const criarRecompensa = async (req: AuthRequest, res: Response): Promise<
     // Processar arquivo de imagem se houver
     let caminhoImagem = imagem || null;
     if (req.file) {
+      console.log('🔍 [CRIAR RECOMPENSA] Arquivo recebido:', req.file);
+      console.log('🔍 [CRIAR RECOMPENSA] Nome do arquivo:', req.file.filename);
+      console.log('🔍 [CRIAR RECOMPENSA] Caminho do arquivo:', req.file.path);
+      console.log('🔍 [CRIAR RECOMPENSA] Tamanho do arquivo:', req.file.size);
+      
       caminhoImagem = `/uploads/recompensas/${req.file.filename}`;
-      console.log('🔍 [CRIAR RECOMPENSA] Arquivo de imagem processado:', caminhoImagem);
+      console.log('🔍 [CRIAR RECOMPENSA] Caminho da imagem definido:', caminhoImagem);
+    } else {
+      console.log('🔍 [CRIAR RECOMPENSA] Nenhum arquivo de imagem recebido');
     }
     
     // Obter empresa_id do gestor logado
