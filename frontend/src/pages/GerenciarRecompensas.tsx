@@ -29,7 +29,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogTrigger,
 } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Recompensa {
   id: number;
@@ -49,6 +51,7 @@ const GerenciarRecompensas = () => {
   const [recompensas, setRecompensas] = useState<Recompensa[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editando, setEditando] = useState<Recompensa | null>(null);
   const [formulario, setFormulario] = useState<{
     nome: string;
@@ -187,6 +190,7 @@ const GerenciarRecompensas = () => {
           toast.success(mensagem);
           buscarRecompensas();
           limparFormulario();
+          setIsModalOpen(false);
         } else {
           console.log('❌ [SALVAR RECOMPENSA] Erro:', data.message);
           toast.error(data.message || 'Erro ao salvar recompensa');
@@ -227,6 +231,7 @@ const GerenciarRecompensas = () => {
           toast.success(mensagem);
           buscarRecompensas();
           limparFormulario();
+          setIsModalOpen(false);
         } else {
           console.log('❌ [SALVAR RECOMPENSA] Erro:', data.message);
           toast.error(data.message || 'Erro ao salvar recompensa');
@@ -307,6 +312,7 @@ const GerenciarRecompensas = () => {
     });
     setEditando(null);
     setMostrarFormulario(false);
+    setIsModalOpen(false);
     setImagemPreview(null);
     setArquivoImagem(null);
   };
@@ -376,8 +382,8 @@ const GerenciarRecompensas = () => {
     
     console.log('🔍 [EDITAR RECOMPENSA] Formulário atualizado');
     setEditando(recompensa);
-    setMostrarFormulario(true);
-    console.log('🔍 [EDITAR RECOMPENSA] Estados atualizados - editando:', recompensa, 'mostrarFormulario: true');
+    setIsModalOpen(true);
+    console.log('🔍 [EDITAR RECOMPENSA] Estados atualizados - editando:', recompensa, 'isModalOpen: true');
     
     // Se já tem imagem, mostrar preview
     if (recompensa.imagem) {
@@ -465,13 +471,192 @@ const GerenciarRecompensas = () => {
               <p className="text-muted-foreground">Crie e gerencie recompensas para a loja</p>
             </div>
             
-            <Button 
-              onClick={() => setMostrarFormulario(true)}
-              className="btn-gaming"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Recompensa
-            </Button>
+            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+              <DialogTrigger asChild>
+                <Button className="btn-gaming">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nova Recompensa
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>{editando ? 'Editar Recompensa' : 'Criar Nova Recompensa'}</DialogTitle>
+                  <DialogDescription>
+                    {editando ? 'Atualize os dados da recompensa' : 'Adicione uma nova recompensa para os operadores'}
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <form onSubmit={salvarRecompensa} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="nome">Nome da Recompensa</Label>
+                      <Input
+                        id="nome"
+                        value={formulario.nome}
+                        onChange={(e) => setFormulario({ ...formulario, nome: e.target.value })}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="categoria">Categoria</Label>
+                      <Select 
+                        value={formulario.categoria} 
+                        onValueChange={(value) => setFormulario({ ...formulario, categoria: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a categoria" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Itens">Itens</SelectItem>
+                          <SelectItem value="Benefícios">Benefícios</SelectItem>
+                          <SelectItem value="Títulos">Títulos</SelectItem>
+                          <SelectItem value="Avatares">Avatares</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="descricao">Descrição</Label>
+                    <Textarea
+                      id="descricao"
+                      value={formulario.descricao}
+                      onChange={(e) => setFormulario({ ...formulario, descricao: e.target.value })}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="preco">Preço (Pontos)</Label>
+                      <Input
+                        id="preco"
+                        type="number"
+                        value={formulario.preco}
+                        onChange={(e) => setFormulario({ ...formulario, preco: parseInt(e.target.value) || 0 })}
+                        min="1"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="tipo">Tipo</Label>
+                      <Select 
+                        value={formulario.tipo} 
+                        onValueChange={(value) => setFormulario({ ...formulario, tipo: value as 'item' | 'beneficio' | 'titulo' | 'avatar' })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="item">Item</SelectItem>
+                          <SelectItem value="beneficio">Benefício</SelectItem>
+                          <SelectItem value="titulo">Título</SelectItem>
+                          <SelectItem value="avatar">Avatar</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="raridade">Raridade</Label>
+                      <Select 
+                        value={formulario.raridade} 
+                        onValueChange={(value) => setFormulario({ ...formulario, raridade: value as 'comum' | 'raro' | 'epico' | 'lendario' })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a raridade" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="comum">Comum</SelectItem>
+                          <SelectItem value="raro">Raro</SelectItem>
+                          <SelectItem value="epico">Épico</SelectItem>
+                          <SelectItem value="lendario">Lendário</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="imagem">Imagem da Recompensa</Label>
+                    <Input
+                      id="imagem-input"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImagemChange}
+                    />
+                    {imagemPreview && (
+                      <div className="mt-2">
+                        <img 
+                          src={imagemPreview} 
+                          alt="Preview" 
+                          className="w-20 h-20 object-cover rounded-lg"
+                        />
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={removerImagem}
+                          className="mt-2"
+                        >
+                          Remover Imagem
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="quantidade_restante">Quantidade Restante (Opcional)</Label>
+                      <Input
+                        id="quantidade_restante"
+                        type="number"
+                        value={formulario.quantidade_restante || ''}
+                        onChange={(e) => setFormulario({ 
+                          ...formulario, 
+                          quantidade_restante: e.target.value ? parseInt(e.target.value) : null 
+                        })}
+                        min="1"
+                        placeholder="Deixe vazio para ilimitado"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Disponível</Label>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="disponivel"
+                          checked={formulario.disponivel}
+                          onChange={(e) => setFormulario({ ...formulario, disponivel: e.target.checked })}
+                          className="rounded"
+                        />
+                        <Label htmlFor="disponivel" className="text-sm">
+                          Recompensa disponível para compra
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => {
+                        setIsModalOpen(false);
+                        limparFormulario();
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type="submit" className="btn-gaming">
+                      <Save className="w-4 h-4 mr-2" />
+                      {editando ? 'Atualizar Recompensa' : 'Criar Recompensa'}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* Formulário */}
