@@ -196,6 +196,12 @@ export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
 // Criar nova recompensa (apenas para gestores)
 export const criarRecompensa = async (req: AuthRequest, res: Response) => {
   try {
+    console.log('🔍 [CRIAR RECOMPENSA] Iniciando criação de recompensa');
+    console.log('🔍 [CRIAR RECOMPENSA] Headers:', req.headers);
+    console.log('🔍 [CRIAR RECOMPENSA] Body recebido:', req.body);
+    console.log('🔍 [CRIAR RECOMPENSA] User:', req.user);
+    console.log('🔍 [CRIAR RECOMPENSA] File:', req.file);
+    
     const {
       nome,
       descricao,
@@ -207,17 +213,38 @@ export const criarRecompensa = async (req: AuthRequest, res: Response) => {
       quantidade_restante
     } = req.body;
     
+    // Validar campos obrigatórios
+    if (!nome || !preco) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nome e preço são obrigatórios'
+      });
+    }
+    
+    // Mapear campos do frontend para a estrutura da tabela
+    const titulo = nome; // O campo na tabela é 'titulo', não 'nome'
+    const categoriaFinal = categoria || 'Outros';
+    
+    console.log('🔍 [CRIAR RECOMPENSA] Dados mapeados:', {
+      titulo,
+      descricao,
+      categoria: categoriaFinal,
+      preco
+    });
+    
     const query = `
       INSERT INTO recompensas (
-        nome, descricao, categoria, preco, tipo, raridade, 
-        imagem, disponivel, quantidade_restante, data_criacao
+        titulo, descricao, categoria, preco, tipo, raridade, 
+        imagem, disponivel, quantidade_restante, criado_em
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, NOW()) RETURNING id
     `;
     
     const [result] = await pool.execute(query, [
-      nome, descricao, categoria, preco, tipo, raridade,
-      imagem, quantidade_restante
+      titulo, descricao, categoriaFinal, preco, tipo || 'item', raridade || 'comum',
+      imagem || null, quantidade_restante || null
     ]);
+    
+    console.log('✅ [CRIAR RECOMPENSA] Recompensa criada com sucesso, ID:', (result as any)[0]?.id);
     
     res.json({
       success: true,
@@ -226,8 +253,18 @@ export const criarRecompensa = async (req: AuthRequest, res: Response) => {
         id: (result as any)[0]?.id
       }
     });
-  } catch (error) {
-    console.error('Erro ao criar recompensa:', error);
+  } catch (error: any) {
+    console.error('❌ [CRIAR RECOMPENSA] Erro ao criar recompensa:', error);
+    console.error('❌ [CRIAR RECOMPENSA] Stack trace:', error?.stack);
+    
+    // Log detalhado do erro para debug
+    if (error.code) {
+      console.error('❌ [CRIAR RECOMPENSA] Código do erro:', error.code);
+    }
+    if (error.detail) {
+      console.error('❌ [CRIAR RECOMPENSA] Detalhes do erro:', error.detail);
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
