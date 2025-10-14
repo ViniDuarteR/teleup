@@ -50,7 +50,7 @@ const SistemaDiscagem = () => {
     try {
       toast.loading("Iniciando chamada...", { id: "iniciando-chamada" });
 
-      const response = await fetch(`${API_BASE_URL}/chamadas/iniciar`, {
+      const response = await fetch(`${API_BASE_URL}/api/chamadas/iniciar`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -102,7 +102,7 @@ const SistemaDiscagem = () => {
     try {
       setFinalizando(true);
 
-      const response = await fetch(`${API_BASE_URL}/chamadas/finalizar`, {
+      const response = await fetch(`${API_BASE_URL}/api/chamadas/finalizar`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -152,7 +152,7 @@ const SistemaDiscagem = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/gamificacao/verificar-conquistas`, {
+      const response = await fetch(`${API_BASE_URL}/api/gamificacao/verificar-conquistas`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

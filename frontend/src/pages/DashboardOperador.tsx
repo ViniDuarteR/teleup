@@ -90,7 +90,7 @@ const DashboardOperador = () => {
 
       // Buscar metas
       try {
-        const metasResponse = await fetch(`${API_BASE_URL}/gamificacao/metas`, {
+        const metasResponse = await fetch(`${API_BASE_URL}/api/gamificacao/metas`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -117,7 +117,7 @@ const DashboardOperador = () => {
 
       // Buscar missões
       try {
-        const missoesResponse = await fetch(`${API_BASE_URL}/gamificacao/missoes`, {
+        const missoesResponse = await fetch(`${API_BASE_URL}/api/gamificacao/missoes`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -144,7 +144,7 @@ const DashboardOperador = () => {
 
       // Buscar conquistas
       try {
-        const conquistasResponse = await fetch(`${API_BASE_URL}/gamificacao/conquistas`, {
+        const conquistasResponse = await fetch(`${API_BASE_URL}/api/gamificacao/conquistas`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

@@ -78,7 +78,7 @@ const MonitorOperadores = () => {
       setIsLoading(true);
 
       // Buscar operadores
-      const operadoresResponse = await fetch(`${API_BASE_URL}/gestor/operadores`, {
+      const operadoresResponse = await fetch(`${API_BASE_URL}/api/gestor/operadores`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -91,7 +91,7 @@ const MonitorOperadores = () => {
       }
 
       // Buscar métricas gerais
-      const metricasResponse = await fetch(`${API_BASE_URL}/gestor/metricas-equipe`, {
+      const metricasResponse = await fetch(`${API_BASE_URL}/api/gestor/metricas-equipe`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -116,7 +116,7 @@ const MonitorOperadores = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/gestor/operador/${operadorId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/gestor/operador/${operadorId}/status`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -145,7 +145,7 @@ const MonitorOperadores = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/gestor/operadores`, {
+      const response = await fetch(`${API_BASE_URL}/api/gestor/operadores`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -83,7 +83,7 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
       email: gestor.email,
       tipo: 'gestor',
       status: gestor.status,
-      avatar: gestor.avatar,
+      avatar: gestor.avatar ? `${process.env.API_BASE_URL || 'https://teleup-backend.vercel.app'}/uploads/${gestor.avatar}` : `${process.env.API_BASE_URL || 'https://teleup-backend.vercel.app'}/avatar_gestor.png`,
       data_criacao: gestor.data_criacao,
       data_atualizacao: gestor.data_atualizacao
     };
@@ -160,9 +160,15 @@ export const listarGestores = async (req: any, res: Response): Promise<void> => 
       [empresaId]
     );
 
+    // Processar avatares para URLs completas
+    const gestoresComAvatar = (gestores as any[]).map(gestor => ({
+      ...gestor,
+      avatar: gestor.avatar ? `${process.env.API_BASE_URL || 'https://teleup-backend.vercel.app'}/uploads/${gestor.avatar}` : `${process.env.API_BASE_URL || 'https://teleup-backend.vercel.app'}/avatar_gestor.png`
+    }));
+
     res.json({
       success: true,
-      data: gestores
+      data: gestoresComAvatar
     });
   } catch (error) {
     console.error('Erro ao listar gestores:', error);

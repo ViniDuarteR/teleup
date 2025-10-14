@@ -68,7 +68,7 @@ const PainelGestor = () => {
       setIsLoading(true);
 
       // Buscar métricas da equipe
-      const metricasResponse = await fetch(`${API_BASE_URL}/gestor/metricas-equipe`, {
+      const metricasResponse = await fetch(`${API_BASE_URL}/api/gestor/metricas-equipe`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -81,7 +81,7 @@ const PainelGestor = () => {
       }
 
       // Buscar operadores
-      const operadoresResponse = await fetch(`${API_BASE_URL}/gestor/operadores`, {
+      const operadoresResponse = await fetch(`${API_BASE_URL}/api/gestor/operadores`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

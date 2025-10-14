@@ -53,7 +53,7 @@ const DashboardEmpresa: React.FC = () => {
   const fetchMetricas = async () => {
     try {
       const token = localStorage.getItem('teleup_token');
-      const response = await fetch(`${API_BASE_URL}/empresas/dashboard`, {
+      const response = await fetch(`${API_BASE_URL}/api/empresas/dashboard`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

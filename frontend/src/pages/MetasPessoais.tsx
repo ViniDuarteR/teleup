@@ -44,7 +44,7 @@ const MetasPessoais = () => {
     try {
       setIsLoading(true);
 
-      const response = await fetch(`${API_BASE_URL}/gamificacao/metas`, {
+      const response = await fetch(`${API_BASE_URL}/api/gamificacao/metas`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

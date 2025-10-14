@@ -53,7 +53,7 @@ const GerenciarUsuarios = () => {
   // Buscar usuários
   const buscarUsuarios = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/usuarios`, {
+      const response = await fetch(`${API_BASE_URL}/api/usuarios`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -81,7 +81,7 @@ const GerenciarUsuarios = () => {
   const criarUsuario = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${API_BASE_URL}/usuarios`, {
+      const response = await fetch(`${API_BASE_URL}/api/usuarios`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -110,7 +110,7 @@ const GerenciarUsuarios = () => {
     if (!selectedUsuario) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/usuarios/${selectedUsuario.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/usuarios/${selectedUsuario.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -143,7 +143,7 @@ const GerenciarUsuarios = () => {
     if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/usuarios/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/usuarios/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -169,7 +169,7 @@ const GerenciarUsuarios = () => {
     if (!selectedUsuario) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/usuarios/${selectedUsuario.id}/redefinir-senha`, {
+      const response = await fetch(`${API_BASE_URL}/api/usuarios/${selectedUsuario.id}/redefinir-senha`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -63,7 +63,7 @@ const LojaRecompensas = () => {
     try {
       setIsLoading(true);
 
-      const response = await fetch(`${API_BASE_URL}/recompensas`, {
+      const response = await fetch(`${API_BASE_URL}/api/recompensas`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -88,7 +88,7 @@ const LojaRecompensas = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/recompensas/compras`, {
+      const response = await fetch(`${API_BASE_URL}/api/recompensas/compras`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -110,7 +110,7 @@ const LojaRecompensas = () => {
     if (!token) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/recompensas/comprar`, {
+      const response = await fetch(`${API_BASE_URL}/api/recompensas/comprar`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
