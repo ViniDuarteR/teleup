@@ -264,7 +264,13 @@ export const criarRecompensa = async (req: AuthRequest, res: Response): Promise<
       console.log('🔍 [CRIAR RECOMPENSA] Caminho do arquivo:', req.file.path);
       console.log('🔍 [CRIAR RECOMPENSA] Tamanho do arquivo:', req.file.size);
       
-      caminhoImagem = `/uploads/recompensas/${req.file.filename}`;
+      // Em produção (Vercel), usar apenas o nome do arquivo
+      // Em desenvolvimento, usar o caminho completo
+      const isProduction = process.env.NODE_ENV === 'production';
+      caminhoImagem = isProduction 
+        ? req.file.filename 
+        : `/uploads/recompensas/${req.file.filename}`;
+      
       console.log('🔍 [CRIAR RECOMPENSA] Caminho da imagem definido:', caminhoImagem);
     } else {
       console.log('🔍 [CRIAR RECOMPENSA] Nenhum arquivo de imagem recebido');

@@ -1,32 +1,45 @@
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 
 // Configuração do multer para upload de imagens
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     try {
-      const uploadDir = path.join(__dirname, '../../uploads/recompensas');
+      // Usar diretório temporário para produção (Vercel)
+      const isProduction = process.env.NODE_ENV === 'production';
+      const uploadDir = isProduction 
+        ? '/tmp' 
+        : path.join(__dirname, '../../uploads/recompensas');
+      
+      console.log('🔍 [UPLOAD] Ambiente:', process.env.NODE_ENV);
       console.log('🔍 [UPLOAD] Tentando salvar em:', uploadDir);
       
-      // Criar diretório se não existir
-      const fs = require('fs');
-      if (!fs.existsSync(uploadDir)) {
+      // Criar diretório se não existir (apenas em desenvolvimento)
+      if (!isProduction && !fs.existsSync(uploadDir)) {
         console.log('🔧 [UPLOAD] Criando diretório:', uploadDir);
         fs.mkdirSync(uploadDir, { recursive: true });
       }
+      
       cb(null, uploadDir);
     } catch (error) {
       console.error('❌ [UPLOAD] Erro ao configurar destino:', error);
-      // Em caso de erro, usar diretório temporário
+      // Sempre usar /tmp como fallback
       cb(null, '/tmp');
     }
   },
   filename: (req, file, cb) => {
-    // Gerar nome único para o arquivo
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const filename = file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname);
-    console.log('🔍 [UPLOAD] Nome do arquivo gerado:', filename);
-    cb(null, filename);
+    try {
+      // Gerar nome único para o arquivo
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const extension = path.extname(file.originalname) || '.jpg';
+      const filename = `imagem-${uniqueSuffix}${extension}`;
+      console.log('🔍 [UPLOAD] Nome do arquivo gerado:', filename);
+      cb(null, filename);
+    } catch (error) {
+      console.error('❌ [UPLOAD] Erro ao gerar nome do arquivo:', error);
+      cb(error as Error, '');
+    }
   }
 });
 
