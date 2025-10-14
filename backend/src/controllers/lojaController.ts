@@ -214,8 +214,12 @@ export const atualizarRecompensa = async (req: AuthRequest, res: Response) => {
     // Verificar se há arquivo de imagem
     let caminhoImagem = null;
     if (req.file) {
+      console.log('🔍 [BACKEND] Arquivo recebido:', req.file);
       // Se há upload de arquivo, usar o caminho do arquivo
       caminhoImagem = `/uploads/recompensas/${req.file.filename}`;
+      console.log('🔍 [BACKEND] Caminho da imagem definido:', caminhoImagem);
+    } else {
+      console.log('🔍 [BACKEND] Nenhum arquivo recebido');
     }
 
     // Se não há novo arquivo, manter a imagem atual
