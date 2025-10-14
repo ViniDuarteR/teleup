@@ -156,13 +156,20 @@ export const authenticateToken = async (
 
 // Middleware para verificar se é gestor
 export const requireGestor = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  if (req.operador.tipo !== 'gestor') {
+  console.log('🔍 [REQUIRE GESTOR] Verificando permissão de gestor');
+  console.log('🔍 [REQUIRE GESTOR] req.operador:', req.operador);
+  console.log('🔍 [REQUIRE GESTOR] Tipo do usuário:', req.operador?.tipo);
+  
+  if (req.operador?.tipo !== 'gestor') {
+    console.log('❌ [REQUIRE GESTOR] Acesso negado - não é gestor');
     res.status(403).json({ 
       success: false, 
       message: 'Acesso negado. Permissão de gestor necessária.' 
     });
     return;
   }
+  
+  console.log('✅ [REQUIRE GESTOR] Permissão de gestor confirmada');
   next();
 };
 

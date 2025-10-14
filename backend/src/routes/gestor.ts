@@ -12,9 +12,12 @@ router.use(requireGestor as any);
 // Rota para métricas da equipe
 router.get('/metricas-equipe', async (req: AuthRequest, res) => {
   try {
+    console.log('🔍 [METRICAS EQUIPE] Iniciando busca de métricas');
     const gestorId = req.operador?.id;
+    console.log('🔍 [METRICAS EQUIPE] Gestor ID:', gestorId);
     
     if (!gestorId) {
+      console.log('❌ [METRICAS EQUIPE] Gestor não autenticado');
       return res.status(401).json({ success: false, message: 'Gestor não autenticado' });
     }
 
