@@ -106,7 +106,11 @@ const GerenciarRecompensas = () => {
   }, [token]);
 
   // Salvar recompensa
-  const salvarRecompensa = async () => {
+  const salvarRecompensa = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    
     console.log('🔍 [SALVAR RECOMPENSA] Função chamada');
     console.log('🔍 [SALVAR RECOMPENSA] Botão clicado!');
     console.log('🔍 [SALVAR RECOMPENSA] Token:', token ? 'existe' : 'não existe');
