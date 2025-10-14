@@ -61,6 +61,9 @@ export const listarMetasOperador = async (req: AuthRequest, res: Response<ApiRes
 // Criar nova meta para operador
 export const criarMeta = async (req: AuthRequest, res: Response<ApiResponse<{ id: number }>>): Promise<void> => {
   try {
+    console.log('🔍 [CRIAR META] Iniciando criação de meta');
+    console.log('🔍 [CRIAR META] Body recebido:', req.body);
+    
     const {
       operador_id,
       tipo_meta,
@@ -72,6 +75,7 @@ export const criarMeta = async (req: AuthRequest, res: Response<ApiResponse<{ id
     } = req.body;
 
     const gestorId = req.operador.id;
+    console.log('🔍 [CRIAR META] Gestor ID:', gestorId);
 
     // Validar campos obrigatórios
     if (!operador_id || !tipo_meta || !valor_meta || !periodo || !data_inicio || !data_fim) {
@@ -98,6 +102,7 @@ export const criarMeta = async (req: AuthRequest, res: Response<ApiResponse<{ id
     }
 
     // Inserir nova meta
+    console.log('🔍 [CRIAR META] Inserindo meta no banco...');
     const [result] = await pool.execute(`
       INSERT INTO metas (
         operador_id, tipo_meta, valor_atual, valor_meta, periodo,
@@ -105,6 +110,8 @@ export const criarMeta = async (req: AuthRequest, res: Response<ApiResponse<{ id
       ) VALUES ($1, $2, 0, $3, $4, $5, $6, TRUE, $7)
       RETURNING id
     `, [operador_id, tipo_meta, valor_meta, periodo, data_inicio, data_fim, pontos_recompensa || 100]);
+    
+    console.log('🔍 [CRIAR META] Resultado da inserção:', result);
 
     const insertResult = result as any;
     const metaId = insertResult[0].id;
@@ -116,7 +123,8 @@ export const criarMeta = async (req: AuthRequest, res: Response<ApiResponse<{ id
     });
 
   } catch (error) {
-    console.error('Erro ao criar meta:', error);
+    console.error('❌ [CRIAR META] Erro ao criar meta:', error);
+    console.error('❌ [CRIAR META] Stack trace:', (error as Error).stack);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
