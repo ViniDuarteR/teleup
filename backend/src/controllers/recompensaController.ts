@@ -228,7 +228,7 @@ export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
 };
 
 // Criar nova recompensa (apenas para gestores)
-export const criarRecompensa = async (req: AuthRequest, res: Response) => {
+export const criarRecompensa = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     console.log('🔍 [CRIAR RECOMPENSA] Iniciando criação de recompensa');
     console.log('🔍 [CRIAR RECOMPENSA] Headers:', req.headers);
@@ -249,10 +249,11 @@ export const criarRecompensa = async (req: AuthRequest, res: Response) => {
     
     // Validar campos obrigatórios
     if (!nome || !preco) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Nome e preço são obrigatórios'
       });
+      return;
     }
     
     // Obter empresa_id do gestor logado
@@ -267,10 +268,11 @@ export const criarRecompensa = async (req: AuthRequest, res: Response) => {
     
     const empresa = empresaResult as any[];
     if (empresa.length === 0) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'Empresa do gestor não encontrada'
       });
+      return;
     }
     
     const empresaId = empresa[0].empresa_id;
@@ -321,6 +323,244 @@ export const criarRecompensa = async (req: AuthRequest, res: Response) => {
       console.error('❌ [CRIAR RECOMPENSA] Detalhes do erro:', error.detail);
     }
     
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Atualizar recompensa (apenas para gestores)
+export const atualizarRecompensa = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const {
+      nome,
+      descricao,
+      categoria,
+      preco,
+      tipo,
+      raridade,
+      imagem,
+      quantidade_restante,
+      disponivel
+    } = req.body;
+    
+    // Obter empresa_id do gestor logado
+    const gestorId = req.user?.id;
+    
+    // Buscar empresa do gestor
+    const [empresaResult] = await pool.execute(
+      'SELECT empresa_id FROM gestores WHERE id = $1',
+      [gestorId]
+    );
+    
+    const empresa = empresaResult as any[];
+    if (empresa.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Empresa do gestor não encontrada'
+      });
+      return;
+    }
+    
+    const empresaId = empresa[0].empresa_id;
+    
+    // Verificar se a recompensa pertence à empresa do gestor
+    const [recompensaResult] = await pool.execute(
+      'SELECT id FROM recompensas WHERE id = $1 AND empresa_id = $2',
+      [id, empresaId]
+    );
+    
+    if (!Array.isArray(recompensaResult) || recompensaResult.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Recompensa não encontrada'
+      });
+      return;
+    }
+    
+    // Construir query de atualização dinamicamente
+    const updateFields = [];
+    const updateValues = [];
+    let paramIndex = 1;
+    
+    if (nome !== undefined) {
+      updateFields.push(`titulo = $${paramIndex++}`);
+      updateValues.push(nome);
+    }
+    if (descricao !== undefined) {
+      updateFields.push(`descricao = $${paramIndex++}`);
+      updateValues.push(descricao);
+    }
+    if (categoria !== undefined) {
+      updateFields.push(`categoria = $${paramIndex++}`);
+      updateValues.push(categoria);
+    }
+    if (preco !== undefined) {
+      updateFields.push(`preco = $${paramIndex++}`);
+      updateValues.push(preco);
+    }
+    if (tipo !== undefined) {
+      updateFields.push(`tipo = $${paramIndex++}`);
+      updateValues.push(tipo);
+    }
+    if (raridade !== undefined) {
+      updateFields.push(`raridade = $${paramIndex++}`);
+      updateValues.push(raridade);
+    }
+    if (imagem !== undefined) {
+      updateFields.push(`imagem = $${paramIndex++}`);
+      updateValues.push(imagem);
+    }
+    if (quantidade_restante !== undefined) {
+      updateFields.push(`quantidade_restante = $${paramIndex++}`);
+      updateValues.push(quantidade_restante);
+    }
+    if (disponivel !== undefined) {
+      updateFields.push(`disponivel = $${paramIndex++}`);
+      updateValues.push(disponivel);
+    }
+    
+    if (updateFields.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Nenhum campo para atualizar'
+      });
+      return;
+    }
+    
+    updateValues.push(id);
+    
+    const query = `UPDATE recompensas SET ${updateFields.join(', ')} WHERE id = $${paramIndex}`;
+    
+    await pool.execute(query, updateValues);
+    
+    res.json({
+      success: true,
+      message: 'Recompensa atualizada com sucesso!'
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar recompensa:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Excluir recompensa (apenas para gestores)
+export const excluirRecompensa = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    
+    // Obter empresa_id do gestor logado
+    const gestorId = req.user?.id;
+    
+    // Buscar empresa do gestor
+    const [empresaResult] = await pool.execute(
+      'SELECT empresa_id FROM gestores WHERE id = $1',
+      [gestorId]
+    );
+    
+    const empresa = empresaResult as any[];
+    if (empresa.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Empresa do gestor não encontrada'
+      });
+      return;
+    }
+    
+    const empresaId = empresa[0].empresa_id;
+    
+    // Verificar se a recompensa pertence à empresa do gestor
+    const [recompensaResult] = await pool.execute(
+      'SELECT id FROM recompensas WHERE id = $1 AND empresa_id = $2',
+      [id, empresaId]
+    );
+    
+    if (!Array.isArray(recompensaResult) || recompensaResult.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Recompensa não encontrada'
+      });
+      return;
+    }
+    
+    // Excluir a recompensa
+    await pool.execute('DELETE FROM recompensas WHERE id = $1', [id]);
+    
+    res.json({
+      success: true,
+      message: 'Recompensa excluída com sucesso!'
+    });
+  } catch (error) {
+    console.error('Erro ao excluir recompensa:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Toggle disponibilidade da recompensa (apenas para gestores)
+export const toggleDisponibilidade = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    
+    // Obter empresa_id do gestor logado
+    const gestorId = req.user?.id;
+    
+    // Buscar empresa do gestor
+    const [empresaResult] = await pool.execute(
+      'SELECT empresa_id FROM gestores WHERE id = $1',
+      [gestorId]
+    );
+    
+    const empresa = empresaResult as any[];
+    if (empresa.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Empresa do gestor não encontrada'
+      });
+      return;
+    }
+    
+    const empresaId = empresa[0].empresa_id;
+    
+    // Verificar se a recompensa pertence à empresa do gestor
+    const [recompensaResult] = await pool.execute(
+      'SELECT id, disponivel FROM recompensas WHERE id = $1 AND empresa_id = $2',
+      [id, empresaId]
+    );
+    
+    if (!Array.isArray(recompensaResult) || recompensaResult.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: 'Recompensa não encontrada'
+      });
+      return;
+    }
+    
+    const recompensa = recompensaResult[0] as any;
+    const novaDisponibilidade = !recompensa.disponivel;
+    
+    // Atualizar disponibilidade
+    await pool.execute(
+      'UPDATE recompensas SET disponivel = $1 WHERE id = $2',
+      [novaDisponibilidade, id]
+    );
+    
+    res.json({
+      success: true,
+      message: `Recompensa ${novaDisponibilidade ? 'disponibilizada' : 'indisponibilizada'} com sucesso!`,
+      data: {
+        disponivel: novaDisponibilidade
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao alterar disponibilidade da recompensa:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
