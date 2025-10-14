@@ -148,6 +148,12 @@ const GerenciarRecompensas = () => {
           console.log(`  ${key}:`, value);
         }
         
+        console.log('🔍 [SALVAR RECOMPENSA] Enviando requisição para:', url);
+        console.log('🔍 [SALVAR RECOMPENSA] Método:', method);
+        console.log('🔍 [SALVAR RECOMPENSA] Headers:', {
+          'Authorization': `Bearer ${token}`
+        });
+        
         const response = await fetch(url, {
           method,
           headers: {
@@ -156,6 +162,7 @@ const GerenciarRecompensas = () => {
           body: formData
         });
         
+        console.log('🔍 [SALVAR RECOMPENSA] Response recebida!');
         console.log('🔍 [SALVAR RECOMPENSA] Response status:', response.status);
         console.log('🔍 [SALVAR RECOMPENSA] Response ok:', response.ok);
         console.log('🔍 [SALVAR RECOMPENSA] Response headers:', Object.fromEntries(response.headers.entries()));

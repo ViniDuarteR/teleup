@@ -1,4 +1,5 @@
 import express, { Response, NextFunction } from 'express';
+import multer from 'multer';
 import { authenticateToken } from '../middleware/auth';
 import { AuthRequest } from '../types';
 import { uploadImagem } from '../middleware/upload';
@@ -28,9 +29,13 @@ router.post('/comprar', comprarRecompensa);
 
 // Criar recompensa (apenas gestores)
 router.post('/', (req: AuthRequest, res: Response, next: NextFunction) => {
+  console.log('🔍 [ROUTE] POST / - Rota de criação de recompensa chamada!');
   console.log('🔍 [ROUTE] POST / - Verificando permissões');
   console.log('🔍 [ROUTE] User:', req.user);
   console.log('🔍 [ROUTE] User tipo:', req.user?.tipo);
+  console.log('🔍 [ROUTE] Headers recebidos:', req.headers);
+  console.log('🔍 [ROUTE] Body recebido:', req.body);
+  console.log('🔍 [ROUTE] File recebido:', req.file);
   
   if (req.user?.tipo !== 'gestor') {
     console.log('❌ [ROUTE] Acesso negado - não é gestor');
@@ -41,7 +46,22 @@ router.post('/', (req: AuthRequest, res: Response, next: NextFunction) => {
   }
   console.log('✅ [ROUTE] Permissão concedida, prosseguindo...');
   return next();
-}, uploadImagem.single('imagem'), criarRecompensa);
+}, uploadImagem.single('imagem'), (error: any, req: AuthRequest, res: Response, next: NextFunction) => {
+  if (error instanceof multer.MulterError) {
+    console.log('❌ [UPLOAD ERROR] Erro do Multer:', error.message);
+    return res.status(400).json({
+      success: false,
+      message: `Erro no upload: ${error.message}`
+    });
+  } else if (error) {
+    console.log('❌ [UPLOAD ERROR] Erro geral:', error.message);
+    return res.status(400).json({
+      success: false,
+      message: `Erro no upload: ${error.message}`
+    });
+  }
+  return next();
+}, criarRecompensa);
 
 // Atualizar recompensa (apenas gestores)
 router.put('/:id', (req: AuthRequest, res: Response, next: NextFunction) => {
