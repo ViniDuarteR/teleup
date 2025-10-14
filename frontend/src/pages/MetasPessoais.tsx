@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/useAuth";
 import Header from "../components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import { toast } from "sonner";
+import { API_BASE_URL } from "../lib/api";
 
 interface Meta {
   id: number;
@@ -37,7 +38,7 @@ const MetasPessoais = () => {
   
 
   // Buscar metas do operador
-  const buscarMetas = async () => {
+  const buscarMetas = useCallback(async () => {
     if (!token) return;
 
     try {
@@ -61,11 +62,11 @@ const MetasPessoais = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     buscarMetas();
-  }, [token]);
+  }, [buscarMetas]);
 
   const getIconeMeta = (tipo: string) => {
     switch (tipo) {
@@ -124,7 +125,15 @@ const MetasPessoais = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header operador={user} />
+      <Header operador={{
+        nome: user.nome,
+        avatar: user.avatar || '',
+        nivel: user.nivel || 1,
+        xp_atual: user.xp_atual || 0,
+        xp_proximo_nivel: user.xp_proximo_nivel || 100,
+        pontos_totais: user.pontos_totais || 0,
+        tempo_online: user.tempo_online ? `${Math.floor(user.tempo_online / 60)}h ${user.tempo_online % 60}m` : '0h 0m'
+      }} />
       
       <div className="p-6 pt-24">
         <div className="max-w-6xl mx-auto space-y-6">
