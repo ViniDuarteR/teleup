@@ -19,6 +19,7 @@ const DialpadDiscagem = ({
 }: DialpadDiscagemProps) => {
   const [numero, setNumero] = useState("");
   const [animatingKey, setAnimatingKey] = useState<string | null>(null);
+  const [isCalling, setIsCalling] = useState(false);
 
   // Teclas do dialpad
   const teclas = [
@@ -61,10 +62,18 @@ const DialpadDiscagem = ({
     setNumero("");
   };
 
-  // Iniciar chamada
+  // Iniciar chamada com animação
   const iniciarChamada = () => {
     if (!numero || numero.length < 8 || emChamada || disabled) return;
-    onIniciarChamada(numero);
+    
+    // Ativar animação de chamada
+    setIsCalling(true);
+    
+    // Simular delay da animação antes de iniciar a chamada real
+    setTimeout(() => {
+      onIniciarChamada(numero);
+      setIsCalling(false);
+    }, 1500); // 1.5 segundos de animação
   };
 
   // Finalizar chamada
@@ -219,14 +228,30 @@ const DialpadDiscagem = ({
               variant="default"
               size="lg"
               onClick={iniciarChamada}
-              disabled={!numero || numero.length < 8 || disabled}
+              disabled={!numero || numero.length < 8 || disabled || isCalling}
               className={cn(
-                "h-14 btn-gaming",
-                numero.length >= 8 && "bg-success hover:bg-success/90 pulse-glow"
+                "h-14 btn-gaming relative overflow-hidden",
+                numero.length >= 8 && !isCalling && "bg-success hover:bg-success/90 pulse-glow",
+                isCalling && "bg-primary ring-4 ring-primary/50 ring-animation"
               )}
             >
-              <Phone className="w-5 h-5 mr-2" />
-              Ligar
+              {isCalling ? (
+                <>
+                  <div className="flex items-center justify-center">
+                    <div className="w-5 h-5 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Ligando...</span>
+                  </div>
+                  {/* Efeito de ondas */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-20 h-20 bg-white/20 rounded-full animate-ping"></div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Phone className="w-5 h-5 mr-2" />
+                  Ligar
+                </>
+              )}
             </Button>
           </>
         )}

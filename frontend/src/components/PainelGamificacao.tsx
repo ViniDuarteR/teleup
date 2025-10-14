@@ -2,6 +2,7 @@ import { Trophy, Target, Zap, Gift, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { useNavigate } from "react-router-dom";
 
 interface Missao {
   id: number;
@@ -29,6 +30,8 @@ interface PainelGamificacaoProps {
 }
 
 const PainelGamificacao = ({ missoes, conquistas, pontos }: PainelGamificacaoProps) => {
+  const navigate = useNavigate();
+  
   const getIcon = (iconName: string) => {
     const iconMap: Record<string, React.ComponentType<any>> = {
       phone: Target,
@@ -55,6 +58,7 @@ const PainelGamificacao = ({ missoes, conquistas, pontos }: PainelGamificacaoPro
           variant="secondary" 
           size="sm" 
           className="mt-3 btn-secondary-gaming"
+          onClick={() => navigate('/loja')}
         >
           <Gift className="w-4 h-4 mr-2" />
           Ver Loja

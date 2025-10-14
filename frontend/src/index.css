@@ -171,6 +171,34 @@
 
   @keyframes ring-pulse {
     0% {
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 10px hsl(var(--primary) / 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+    }
+  }
+
+  /* Animação de chamada */
+  .calling-animation {
+    animation: calling-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes calling-pulse {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow: 0 0 0 20px hsl(var(--primary) / 0);
+    }
+  }
+
+  @keyframes ring-pulse {
+    0% {
       transform: scale(1);
       opacity: 1;
     }
