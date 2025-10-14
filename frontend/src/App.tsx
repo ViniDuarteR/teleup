@@ -91,6 +91,14 @@ const App = () => (
               } 
             />
             <Route 
+              path="/gestor/relatorios" 
+              element={
+                <ProtectedRoute requiredRole="gestor">
+                  <NotFound />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/usuarios" 
               element={
                 <ProtectedRoute requiredRole="gestor">
