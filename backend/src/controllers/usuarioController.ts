@@ -90,7 +90,11 @@ export const listarUsuarios = async (req: AuthRequest, res: Response<ApiResponse
 // Criar novo usuário
 export const criarUsuario = async (req: AuthRequest, res: Response<ApiResponse<{ id: number }>>): Promise<void> => {
   try {
+    console.log('🔍 [USUARIO CREATE] Iniciando criação de usuário');
+    console.log('🔍 [USUARIO CREATE] Body recebido:', req.body);
+    
     const { nome, email, senha, nivel = 1, pa = '', carteira = '' } = req.body;
+    console.log('🔍 [USUARIO CREATE] Dados extraídos:', { nome, email, nivel, pa, carteira });
     
     let empresaId = 1; // Default empresa ID
     
@@ -129,21 +133,25 @@ export const criarUsuario = async (req: AuthRequest, res: Response<ApiResponse<{
     const xpProximoNivel = nivel * 100;
 
     // Inserir novo operador
+    console.log('🔍 [USUARIO CREATE] Inserindo operador no banco...');
     const [result] = await pool.execute(
       `INSERT INTO operadores (nome, email, senha, nivel, xp_atual, xp_proximo_nivel, 
                               pontos_totais, status, avatar, tempo_online, empresa_id, pa, carteira)
-       VALUES (?, ?, ?, ?, 0, ?, 0, 'Aguardando Chamada', 'avatar1.png', 0, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, 0, $5, 0, 'Aguardando Chamada', 'avatar1.png', 0, $6, $7, $8) RETURNING id`,
       [nome, email, senhaHash, nivel, xpProximoNivel, empresaId, pa, carteira]
     );
 
     const insertResult = result as any;
+    console.log('✅ [USUARIO CREATE] Usuário criado com sucesso, ID:', insertResult[0]?.id);
+    
     res.status(201).json({
       success: true,
       message: 'Usuário criado com sucesso',
-      data: { id: insertResult.insertId }
+      data: { id: insertResult[0]?.id }
     });
-  } catch (error) {
-    console.error('Erro ao criar usuário:', error);
+  } catch (error: any) {
+    console.error('❌ [USUARIO CREATE] Erro ao criar usuário:', error);
+    console.error('❌ [USUARIO CREATE] Stack trace:', error?.stack);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
