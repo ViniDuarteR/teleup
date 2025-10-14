@@ -145,6 +145,7 @@ const GerenciarRecompensas = () => {
         
         console.log('🔍 [SALVAR RECOMPENSA] Response status:', response.status);
         console.log('🔍 [SALVAR RECOMPENSA] Response ok:', response.ok);
+        console.log('🔍 [SALVAR RECOMPENSA] Response headers:', Object.fromEntries(response.headers.entries()));
         
         if (!response.ok) {
           console.log('❌ [SALVAR RECOMPENSA] Response not ok, status:', response.status);
@@ -154,8 +155,19 @@ const GerenciarRecompensas = () => {
           return;
         }
         
-        const data = await response.json();
-        console.log('🔍 [SALVAR RECOMPENSA] Response data:', data);
+        const responseText = await response.text();
+        console.log('🔍 [SALVAR RECOMPENSA] Raw response text:', responseText);
+        
+        let data;
+        try {
+          data = JSON.parse(responseText);
+          console.log('🔍 [SALVAR RECOMPENSA] Parsed response data:', data);
+        } catch (parseError) {
+          console.error('❌ [SALVAR RECOMPENSA] Erro ao fazer parse do JSON:', parseError);
+          console.error('❌ [SALVAR RECOMPENSA] Response text que falhou:', responseText);
+          toast.error('Erro ao processar resposta do servidor');
+          return;
+        }
         
         if (data.success) {
           console.log('✅ [SALVAR RECOMPENSA] Sucesso!');

@@ -39,6 +39,7 @@ router.post('/', (req: AuthRequest, res: Response, next: NextFunction) => {
 
 // Atualizar recompensa (apenas gestores)
 router.put('/:id', (req: AuthRequest, res: Response, next: NextFunction) => {
+  console.log('🔍 [ROUTE] PUT /:id - Rota chamada');
   console.log('🔍 [ROUTE] PUT /:id - Verificando permissões');
   console.log('🔍 [ROUTE] User:', req.user);
   console.log('🔍 [ROUTE] User tipo:', req.user?.tipo);

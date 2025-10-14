@@ -194,6 +194,8 @@ export const atualizarRecompensa = async (req: AuthRequest, res: Response) => {
     console.log('🔍 [BACKEND] Params:', req.params);
     console.log('🔍 [BACKEND] Body:', req.body);
     console.log('🔍 [BACKEND] File:', req.file);
+    console.log('🔍 [BACKEND] User:', req.user);
+    console.log('🔍 [BACKEND] Operador:', req.operador);
     
     createUploadDir(); // Garantir que o diretório existe
     
@@ -228,8 +230,12 @@ export const atualizarRecompensa = async (req: AuthRequest, res: Response) => {
       params = [nome, descricao, categoria, parseInt(preco), tipo, raridade, disponivel !== false ? 1 : 0, quantidade_restante ? parseInt(quantidade_restante) : null, parseInt(id)];
     }
 
+    console.log('🔍 [BACKEND] Executando query:', query);
+    console.log('🔍 [BACKEND] Com parâmetros:', params);
+    
     const [result] = await pool.execute(query, params);
     console.log('🔍 [BACKEND] Update result:', result);
+    console.log('🔍 [BACKEND] Row count:', (result as any).rowCount);
 
     // PostgreSQL retorna rowCount em vez de affectedRows
     if ((result as any).rowCount === 0) {
