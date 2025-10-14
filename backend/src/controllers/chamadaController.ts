@@ -9,7 +9,7 @@ export const iniciarChamada = async (req: AuthRequest, res: Response<ApiResponse
     const operadorId = req.operador.id;
 
     // Verificar se operador está disponível
-    if (req.operador.status !== 'Aguardando Chamada') {
+    if (req.operador.status_operacional !== 'Aguardando Chamada') {
       res.status(400).json({
         success: false,
         message: 'Operador deve estar aguardando chamada para iniciar uma nova'
@@ -27,7 +27,7 @@ export const iniciarChamada = async (req: AuthRequest, res: Response<ApiResponse
 
     // Atualizar status do operador
     await pool.execute(
-      'UPDATE operadores SET status = $1 WHERE id = $2',
+      'UPDATE operadores SET status_operacional = $1 WHERE id = $2',
       ['Em Chamada', operadorId]
     );
 
@@ -96,7 +96,7 @@ export const finalizarChamada = async (req: AuthRequest, res: Response<ApiRespon
 
     // Atualizar status do operador
     await pool.execute(
-      'UPDATE operadores SET status = $1 WHERE id = $2',
+      'UPDATE operadores SET status_operacional = $1 WHERE id = $2',
       ['Aguardando Chamada', operadorId]
     );
 

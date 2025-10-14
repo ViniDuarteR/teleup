@@ -12,7 +12,8 @@ export interface Operador {
   xp_atual: number;
   xp_proximo_nivel: number;
   pontos_totais: number;
-  status: 'Aguardando Chamada' | 'Em Chamada' | 'Em Pausa' | 'Offline';
+  status: 'Ativo' | 'Inativo' | 'Suspenso';
+  status_operacional: 'Aguardando Chamada' | 'Em Chamada' | 'Em Pausa' | 'Offline';
   tempo_online: string;
   data_criacao: Date;
   data_atualizacao: Date;

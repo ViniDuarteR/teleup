@@ -41,22 +41,22 @@ router.get('/metricas-equipe', async (req: AuthRequest, res) => {
     );
 
     const [operadoresOnline] = await pool.execute(
-      'SELECT COUNT(*) as online FROM operadores WHERE empresa_id = $1 AND status = $2',
-      [empresaId, 'Online']
+      'SELECT COUNT(*) as online FROM operadores WHERE empresa_id = $1 AND status_operacional = $2',
+      [empresaId, 'Aguardando Chamada']
     );
 
     const [operadoresEmChamada] = await pool.execute(
-      'SELECT COUNT(*) as em_chamada FROM operadores WHERE empresa_id = $1 AND status = $2',
+      'SELECT COUNT(*) as em_chamada FROM operadores WHERE empresa_id = $1 AND status_operacional = $2',
       [empresaId, 'Em Chamada']
     );
 
     const [operadoresEmPausa] = await pool.execute(
-      'SELECT COUNT(*) as em_pausa FROM operadores WHERE empresa_id = $1 AND status = $2',
+      'SELECT COUNT(*) as em_pausa FROM operadores WHERE empresa_id = $1 AND status_operacional = $2',
       [empresaId, 'Em Pausa']
     );
 
     const [operadoresOffline] = await pool.execute(
-      'SELECT COUNT(*) as offline FROM operadores WHERE empresa_id = $1 AND status = $2',
+      'SELECT COUNT(*) as offline FROM operadores WHERE empresa_id = $1 AND status_operacional = $2',
       [empresaId, 'Offline']
     );
 
@@ -132,7 +132,8 @@ router.get('/operadores', async (req: AuthRequest, res) => {
          o.email, 
          o.nivel, 
          o.pontos_totais, 
-         o.status, 
+         o.status,
+         o.status_operacional, 
          o.avatar, 
          COALESCE(o.tempo_online, 0) as tempo_online_minutos,
          COALESCE(c.chamadas_hoje, 0) as chamadas_hoje,
@@ -225,7 +226,7 @@ router.post('/operadores', async (req: AuthRequest, res) => {
     const [result] = await pool.execute(
       `INSERT INTO operadores (nome, email, senha, nivel, xp_atual, xp_proximo_nivel, 
                               pontos_totais, status, avatar, tempo_online, empresa_id, gestor_id, pa, carteira)
-       VALUES ($1, $2, $3, $4, 0, $5, 0, 'Aguardando Chamada', 'avatar1.png', 0, $6, $7, $8, $9) RETURNING id`,
+       VALUES ($1, $2, $3, $4, 0, $5, 0, 'Ativo', 'avatar1.png', 0, $6, $7, $8, $9) RETURNING id`,
       [nome, email, senhaHash, nivel, xpProximoNivel, empresaId, gestorId, pa, carteira]
     );
 
@@ -280,7 +281,7 @@ router.patch('/operador/:id/status', async (req: AuthRequest, res) => {
 
     // Atualizar status do operador
     await pool.execute(
-      'UPDATE operadores SET status = $1 WHERE id = $2',
+      'UPDATE operadores SET status_operacional = $1 WHERE id = $2',
       [status, operadorId]
     );
 

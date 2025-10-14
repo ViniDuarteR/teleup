@@ -175,7 +175,7 @@ export const requireGestor = (req: AuthRequest, res: Response, next: NextFunctio
 
 // Middleware para verificar se operador está online
 export const requireOnline = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  if (req.operador.status === 'Offline') {
+  if (req.operador.status_operacional === 'Offline') {
     res.status(403).json({ 
       success: false, 
       message: 'Operador deve estar online para esta ação' 

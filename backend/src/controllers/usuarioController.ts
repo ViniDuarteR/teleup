@@ -30,7 +30,7 @@ export const listarUsuarios = async (req: AuthRequest, res: Response<ApiResponse
       // Buscar operadores da empresa do gestor
       const [operadores] = await pool.execute(
         `SELECT id, nome, email, nivel, xp_atual, xp_proximo_nivel, pontos_totais, 
-                status, avatar, tempo_online, data_criacao, data_atualizacao, pa, carteira
+                status, status_operacional, avatar, tempo_online, data_criacao, data_atualizacao, pa, carteira
          FROM operadores 
          WHERE empresa_id = $1
          ORDER BY pontos_totais DESC`,
@@ -140,7 +140,7 @@ export const criarUsuario = async (req: Request, res: Response<ApiResponse<{ id:
     const [result] = await pool.execute(
       `INSERT INTO operadores (nome, email, senha, nivel, xp_atual, xp_proximo_nivel, 
                               pontos_totais, status, avatar, tempo_online, empresa_id, gestor_id, pa, carteira)
-       VALUES ($1, $2, $3, $4, 0, $5, 0, 'Aguardando Chamada', 'avatar1.png', 0, $6, NULL, $7, $8) RETURNING id`,
+       VALUES ($1, $2, $3, $4, 0, $5, 0, 'Ativo', 'avatar1.png', 0, $6, NULL, $7, $8) RETURNING id`,
       [nome, email, senhaHash, nivel, xpProximoNivel, empresaId, pa, carteira]
     );
 

@@ -96,7 +96,7 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
     // Atualizar status para online
     console.log(`📊 [OPERADOR LOGIN] Atualizando status do operador para 'Aguardando Chamada'`);
     await pool.execute(
-      'UPDATE operadores SET status = $1 WHERE id = $2',
+      'UPDATE operadores SET status_operacional = $1 WHERE id = $2',
       ['Aguardando Chamada', operador.id]
     );
     console.log(`✅ [OPERADOR LOGIN] Status atualizado com sucesso`);
@@ -108,7 +108,8 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
       nome: operador.nome,
       email: operador.email,
       tipo: 'operador', // Todos os usuários da tabela operadores são operadores
-      status: 'Aguardando Chamada' as const,
+      status: operador.status,
+      status_operacional: 'Aguardando Chamada' as const,
       avatar: operador.avatar,
       data_criacao: operador.data_criacao,
       data_atualizacao: operador.data_atualizacao
@@ -174,7 +175,7 @@ export const logout = async (req: AuthRequest, res: Response<ApiResponse>): Prom
 
     // Atualizar status para offline
     await pool.execute(
-      'UPDATE operadores SET status = $1 WHERE id = $2',
+      'UPDATE operadores SET status_operacional = $1 WHERE id = $2',
       ['Offline', req.operador.id]
     );
 
@@ -199,7 +200,7 @@ export const getDashboard = async (req: AuthRequest, res: Response<ApiResponse<D
 
     // Buscar dados do operador
     const [operadores] = await pool.execute(
-      'SELECT * FROM operadores WHERE id = $1',
+      'SELECT id, nome, email, nivel, xp, pontos_totais, status, status_operacional, avatar, tempo_online, data_criacao, data_atualizacao FROM operadores WHERE id = $1',
       [operadorId]
     );
 
@@ -267,6 +268,7 @@ export const getDashboard = async (req: AuthRequest, res: Response<ApiResponse<D
           xp_proximo_nivel: operador.xp_proximo_nivel,
           pontos_totais: operador.pontos_totais,
           status: operador.status,
+          status_operacional: operador.status_operacional,
           tempo_online: operador.tempo_online,
           data_criacao: operador.data_criacao,
           data_atualizacao: operador.data_atualizacao
@@ -305,6 +307,7 @@ export const updateStatus = async (req: AuthRequest, res: Response<ApiResponse<{
     const { status } = req.body;
 
     const statusValidos = ['Aguardando Chamada', 'Em Chamada', 'Em Pausa', 'Offline'];
+    
     if (!statusValidos.includes(status)) {
       res.status(400).json({
         success: false,
@@ -312,9 +315,10 @@ export const updateStatus = async (req: AuthRequest, res: Response<ApiResponse<{
       });
       return;
     }
-
+    
+    // Atualizar status operacional
     await pool.execute(
-      'UPDATE operadores SET status = $1 WHERE id = $2',
+      'UPDATE operadores SET status_operacional = $1 WHERE id = $2',
       [status, req.operador.id]
     );
 
