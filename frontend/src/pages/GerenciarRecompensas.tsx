@@ -23,6 +23,13 @@ import {
   EyeOff
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface Recompensa {
   id: number;
@@ -66,6 +73,8 @@ const GerenciarRecompensas = () => {
   });
   const [imagemPreview, setImagemPreview] = useState<string | null>(null);
   const [arquivoImagem, setArquivoImagem] = useState<File | null>(null);
+  const [mostrarModalSucesso, setMostrarModalSucesso] = useState(false);
+  const [mensagemSucesso, setMensagemSucesso] = useState('');
 
 
   // Buscar recompensas
@@ -118,6 +127,7 @@ const GerenciarRecompensas = () => {
       
       // Se há um arquivo de imagem, usar FormData
       if (arquivoImagem) {
+        console.log('🔍 [SALVAR RECOMPENSA] Arquivo de imagem encontrado:', arquivoImagem);
         const formData = new FormData();
         formData.append('imagem', arquivoImagem);
         formData.append('nome', formulario.nome);
@@ -171,7 +181,10 @@ const GerenciarRecompensas = () => {
         
         if (data.success) {
           console.log('✅ [SALVAR RECOMPENSA] Sucesso!');
-          toast.success(editando ? 'Recompensa atualizada!' : 'Recompensa criada!');
+          const mensagem = editando ? 'Recompensa atualizada com sucesso!' : 'Recompensa criada com sucesso!';
+          setMensagemSucesso(mensagem);
+          setMostrarModalSucesso(true);
+          toast.success(mensagem);
           buscarRecompensas();
           limparFormulario();
         } else {
@@ -180,7 +193,7 @@ const GerenciarRecompensas = () => {
         }
       } else {
         // Se não há arquivo, enviar como JSON normal
-        console.log('🔍 [SALVAR RECOMPENSA] Enviando JSON');
+        console.log('🔍 [SALVAR RECOMPENSA] Nenhum arquivo de imagem, enviando JSON');
         console.log('🔍 [SALVAR RECOMPENSA] JSON data:', JSON.stringify(formulario, null, 2));
         
         const response = await fetch(url, {
@@ -208,7 +221,10 @@ const GerenciarRecompensas = () => {
 
         if (data.success) {
           console.log('✅ [SALVAR RECOMPENSA] Sucesso!');
-          toast.success(editando ? 'Recompensa atualizada!' : 'Recompensa criada!');
+          const mensagem = editando ? 'Recompensa atualizada com sucesso!' : 'Recompensa criada com sucesso!';
+          setMensagemSucesso(mensagem);
+          setMostrarModalSucesso(true);
+          toast.success(mensagem);
           buscarRecompensas();
           limparFormulario();
         } else {
@@ -297,20 +313,30 @@ const GerenciarRecompensas = () => {
 
   // Função para lidar com o upload de imagem
   const handleImagemChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('🔍 [UPLOAD IMAGEM] Input change detectado');
     const file = event.target.files?.[0];
+    console.log('🔍 [UPLOAD IMAGEM] Arquivo selecionado:', file);
+    
     if (file) {
+      console.log('🔍 [UPLOAD IMAGEM] Nome do arquivo:', file.name);
+      console.log('🔍 [UPLOAD IMAGEM] Tipo do arquivo:', file.type);
+      console.log('🔍 [UPLOAD IMAGEM] Tamanho do arquivo:', file.size);
+      
       // Verificar se é uma imagem
       if (!file.type.startsWith('image/')) {
+        console.log('❌ [UPLOAD IMAGEM] Arquivo não é uma imagem');
         toast.error('Por favor, selecione apenas arquivos de imagem');
         return;
       }
       
       // Verificar tamanho do arquivo (máximo 5MB)
       if (file.size > 5 * 1024 * 1024) {
+        console.log('❌ [UPLOAD IMAGEM] Arquivo muito grande');
         toast.error('A imagem deve ter no máximo 5MB');
         return;
       }
 
+      console.log('✅ [UPLOAD IMAGEM] Arquivo válido, definindo no estado');
       setArquivoImagem(file);
       
       // Criar preview da imagem
@@ -705,6 +731,29 @@ const GerenciarRecompensas = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de Sucesso */}
+      <Dialog open={mostrarModalSucesso} onOpenChange={setMostrarModalSucesso}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <Gift className="w-5 h-5" />
+              Sucesso!
+            </DialogTitle>
+            <DialogDescription className="text-center py-4">
+              {mensagemSucesso}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center">
+            <Button 
+              onClick={() => setMostrarModalSucesso(false)}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Continuar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
