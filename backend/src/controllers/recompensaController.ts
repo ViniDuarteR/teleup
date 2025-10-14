@@ -2,13 +2,45 @@ import { Response } from 'express';
 import { AuthRequest } from '../types';
 import { pool } from '../config/database';
 
-// Buscar todas as recompensas disponíveis
+// Buscar todas as recompensas disponíveis da empresa
 export const getRecompensas = async (req: AuthRequest, res: Response) => {
   try {
+    console.log('🔍 [GET RECOMPENSAS] Buscando recompensas');
+    
+    let empresaId = 1; // Default
+    
+    // Se for gestor, buscar empresa do gestor
+    if (req.user?.tipo === 'gestor') {
+      const gestorId = req.user.id;
+      const [empresaResult] = await pool.execute(
+        'SELECT empresa_id FROM gestores WHERE id = $1',
+        [gestorId]
+      );
+      
+      const empresa = empresaResult as any[];
+      if (empresa.length > 0) {
+        empresaId = empresa[0].empresa_id;
+      }
+    } else if (req.user?.tipo === 'operador') {
+      // Se for operador, buscar empresa do operador
+      const operadorId = req.user.id;
+      const [empresaResult] = await pool.execute(
+        'SELECT empresa_id FROM operadores WHERE id = $1',
+        [operadorId]
+      );
+      
+      const empresa = empresaResult as any[];
+      if (empresa.length > 0) {
+        empresaId = empresa[0].empresa_id;
+      }
+    }
+    
+    console.log('🔍 [GET RECOMPENSAS] Empresa ID:', empresaId);
+    
     const query = `
       SELECT 
         id,
-        nome,
+        titulo as nome,
         descricao,
         categoria,
         preco,
@@ -17,20 +49,22 @@ export const getRecompensas = async (req: AuthRequest, res: Response) => {
         imagem,
         disponivel,
         quantidade_restante,
-        data_criacao
+        criado_em as data_criacao
       FROM recompensas 
-      WHERE disponivel = true
+      WHERE disponivel = true AND empresa_id = $1
       ORDER BY raridade DESC, preco ASC
     `;
 
-    const [rows] = await pool.execute(query);
+    const [rows] = await pool.execute(query, [empresaId]);
+    
+    console.log('✅ [GET RECOMPENSAS] Recompensas encontradas:', rows.length);
     
     res.json({
       success: true,
       data: rows
     });
   } catch (error) {
-    console.error('Erro ao buscar recompensas:', error);
+    console.error('❌ [GET RECOMPENSAS] Erro ao buscar recompensas:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -221,6 +255,27 @@ export const criarRecompensa = async (req: AuthRequest, res: Response) => {
       });
     }
     
+    // Obter empresa_id do gestor logado
+    const gestorId = req.user?.id;
+    console.log('🔍 [CRIAR RECOMPENSA] Gestor ID:', gestorId);
+    
+    // Buscar empresa do gestor
+    const [empresaResult] = await pool.execute(
+      'SELECT empresa_id FROM gestores WHERE id = $1',
+      [gestorId]
+    );
+    
+    const empresa = empresaResult as any[];
+    if (empresa.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Empresa do gestor não encontrada'
+      });
+    }
+    
+    const empresaId = empresa[0].empresa_id;
+    console.log('🔍 [CRIAR RECOMPENSA] Empresa ID:', empresaId);
+    
     // Mapear campos do frontend para a estrutura da tabela
     const titulo = nome; // O campo na tabela é 'titulo', não 'nome'
     const categoriaFinal = categoria || 'Outros';
@@ -229,19 +284,20 @@ export const criarRecompensa = async (req: AuthRequest, res: Response) => {
       titulo,
       descricao,
       categoria: categoriaFinal,
-      preco
+      preco,
+      empresaId
     });
     
     const query = `
       INSERT INTO recompensas (
         titulo, descricao, categoria, preco, tipo, raridade, 
-        imagem, disponivel, quantidade_restante, criado_em
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, NOW()) RETURNING id
+        imagem, disponivel, quantidade_restante, empresa_id, criado_em
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, NOW()) RETURNING id
     `;
     
     const [result] = await pool.execute(query, [
       titulo, descricao, categoriaFinal, preco, tipo || 'item', raridade || 'comum',
-      imagem || null, quantidade_restante || null
+      imagem || null, quantidade_restante || null, empresaId
     ]);
     
     console.log('✅ [CRIAR RECOMPENSA] Recompensa criada com sucesso, ID:', (result as any)[0]?.id);
