@@ -142,14 +142,7 @@ const MonitorOperadores = () => {
   // Criar novo operador
   const criarOperador = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token) {
-      console.error('Token não disponível');
-      toast.error('Token de autenticação não encontrado');
-      return;
-    }
-
-    console.log('Token disponível:', token ? 'Sim' : 'Não');
-    console.log('Dados do formulário:', formData);
+    if (!token) return;
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/gestor/operadores`, {
