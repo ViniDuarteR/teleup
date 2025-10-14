@@ -25,6 +25,7 @@ import DashboardEmpresa from "./pages/DashboardEmpresa";
 import RelatoriosEmpresa from "./pages/RelatoriosEmpresa";
 import GerenciarGestoresEmpresa from "./pages/GerenciarGestoresEmpresa";
 import ConfiguracoesEmpresa from "./pages/ConfiguracoesEmpresa";
+import GerenciarMetas from "./pages/GerenciarMetas";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -87,6 +88,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole="gestor">
                   <GerenciarRecompensas />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/gestor/metas" 
+              element={
+                <ProtectedRoute requiredRole="gestor">
+                  <GerenciarMetas />
                 </ProtectedRoute>
               } 
             />

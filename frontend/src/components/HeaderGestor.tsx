@@ -8,7 +8,8 @@ import {
   LogOut,
   Activity,
   TrendingUp,
-  Shield
+  Shield,
+  Target
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/useAuth";
@@ -87,6 +88,17 @@ const HeaderGestor = ({ gestor }: HeaderGestorProps) => {
               >
                 <Gift className="w-4 h-4 mr-2" />
                 Recompensas
+              </Button>
+            </Link>
+            
+            <Link to="/gestor/metas">
+              <Button 
+                variant={location.pathname === '/gestor/metas' ? "default" : "ghost"} 
+                size="sm" 
+                className={location.pathname === '/gestor/metas' ? "btn-gaming" : "text-muted-foreground hover:text-primary"}
+              >
+                <Target className="w-4 h-4 mr-2" />
+                Metas
               </Button>
             </Link>
             
