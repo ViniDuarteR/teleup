@@ -247,7 +247,7 @@ export const atualizarUsuario = async (req: AuthRequest, res: Response<ApiRespon
     updateValues.push(id);
 
     await pool.execute(
-      `UPDATE operadores SET ${updateFields.join(', ')} WHERE id = ?`,
+      `UPDATE operadores SET ${updateFields.join(', ')} WHERE id = $${updateValues.length}`,
       updateValues
     );
 

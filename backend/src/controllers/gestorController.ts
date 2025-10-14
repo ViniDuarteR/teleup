@@ -222,7 +222,7 @@ export const criarGestor = async (req: any, res: Response): Promise<void> => {
     // Inserir novo gestor
     const [result] = await pool.execute(
       `INSERT INTO gestores (nome, email, senha, status, avatar, empresa_id)
-       VALUES (?, ?, ?, 'Ativo', 'avatar1.png', ?)`,
+       VALUES ($1, $2, $3, 'Ativo', 'avatar1.png', $4) RETURNING id`,
       [nome, email, senhaHash, empresaId]
     );
 
@@ -230,7 +230,7 @@ export const criarGestor = async (req: any, res: Response): Promise<void> => {
     res.status(201).json({
       success: true,
       message: 'Gestor criado com sucesso',
-      data: { id: insertResult.insertId }
+      data: { id: insertResult[0]?.id }
     });
 
   } catch (error) {

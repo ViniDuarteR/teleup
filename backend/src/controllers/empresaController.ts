@@ -447,7 +447,7 @@ export const atualizarGestorEmpresa = async (req: AuthRequest, res: Response<Api
     }
 
     await pool.execute(
-      `UPDATE gestores SET ${updateFields.join(', ')} WHERE id = ?`,
+      `UPDATE gestores SET ${updateFields.join(', ')} WHERE id = $${updateValues.length}`,
       updateValues
     );
 
@@ -550,7 +550,7 @@ export const getDashboardEmpresa = async (req: AuthRequest, res: Response<ApiRes
     );
 
     const [operadoresAtivos] = await pool.execute(
-      'SELECT COUNT(*) as total FROM operadores WHERE empresa_id = ? AND status IN ("Dispon??vel", "Em Chamada")',
+      'SELECT COUNT(*) as total FROM operadores WHERE empresa_id = $1 AND status IN (\'Disponível\', \'Em Chamada\')',
       [empresaId]
     );
 

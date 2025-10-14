@@ -62,7 +62,7 @@ export const getCompras = async (req: AuthRequest, res: Response) => {
         r.preco
       FROM compras c
       JOIN recompensas r ON c.recompensa_id = r.id
-      WHERE c.operador_id = ?
+      WHERE c.operador_id = $1
       ORDER BY c.data_compra DESC
     `;
 
@@ -155,7 +155,7 @@ export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
     
     // Realizar a compra
     const [result] = await pool.execute(
-      'INSERT INTO compras (operador_id, recompensa_id, data_compra, status) VALUES (?, ?, NOW(), "aprovada")',
+      'INSERT INTO compras (operador_id, recompensa_id, data_compra, status) VALUES ($1, $2, NOW(), \'aprovada\') RETURNING id',
       [operadorId, recompensa_id]
     );
     
@@ -211,7 +211,7 @@ export const criarRecompensa = async (req: AuthRequest, res: Response) => {
       INSERT INTO recompensas (
         nome, descricao, categoria, preco, tipo, raridade, 
         imagem, disponivel, quantidade_restante, data_criacao
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, true, ?, NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, NOW()) RETURNING id
     `;
     
     const [result] = await pool.execute(query, [
@@ -223,7 +223,7 @@ export const criarRecompensa = async (req: AuthRequest, res: Response) => {
       success: true,
       message: 'Recompensa criada com sucesso!',
       data: {
-        id: (result as any).insertId
+        id: (result as any)[0]?.id
       }
     });
   } catch (error) {

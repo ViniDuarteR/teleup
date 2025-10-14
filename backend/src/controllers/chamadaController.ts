@@ -20,10 +20,10 @@ export const iniciarChamada = async (req: AuthRequest, res: Response<ApiResponse
     // Criar nova chamada
     const [result] = await pool.execute(`
       INSERT INTO chamadas (operador_id, numero_cliente, tipo_chamada, status) 
-      VALUES (?, ?, ?, 'Em Andamento')
+      VALUES ($1, $2, $3, 'Em Andamento') RETURNING id
     `, [operadorId, numero_cliente, tipo_chamada]);
 
-    const chamadaId = (result as any).insertId;
+    const chamadaId = (result as any)[0]?.id;
 
     // Atualizar status do operador
     await pool.execute(
@@ -58,7 +58,7 @@ export const finalizarChamada = async (req: AuthRequest, res: Response<ApiRespon
 
     // Buscar chamada
     const [chamadas] = await pool.execute(
-      'SELECT * FROM chamadas WHERE id = ? AND operador_id = ? AND status = "Em Andamento"',
+      'SELECT * FROM chamadas WHERE id = $1 AND operador_id = $2 AND status = \'Em Andamento\'',
       [chamada_id, operadorId]
     );
 
@@ -83,9 +83,9 @@ export const finalizarChamada = async (req: AuthRequest, res: Response<ApiRespon
     // Finalizar chamada
     await pool.execute(`
       UPDATE chamadas 
-      SET fim_chamada = ?, duracao_segundos = ?, status = 'Finalizada', 
-          satisfacao_cliente = ?, resolvida = ?, observacoes = ?, pontos_ganhos = ?
-      WHERE id = ?
+      SET fim_chamada = $1, duracao_segundos = $2, status = 'Finalizada', 
+          satisfacao_cliente = $3, resolvida = $4, observacoes = $5, pontos_ganhos = $6
+      WHERE id = $7
     `, [agora, duracaoSegundos, satisfacao_cliente, resolvida, observacoes, pontosGanhos, chamada_id]);
 
     // Atualizar pontos do operador
@@ -128,17 +128,20 @@ export const getHistorico = async (req: AuthRequest, res: Response<ApiResponse<{
     const { data_inicio, data_fim, limite = 50, offset = 0 } = req.query;
     const operadorId = req.operador.id;
 
-    let whereClause = 'WHERE operador_id = ?';
+    let whereClause = 'WHERE operador_id = $1';
     let params: any[] = [operadorId];
+    let paramIndex = 2;
 
     if (data_inicio) {
-      whereClause += ' AND DATE(inicio_chamada) >= ?';
+      whereClause += ` AND DATE(inicio_chamada) >= $${paramIndex}`;
       params.push(data_inicio);
+      paramIndex++;
     }
 
     if (data_fim) {
-      whereClause += ' AND DATE(inicio_chamada) <= ?';
+      whereClause += ` AND DATE(inicio_chamada) <= $${paramIndex}`;
       params.push(data_fim);
+      paramIndex++;
     }
 
     const [chamadas] = await pool.execute(`
@@ -191,7 +194,7 @@ export const getEstatisticas = async (req: AuthRequest, res: Response<ApiRespons
     const { periodo = 'hoje' } = req.query;
     const operadorId = req.operador.id;
 
-    let whereClause = 'WHERE operador_id = ?';
+    let whereClause = 'WHERE operador_id = $1';
     let params: any[] = [operadorId];
 
     switch (periodo) {
