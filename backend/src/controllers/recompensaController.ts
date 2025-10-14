@@ -333,6 +333,12 @@ export const criarRecompensa = async (req: AuthRequest, res: Response): Promise<
 // Atualizar recompensa (apenas para gestores)
 export const atualizarRecompensa = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    console.log('🔍 [ATUALIZAR RECOMPENSA] Função chamada');
+    console.log('🔍 [ATUALIZAR RECOMPENSA] Params:', req.params);
+    console.log('🔍 [ATUALIZAR RECOMPENSA] Body:', req.body);
+    console.log('🔍 [ATUALIZAR RECOMPENSA] File:', req.file);
+    console.log('🔍 [ATUALIZAR RECOMPENSA] User:', req.user);
+    
     const { id } = req.params;
     const {
       nome,
@@ -434,7 +440,12 @@ export const atualizarRecompensa = async (req: AuthRequest, res: Response): Prom
     
     const query = `UPDATE recompensas SET ${updateFields.join(', ')} WHERE id = $${paramIndex}`;
     
+    console.log('🔍 [ATUALIZAR RECOMPENSA] Executando query:', query);
+    console.log('🔍 [ATUALIZAR RECOMPENSA] Com valores:', updateValues);
+    
     await pool.execute(query, updateValues);
+    
+    console.log('✅ [ATUALIZAR RECOMPENSA] Recompensa atualizada com sucesso!');
     
     res.json({
       success: true,
