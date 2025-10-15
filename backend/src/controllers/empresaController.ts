@@ -567,9 +567,11 @@ export const getDashboardEmpresa = async (req: AuthRequest, res: Response<ApiRes
       [empresaId]
     );
 
-    // Buscar chamadas de hoje
+    // Buscar chamadas de hoje (através dos operadores da empresa)
     const [chamadasHoje] = await pool.execute(
-      'SELECT COUNT(*) as total FROM chamadas WHERE empresa_id = $1 AND DATE(data_inicio) = CURRENT_DATE',
+      `SELECT COUNT(*) as total FROM chamadas c 
+       INNER JOIN operadores o ON c.operador_id = o.id 
+       WHERE o.empresa_id = $1 AND DATE(c.inicio_chamada) = CURRENT_DATE`,
       [empresaId]
     );
 
@@ -578,19 +580,28 @@ export const getDashboardEmpresa = async (req: AuthRequest, res: Response<ApiRes
 
     // Buscar satisfação média
     const [satisfacaoMedia] = await pool.execute(
-      'SELECT COALESCE(AVG(avaliacao_satisfacao), 0) as media FROM chamadas WHERE empresa_id = $1 AND avaliacao_satisfacao IS NOT NULL',
+      `SELECT COALESCE(AVG(c.satisfacao_cliente), 0) as media 
+       FROM chamadas c 
+       INNER JOIN operadores o ON c.operador_id = o.id 
+       WHERE o.empresa_id = $1 AND c.satisfacao_cliente IS NOT NULL`,
       [empresaId]
     );
 
     // Buscar tempo médio de atendimento
     const [tempoMedio] = await pool.execute(
-      'SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (data_fim - data_inicio))/60), 0) as media FROM chamadas WHERE empresa_id = $1 AND data_fim IS NOT NULL',
+      `SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (c.fim_chamada - c.inicio_chamada))/60), 0) as media 
+       FROM chamadas c 
+       INNER JOIN operadores o ON c.operador_id = o.id 
+       WHERE o.empresa_id = $1 AND c.fim_chamada IS NOT NULL`,
       [empresaId]
     );
 
     // Buscar taxa de resolução
     const [taxaResolucao] = await pool.execute(
-      'SELECT COALESCE(AVG(CASE WHEN status = \'Resolvida\' THEN 100 ELSE 0 END), 0) as taxa FROM chamadas WHERE empresa_id = $1',
+      `SELECT COALESCE(AVG(CASE WHEN c.resolvida = TRUE THEN 100 ELSE 0 END), 0) as taxa 
+       FROM chamadas c 
+       INNER JOIN operadores o ON c.operador_id = o.id 
+       WHERE o.empresa_id = $1`,
       [empresaId]
     );
 
