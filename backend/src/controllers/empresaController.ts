@@ -551,6 +551,8 @@ export const getDashboardEmpresa = async (req: AuthRequest, res: Response<ApiRes
       return;
     }
 
+    console.log(`🔍 [DASHBOARD EMPRESA] Buscando dados para empresa ID: ${empresaId}`);
+
     // Buscar estatísticas da empresa
     const [totalGestores] = await pool.execute(
       'SELECT COUNT(*) as total FROM gestores WHERE empresa_id = $1',
@@ -567,59 +569,83 @@ export const getDashboardEmpresa = async (req: AuthRequest, res: Response<ApiRes
       [empresaId]
     );
 
-    // Buscar chamadas de hoje (através dos operadores da empresa)
-    const [chamadasHoje] = await pool.execute(
-      `SELECT COUNT(*) as total FROM chamadas c 
-       INNER JOIN operadores o ON c.operador_id = o.id 
-       WHERE o.empresa_id = $1 AND DATE(c.inicio_chamada) = CURRENT_DATE`,
-      [empresaId]
-    );
+    console.log(`📊 [DASHBOARD EMPRESA] Dados básicos: gestores=${(totalGestores as any[])[0].total}, operadores=${(totalOperadores as any[])[0].total}, online=${(operadoresOnline as any[])[0].total}`);
+
+    // Verificar se tabela chamadas existe antes de fazer queries
+    let chamadasHoje = 0;
+    let satisfacaoMedia = 0;
+    let tempoMedioAtendimento = 0;
+    let taxaResolucao = 0;
+
+    try {
+      // Buscar chamadas de hoje (através dos operadores da empresa)
+      const [chamadasHojeResult] = await pool.execute(
+        `SELECT COUNT(*) as total FROM chamadas c 
+         INNER JOIN operadores o ON c.operador_id = o.id 
+         WHERE o.empresa_id = $1 AND DATE(c.inicio_chamada) = CURRENT_DATE`,
+        [empresaId]
+      );
+      chamadasHoje = (chamadasHojeResult as any[])[0].total;
+
+      // Buscar satisfação média
+      const [satisfacaoMediaResult] = await pool.execute(
+        `SELECT COALESCE(AVG(c.satisfacao_cliente), 0) as media 
+         FROM chamadas c 
+         INNER JOIN operadores o ON c.operador_id = o.id 
+         WHERE o.empresa_id = $1 AND c.satisfacao_cliente IS NOT NULL`,
+        [empresaId]
+      );
+      satisfacaoMedia = parseFloat((satisfacaoMediaResult as any[])[0].media) || 0;
+
+      // Buscar tempo médio de atendimento
+      const [tempoMedioResult] = await pool.execute(
+        `SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (c.fim_chamada - c.inicio_chamada))/60), 0) as media 
+         FROM chamadas c 
+         INNER JOIN operadores o ON c.operador_id = o.id 
+         WHERE o.empresa_id = $1 AND c.fim_chamada IS NOT NULL`,
+        [empresaId]
+      );
+      tempoMedioAtendimento = Math.round(parseFloat((tempoMedioResult as any[])[0].media)) || 0;
+
+      // Buscar taxa de resolução
+      const [taxaResolucaoResult] = await pool.execute(
+        `SELECT COALESCE(AVG(CASE WHEN c.resolvida = TRUE THEN 100 ELSE 0 END), 0) as taxa 
+         FROM chamadas c 
+         INNER JOIN operadores o ON c.operador_id = o.id 
+         WHERE o.empresa_id = $1`,
+        [empresaId]
+      );
+      taxaResolucao = Math.round(parseFloat((taxaResolucaoResult as any[])[0].taxa)) || 0;
+
+      console.log(`📞 [DASHBOARD EMPRESA] Dados de chamadas: hoje=${chamadasHoje}, satisfacao=${satisfacaoMedia}, tempo=${tempoMedioAtendimento}, resolucao=${taxaResolucao}`);
+
+    } catch (chamadasError) {
+      console.log(`⚠️ [DASHBOARD EMPRESA] Erro ao buscar dados de chamadas (tabela pode não existir):`, chamadasError);
+      // Continuar com valores padrão
+    }
 
     // Buscar meta diária (usar valor padrão por enquanto)
     const metaDiaria = 100; // Valor padrão, pode ser configurável depois
 
-    // Buscar satisfação média
-    const [satisfacaoMedia] = await pool.execute(
-      `SELECT COALESCE(AVG(c.satisfacao_cliente), 0) as media 
-       FROM chamadas c 
-       INNER JOIN operadores o ON c.operador_id = o.id 
-       WHERE o.empresa_id = $1 AND c.satisfacao_cliente IS NOT NULL`,
-      [empresaId]
-    );
+    const dashboardData = {
+      totalGestores: (totalGestores as any[])[0].total,
+      totalOperadores: (totalOperadores as any[])[0].total,
+      operadoresOnline: (operadoresOnline as any[])[0].total,
+      chamadasHoje: chamadasHoje,
+      metaDiaria: metaDiaria,
+      satisfacaoMedia: satisfacaoMedia,
+      tempoMedioAtendimento: tempoMedioAtendimento,
+      taxaResolucao: taxaResolucao
+    };
 
-    // Buscar tempo médio de atendimento
-    const [tempoMedio] = await pool.execute(
-      `SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (c.fim_chamada - c.inicio_chamada))/60), 0) as media 
-       FROM chamadas c 
-       INNER JOIN operadores o ON c.operador_id = o.id 
-       WHERE o.empresa_id = $1 AND c.fim_chamada IS NOT NULL`,
-      [empresaId]
-    );
-
-    // Buscar taxa de resolução
-    const [taxaResolucao] = await pool.execute(
-      `SELECT COALESCE(AVG(CASE WHEN c.resolvida = TRUE THEN 100 ELSE 0 END), 0) as taxa 
-       FROM chamadas c 
-       INNER JOIN operadores o ON c.operador_id = o.id 
-       WHERE o.empresa_id = $1`,
-      [empresaId]
-    );
+    console.log(`✅ [DASHBOARD EMPRESA] Dados finais:`, dashboardData);
 
     res.json({
       success: true,
-      data: {
-        totalGestores: (totalGestores as any[])[0].total,
-        totalOperadores: (totalOperadores as any[])[0].total,
-        operadoresOnline: (operadoresOnline as any[])[0].total,
-        chamadasHoje: (chamadasHoje as any[])[0].total,
-        metaDiaria: metaDiaria,
-        satisfacaoMedia: parseFloat((satisfacaoMedia as any[])[0].media) || 0,
-        tempoMedioAtendimento: Math.round(parseFloat((tempoMedio as any[])[0].media)) || 0,
-        taxaResolucao: Math.round(parseFloat((taxaResolucao as any[])[0].taxa)) || 0
-      }
+      data: dashboardData
     });
   } catch (error) {
-    console.error('Erro ao buscar dashboard da empresa:', error);
+    console.error('❌ [DASHBOARD EMPRESA] Erro ao buscar dashboard da empresa:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
