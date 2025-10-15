@@ -562,13 +562,35 @@ export const getDashboardEmpresa = async (req: AuthRequest, res: Response<ApiRes
       [empresaId]
     );
 
-    const [operadoresAtivos] = await pool.execute(
-      'SELECT COUNT(*) as total FROM operadores WHERE empresa_id = $1 AND status IN (\'Disponível\', \'Em Chamada\')',
+    const [operadoresOnline] = await pool.execute(
+      'SELECT COUNT(*) as total FROM operadores WHERE empresa_id = $1 AND status_operacional = \'Online\'',
       [empresaId]
     );
 
-    const [totalPontos] = await pool.execute(
-      'SELECT COALESCE(SUM(pontos_totais), 0) as total FROM operadores WHERE empresa_id = $1',
+    // Buscar chamadas de hoje
+    const [chamadasHoje] = await pool.execute(
+      'SELECT COUNT(*) as total FROM chamadas WHERE empresa_id = $1 AND DATE(data_inicio) = CURRENT_DATE',
+      [empresaId]
+    );
+
+    // Buscar meta diária (usar valor padrão por enquanto)
+    const metaDiaria = 100; // Valor padrão, pode ser configurável depois
+
+    // Buscar satisfação média
+    const [satisfacaoMedia] = await pool.execute(
+      'SELECT COALESCE(AVG(avaliacao_satisfacao), 0) as media FROM chamadas WHERE empresa_id = $1 AND avaliacao_satisfacao IS NOT NULL',
+      [empresaId]
+    );
+
+    // Buscar tempo médio de atendimento
+    const [tempoMedio] = await pool.execute(
+      'SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (data_fim - data_inicio))/60), 0) as media FROM chamadas WHERE empresa_id = $1 AND data_fim IS NOT NULL',
+      [empresaId]
+    );
+
+    // Buscar taxa de resolução
+    const [taxaResolucao] = await pool.execute(
+      'SELECT COALESCE(AVG(CASE WHEN status = \'Resolvida\' THEN 100 ELSE 0 END), 0) as taxa FROM chamadas WHERE empresa_id = $1',
       [empresaId]
     );
 
@@ -577,8 +599,12 @@ export const getDashboardEmpresa = async (req: AuthRequest, res: Response<ApiRes
       data: {
         totalGestores: (totalGestores as any[])[0].total,
         totalOperadores: (totalOperadores as any[])[0].total,
-        operadoresAtivos: (operadoresAtivos as any[])[0].total,
-        totalPontos: (totalPontos as any[])[0].total
+        operadoresOnline: (operadoresOnline as any[])[0].total,
+        chamadasHoje: (chamadasHoje as any[])[0].total,
+        metaDiaria: metaDiaria,
+        satisfacaoMedia: parseFloat((satisfacaoMedia as any[])[0].media) || 0,
+        tempoMedioAtendimento: Math.round(parseFloat((tempoMedio as any[])[0].media)) || 0,
+        taxaResolucao: Math.round(parseFloat((taxaResolucao as any[])[0].taxa)) || 0
       }
     });
   } catch (error) {
