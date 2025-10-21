@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS empresas (
 );
 
 CREATE INDEX IF NOT EXISTS idx_empresas_email ON empresas(email);
+CREATE INDEX IF NOT EXISTS idx_empresas_cnpj ON empresas(cnpj);
 
 -- Adicionar colunas faltantes na tabela empresas (se não existirem)
 DO $$
@@ -93,6 +94,7 @@ CREATE TABLE IF NOT EXISTS gestores (
 );
 
 CREATE INDEX IF NOT EXISTS idx_gestores_empresa ON gestores(empresa_id);
+CREATE INDEX IF NOT EXISTS idx_gestores_email ON gestores(email);
 
 -- ==================================================
 -- Tabela: operadores
@@ -118,6 +120,7 @@ CREATE TABLE IF NOT EXISTS operadores (
 
 CREATE INDEX IF NOT EXISTS idx_operadores_empresa ON operadores(empresa_id);
 CREATE INDEX IF NOT EXISTS idx_operadores_gestor ON operadores(gestor_id);
+CREATE INDEX IF NOT EXISTS idx_operadores_email ON operadores(email);
 
 -- ==================================================
 -- Tabela: sessoes (operadores)
@@ -204,12 +207,68 @@ CREATE TABLE IF NOT EXISTS conquistas (
 );
 
 -- ==================================================
--- Triggers de atualização de data_atualizacao
+-- Tabelas Faltantes (Sistema de Atendimento e Metas)
+-- ==================================================
+CREATE TABLE IF NOT EXISTS chamadas (
+  id                 BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  operador_id        BIGINT NOT NULL REFERENCES operadores(id) ON DELETE CASCADE,
+  cliente_nome       VARCHAR(255),
+  cliente_telefone   VARCHAR(50),
+  status             VARCHAR(100) NOT NULL DEFAULT 'Concluída',
+  inicio_chamada     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  fim_chamada        TIMESTAMPTZ,
+  duracao            INTEGER,
+  satisfacao_cliente INTEGER,
+  observacoes        TEXT,
+  criado_em          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_chamadas_operador ON chamadas(operador_id);
+
+CREATE TABLE IF NOT EXISTS metas (
+  id               BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  empresa_id       BIGINT NOT NULL REFERENCES empresas(id) ON DELETE CASCADE,
+  titulo           VARCHAR(255) NOT NULL,
+  descricao        TEXT,
+  tipo             VARCHAR(100),
+  valor_meta       INTEGER NOT NULL,
+  periodo          VARCHAR(100),
+  data_inicio      TIMESTAMPTZ DEFAULT NOW(),
+  data_fim         TIMESTAMPTZ,
+  ativa            BOOLEAN NOT NULL DEFAULT TRUE,
+  criado_em        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  atualizado_em    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_metas_empresa ON metas(empresa_id);
+
+CREATE TABLE IF NOT EXISTS progresso_metas (
+  id               BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  meta_id          BIGINT NOT NULL REFERENCES metas(id) ON DELETE CASCADE,
+  operador_id      BIGINT NOT NULL REFERENCES operadores(id) ON DELETE CASCADE,
+  progresso_atual  INTEGER NOT NULL DEFAULT 0,
+  data_atualizacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (meta_id, operador_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_progresso_metas_meta ON progresso_metas(meta_id);
+CREATE INDEX IF NOT EXISTS idx_progresso_metas_operador ON progresso_metas(operador_id);
+
+-- ==================================================
+-- Triggers de atualização
 -- ==================================================
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.data_atualizacao = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION set_atualizado_em()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.atualizado_em = NOW();
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -236,6 +295,22 @@ BEGIN
     CREATE TRIGGER trg_empresas_updated_at
     BEFORE UPDATE ON empresas
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+  END IF;
+  
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'trg_recompensas_atualizado_em'
+  ) THEN
+    CREATE TRIGGER trg_recompensas_atualizado_em
+    BEFORE UPDATE ON recompensas
+    FOR EACH ROW EXECUTE FUNCTION set_atualizado_em();
+  END IF;
+  
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'metas')
+     AND NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_metas_atualizado_em')
+  THEN
+    CREATE TRIGGER trg_metas_atualizado_em
+    BEFORE UPDATE ON metas
+    FOR EACH ROW EXECUTE FUNCTION set_atualizado_em();
   END IF;
 END$$;
 
@@ -282,5 +357,3 @@ JOIN empresas e ON e.id = g.empresa_id;
 -- ==================================================
 -- FIM
 -- ==================================================
-
-
