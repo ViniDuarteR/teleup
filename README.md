@@ -79,84 +79,6 @@ teleup/
 ├── docker-compose.yml      # Docker para desenvolvimento
 └── README.md
 ```
-
-## 🚀 Deploy na Vercel
-
-### Deploy Automatizado (Recomendado)
-
-1. **Conectar repositório na Vercel**
-   - Acesse [vercel.com](https://vercel.com)
-   - Importe o repositório do GitHub
-   - Configure as variáveis de ambiente
-
-2. **Configurar variáveis de ambiente**
-
-#### Backend (.env)
-```env
-DATABASE_URL=postgresql://neondb_owner:senha@ep-xxx.sa-east-1.aws.neon.tech/teleupdb?sslmode=require
-JWT_SECRET=sua_chave_secreta_jwt
-JWT_EXPIRES_IN=24h
-NODE_ENV=production
-API_BASE_URL=https://teleup-backend.vercel.app
-CORS_ORIGIN=https://teleup-frontend.vercel.app
-```
-
-#### Frontend (.env)
-```env
-VITE_API_BASE_URL=https://teleup-backend.vercel.app
-```
-
-### Deploy Manual
-
-1. **Instalar Vercel CLI**
-   ```bash
-   npm install -g vercel
-   ```
-
-2. **Deploy Backend**
-   ```bash
-   cd backend
-   vercel --prod
-   ```
-
-3. **Deploy Frontend**
-   ```bash
-   cd frontend
-   vercel --prod
-   ```
-
-## 🗄️ Banco de Dados (Neon PostgreSQL)
-
-### Configuração do Neon
-
-1. **Criar projeto no Neon**
-   - Acesse [neon.tech](https://neon.tech)
-   - Crie um novo projeto
-   - Copie a `DATABASE_URL`
-
-2. **Executar schema**
-   ```sql
-   -- Conectar ao banco e executar:
-   -- backend/config/postgres-all-sql-commands.sql
-   ```
-
-### Usuários Padrão
-
-```
-Empresas:
-- TeleUp: contato@teleup.com / password
-- TechCorp: admin@techcorp.com / password
-
-Gestores:
-- TeleUp: hyttalo@teleup.com / password
-- TechCorp: roberto.silva@techcorp.com / password
-
-Operadores:
-- Mateus: mateus@teleup.com / password
-- Guilherme: guilherme@teleup.com / password
-- Vinicius: vinicius@teleup.com / password
-```
-
 ## 🔧 Desenvolvimento Local
 
 ### Pré-requisitos
@@ -205,15 +127,6 @@ cd frontend
 npm run dev
 ```
 
-## 🌐 Acessos
-
-### Produção (Vercel)
-- **Frontend**: `https://teleup-frontend.vercel.app`
-- **Backend API**: `https://teleup-backend.vercel.app`
-
-### Desenvolvimento Local
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:3001
 
 ## 📚 Documentação da API
 
@@ -253,6 +166,7 @@ npm run dev
 
 ## 📊 Monitoramento
 
+
 ### Vercel CLI
 ```bash
 vercel logs --follow    # Logs em tempo real
@@ -260,54 +174,8 @@ vercel status          # Status dos deploys
 vercel env ls          # Variáveis de ambiente
 ```
 
-### Neon Dashboard
-- Acesse o dashboard do Neon para monitorar o banco
-- Visualize métricas de performance
-- Configure backups automáticos
-
-## 💰 Custos
-
-### Vercel (Plano Gratuito)
-- 100GB bandwidth/mês
-- Deploys ilimitados
-- Domínio .vercel.app
-- SSL automático
-
-### Neon (Plano Gratuito)
-- 0.5GB storage
-- 10GB transfer/mês
-- 1 database
-- Backup automático
-
-### Plano Pro (Vercel + Neon)
-- **Vercel Pro**: $20/mês
-- **Neon Pro**: $19/mês
-- Recursos avançados
-- Suporte prioritário
-
-## 🤝 Contribuição
-
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
-
 ## 📝 Licença
 
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
-## 👥 Equipe
-
-- **Desenvolvimento**: Equipe TeleUp
-- **Design**: UI/UX Team
-
-## 📞 Suporte
-
-Para suporte, entre em contato:
-- **Email**: suporte@teleup.com
-- **Issues**: [GitHub Issues](https://github.com/teleup/issues)
-
----
-
-**TeleUp** - Transformando call centers em experiências gamificadas! 🎮✨
+- **TeleUp** - Transformando call centers em experiências gamificadas! 🎮✨
