@@ -496,7 +496,7 @@ const Homepage = () => {
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
             <p>&copy; 2025 TeleUp. Todos os direitos reservados.</p>
           </div>
-          Desenvolvido por <a href="https://www.linkedin.com/in/hyttalo-costa-1991841b2/" target="_blank" rel="noopener noreferrer" className="text-blue-900">Hyttalo Costa</a> e <a href="https://www.linkedin.com/in/vinicius-duarte1/" target="_blank" rel="noopener noreferrer" className="text-blue-900">Vinicius Duarte</a>
+          Desenvolvido por <a href="https://www.linkedin.com/in/hyttalo-costa-1991841b2/" target="_blank" rel="noopener noreferrer" className="text-purple-900">Hyttalo Costa</a> e <a href="https://www.linkedin.com/in/vinicius-duarte1/" target="_blank" rel="noopener noreferrer" className="text-purple-900">Vinicius Duarte</a>
         </div>
       </footer>
     </div>
