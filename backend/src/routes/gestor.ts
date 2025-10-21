@@ -329,8 +329,8 @@ router.get('/outros-gestores', async (req: AuthRequest, res) => {
         g.email,
         g.status,
         g.data_criacao,
-        COALESCE(COUNT(o.id), 0) as total_operadores,
-        COALESCE(COUNT(CASE WHEN o.status_operacional = 'Aguardando Chamada' THEN o.id END), 0) as operadores_online
+        COALESCE(COUNT(o.id), 0)::INTEGER as total_operadores,
+        COALESCE(COUNT(CASE WHEN o.status_operacional = 'Aguardando Chamada' THEN o.id END), 0)::INTEGER as operadores_online
       FROM gestores g
       LEFT JOIN operadores o ON o.gestor_id = g.id
       WHERE g.empresa_id = $1 AND g.id != $2
@@ -338,11 +338,18 @@ router.get('/outros-gestores', async (req: AuthRequest, res) => {
       ORDER BY g.data_criacao DESC
     `, [empresaId, gestorId]);
 
-    console.log('✅ [GESTOR OUTROS] Outros gestores encontrados:', (outrosGestores as any[]).length);
+    // Converter strings para números
+    const gestoresFormatados = (outrosGestores as any[]).map(gestor => ({
+      ...gestor,
+      total_operadores: parseInt(gestor.total_operadores) || 0,
+      operadores_online: parseInt(gestor.operadores_online) || 0
+    }));
+
+    console.log('✅ [GESTOR OUTROS] Outros gestores encontrados:', gestoresFormatados.length);
 
     return res.json({
       success: true,
-      data: outrosGestores as any[]
+      data: gestoresFormatados
     });
   } catch (error) {
     console.error('Erro ao buscar outros gestores:', error);
