@@ -201,17 +201,17 @@ const PainelGestor = () => {
                   </Button>
                 </Link>
                 
-                <Link to="/usuarios">
+                <Link to="/gestor/outros-gestores">
                   <Button variant="outline" className="w-full h-20 flex flex-col items-center gap-2">
                     <Users className="w-6 h-6 text-primary" />
-                    <span>Gerenciar Usuários</span>
+                    <span>Ver Outros Gestores</span>
                   </Button>
                 </Link>
                 
-                <Link to="/gestores">
+                <Link to="/gestor/metas">
                   <Button variant="outline" className="w-full h-20 flex flex-col items-center gap-2">
-                    <Settings className="w-6 h-6 text-primary" />
-                    <span>Gerenciar Gestores</span>
+                    <Target className="w-6 h-6 text-primary" />
+                    <span>Gerenciar Metas</span>
                   </Button>
                 </Link>
                 

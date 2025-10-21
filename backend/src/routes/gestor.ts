@@ -295,4 +295,58 @@ router.patch('/operador/:id/status', async (req: AuthRequest, res) => {
   }
 });
 
+// Rota para listar outros gestores da empresa
+router.get('/outros-gestores', async (req: AuthRequest, res) => {
+  try {
+    console.log('🔍 [GESTOR OUTROS] Iniciando busca de outros gestores');
+    const gestorId = req.operador?.id;
+    console.log('🔍 [GESTOR OUTROS] Gestor ID:', gestorId);
+    
+    if (!gestorId) {
+      console.log('❌ [GESTOR OUTROS] Gestor não autenticado');
+      return res.status(401).json({ success: false, message: 'Gestor não autenticado' });
+    }
+
+    // Buscar empresa do gestor
+    const [gestorEmpresa] = await pool.execute(
+      'SELECT empresa_id FROM gestores WHERE id = $1',
+      [gestorId]
+    );
+    
+    const empresa = gestorEmpresa as any[];
+    if (empresa.length === 0) {
+      return res.status(404).json({ success: false, message: 'Empresa do gestor não encontrada' });
+    }
+
+    const empresaId = empresa[0].empresa_id;
+
+    // Buscar outros gestores da mesma empresa (excluindo o próprio)
+    const [outrosGestores] = await pool.execute(`
+      SELECT 
+        g.id,
+        g.nome,
+        g.email,
+        g.status,
+        g.data_criacao,
+        COALESCE(COUNT(o.id), 0) as total_operadores,
+        COALESCE(COUNT(CASE WHEN o.status_operacional = 'Aguardando Chamada' THEN o.id END), 0) as operadores_online
+      FROM gestores g
+      LEFT JOIN operadores o ON o.gestor_id = g.id
+      WHERE g.empresa_id = $1 AND g.id != $2
+      GROUP BY g.id, g.nome, g.email, g.status, g.data_criacao
+      ORDER BY g.data_criacao DESC
+    `, [empresaId, gestorId]);
+
+    console.log('✅ [GESTOR OUTROS] Outros gestores encontrados:', (outrosGestores as any[]).length);
+
+    return res.json({
+      success: true,
+      data: outrosGestores as any[]
+    });
+  } catch (error) {
+    console.error('Erro ao buscar outros gestores:', error);
+    return res.status(500).json({ success: false, message: 'Erro interno do servidor' });
+  }
+});
+
 export default router;
