@@ -8,18 +8,14 @@ import { AuthRequest, LoginRequest, LoginResponse, DashboardData, ApiResponse } 
 export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRequest>, res: Response<ApiResponse<LoginResponse>>): Promise<void> => {
   try {
     const { email, senha } = req.body;
-    console.log(`🔐 [OPERADOR LOGIN] Tentativa de login iniciada para: ${email}`);
 
     if (!email || !senha) {
-      console.log(`❌ [OPERADOR LOGIN] Dados incompletos - Email: ${!!email}, Senha: ${!!senha}`);
       res.status(400).json({
         success: false,
         message: 'Email e senha são obrigatórios'
       });
       return;
     }
-
-    console.log(`🔍 [OPERADOR LOGIN] Buscando operador no banco de dados para: ${email}`);
     
     // Buscar operador por email
     const [operadores] = await pool.execute(
@@ -27,10 +23,7 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
       [email]
     );
 
-    console.log(`📊 [OPERADOR LOGIN] Resultado da busca: ${(operadores as any[]).length} operador(es) encontrado(s)`);
-
     if ((operadores as any[]).length === 0) {
-      console.log(`❌ [OPERADOR LOGIN] Operador não encontrado para: ${email}`);
       res.status(401).json({
         success: false,
         message: 'Credenciais inválidas'
@@ -39,15 +32,11 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
     }
 
     const operador = (operadores as any[])[0];
-    console.log(`✅ [OPERADOR LOGIN] Operador encontrado - ID: ${operador.id}, Nome: ${operador.nome}, Status: ${operador.status}`);
 
     // Verificar senha
-    console.log(`🔐 [OPERADOR LOGIN] Verificando senha para operador ID: ${operador.id}`);
     const senhaValida = await bcrypt.compare(senha, operador.senha);
-    console.log(`🔐 [OPERADOR LOGIN] Senha válida: ${senhaValida}`);
     
     if (!senhaValida) {
-      console.log(`❌ [OPERADOR LOGIN] Senha inválida para operador: ${email}`);
       res.status(401).json({
         success: false,
         message: 'Credenciais inválidas'
@@ -56,13 +45,11 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
     }
 
     // Gerar token JWT
-    console.log(`🎫 [OPERADOR LOGIN] Gerando token JWT para operador ID: ${operador.id}`);
     const token = jwt.sign(
       { operadorId: operador.id, email: operador.email, tipo: 'operador' },
       process.env.JWT_SECRET || 'seu_jwt_secret_super_seguro_aqui',
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' } as jwt.SignOptions
     );
-    console.log(`🎫 [OPERADOR LOGIN] Token JWT gerado com sucesso`);
 
     // Salvar sessão no banco
     const dataExpiracao = new Date();
