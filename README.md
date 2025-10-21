@@ -4,7 +4,8 @@
 [![React](https://img.shields.io/badge/React-18.3.1-blue.svg)](https://reactjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)](https://www.postgresql.org/)
-[![Railway](https://img.shields.io/badge/Deploy-Railway-00D9FF.svg)](https://railway.app/)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel-000000.svg)](https://vercel.com/)
+[![Neon](https://img.shields.io/badge/Database-Neon-00D9FF.svg)](https://neon.tech/)
 
 ## 📋 Sobre o Projeto
 
@@ -26,7 +27,7 @@ O **TeleUp** é uma plataforma de gamificação completa para call centers de te
 - **Node.js** 18.x
 - **TypeScript** 5.3.3
 - **Express.js** 4.18.2
-- **PostgreSQL** 15+
+- **PostgreSQL** 15+ (Neon)
 - **Socket.io** 4.7.4 (WebSocket)
 - **JWT** para autenticação
 - **bcryptjs** para hash de senhas
@@ -41,8 +42,9 @@ O **TeleUp** é uma plataforma de gamificação completa para call centers de te
 - **React Query** 5.83.0
 - **Recharts** 2.15.4 (Gráficos)
 
-### Deploy
-- **Railway** (Backend + Frontend + PostgreSQL)
+### Deploy & Database
+- **Vercel** (Frontend + Backend)
+- **Neon PostgreSQL** (Database)
 
 ## 📁 Estrutura do Projeto
 
@@ -61,7 +63,8 @@ teleup/
 │   ├── dist/               # Código compilado (JS)
 │   ├── package.json
 │   ├── tsconfig.json
-│   └── railway.json
+│   ├── vercel.json         # Configuração Vercel
+│   └── .env                # Variáveis de ambiente
 ├── frontend/               # Interface React
 │   ├── src/
 │   │   ├── components/     # Componentes React
@@ -71,66 +74,71 @@ teleup/
 │   │   └── lib/            # Utilitários e API
 │   ├── public/
 │   ├── package.json
-│   └── railway.json
-├── deploy-railway.ps1      # Script de deploy automatizado
-├── configure-railway-env.ps1  # Script de configuração
+│   ├── vercel.json         # Configuração Vercel
+│   └── vite.config.ts
+├── docker-compose.yml      # Docker para desenvolvimento
 └── README.md
 ```
 
-## 🚀 Deploy no Railway
+## 🚀 Deploy na Vercel
 
 ### Deploy Automatizado (Recomendado)
 
-```powershell
-# 1. Execute o script de deploy completo
-.\deploy-railway.ps1
+1. **Conectar repositório na Vercel**
+   - Acesse [vercel.com](https://vercel.com)
+   - Importe o repositório do GitHub
+   - Configure as variáveis de ambiente
 
-# 2. Configure as variáveis de ambiente
-.\configure-railway-env.ps1
+2. **Configurar variáveis de ambiente**
+
+#### Backend (.env)
+```env
+DATABASE_URL=postgresql://neondb_owner:senha@ep-xxx.sa-east-1.aws.neon.tech/teleupdb?sslmode=require
+JWT_SECRET=sua_chave_secreta_jwt
+JWT_EXPIRES_IN=24h
+NODE_ENV=production
+API_BASE_URL=https://teleup-backend.vercel.app
+CORS_ORIGIN=https://teleup-frontend.vercel.app
+```
+
+#### Frontend (.env)
+```env
+VITE_API_BASE_URL=https://teleup-backend.vercel.app
 ```
 
 ### Deploy Manual
 
-1. **Instalar Railway CLI**
+1. **Instalar Vercel CLI**
    ```bash
-   npm install -g @railway/cli
+   npm install -g vercel
    ```
 
-2. **Login no Railway**
-   ```bash
-   railway login
-   ```
-
-3. **Linkar projeto**
-   ```bash
-   railway link
-   ```
-
-4. **Adicionar PostgreSQL**
-   ```bash
-   railway add postgresql
-   ```
-
-5. **Deploy Backend**
+2. **Deploy Backend**
    ```bash
    cd backend
-   railway up --service backend
+   vercel --prod
    ```
 
-6. **Deploy Frontend**
+3. **Deploy Frontend**
    ```bash
    cd frontend
-   railway up --service frontend
+   vercel --prod
    ```
 
-## 🗄️ Banco de Dados
+## 🗄️ Banco de Dados (Neon PostgreSQL)
 
-O projeto usa PostgreSQL com schema otimizado para Railway:
+### Configuração do Neon
 
-```sql
--- Executar schema
-railway run psql < backend/config/postgres-all-sql-commands.sql
-```
+1. **Criar projeto no Neon**
+   - Acesse [neon.tech](https://neon.tech)
+   - Crie um novo projeto
+   - Copie a `DATABASE_URL`
+
+2. **Executar schema**
+   ```sql
+   -- Conectar ao banco e executar:
+   -- backend/config/postgres-all-sql-commands.sql
+   ```
 
 ### Usuários Padrão
 
@@ -169,6 +177,8 @@ cd teleup
 ```bash
 cd backend
 npm install
+cp .env.example .env
+# Configure as variáveis de ambiente no .env
 npm run build
 ```
 
@@ -177,6 +187,8 @@ npm run build
 ```bash
 cd frontend
 npm install
+cp .env.example .env
+# Configure as variáveis de ambiente no .env
 ```
 
 ### 4. Executar em Desenvolvimento
@@ -195,9 +207,9 @@ npm run dev
 
 ## 🌐 Acessos
 
-### Produção (Railway)
-- **Frontend**: `https://seu-frontend.railway.app`
-- **Backend API**: `https://seu-backend.railway.app`
+### Produção (Vercel)
+- **Frontend**: `https://teleup-frontend.vercel.app`
+- **Backend API**: `https://teleup-backend.vercel.app`
 
 ### Desenvolvimento Local
 - **Frontend**: http://localhost:5173
@@ -241,27 +253,37 @@ npm run dev
 
 ## 📊 Monitoramento
 
-### Railway CLI
+### Vercel CLI
 ```bash
-railway logs --service backend    # Logs do backend
-railway logs --service frontend   # Logs do frontend
-railway status                    # Status geral
-railway variables                 # Variáveis de ambiente
+vercel logs --follow    # Logs em tempo real
+vercel status          # Status dos deploys
+vercel env ls          # Variáveis de ambiente
 ```
 
-## 💰 Custos Railway
+### Neon Dashboard
+- Acesse o dashboard do Neon para monitorar o banco
+- Visualize métricas de performance
+- Configure backups automáticos
 
-### Plano Gratuito
-- $5 de crédito/mês
-- 512MB RAM por serviço
-- 1GB storage
-- Domínio .railway.app
+## 💰 Custos
 
-### Plano Pro ($5/mês)
-- $20 de crédito/mês
-- 1GB RAM por serviço
-- 10GB storage
-- Domínio customizado
+### Vercel (Plano Gratuito)
+- 100GB bandwidth/mês
+- Deploys ilimitados
+- Domínio .vercel.app
+- SSL automático
+
+### Neon (Plano Gratuito)
+- 0.5GB storage
+- 10GB transfer/mês
+- 1 database
+- Backup automático
+
+### Plano Pro (Vercel + Neon)
+- **Vercel Pro**: $20/mês
+- **Neon Pro**: $19/mês
+- Recursos avançados
+- Suporte prioritário
 
 ## 🤝 Contribuição
 
