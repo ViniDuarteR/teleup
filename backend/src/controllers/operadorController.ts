@@ -54,42 +54,32 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
     // Salvar sessão no banco
     const dataExpiracao = new Date();
     dataExpiracao.setHours(dataExpiracao.getHours() + 24);
-    console.log(`💾 [OPERADOR LOGIN] Tentando salvar sessão para operador ID: ${operador.id}`);
 
     // Verificar se a tabela sessoes existe, se não, usar sessoes_empresa
     try {
-      console.log(`💾 [OPERADOR LOGIN] Tentando inserir na tabela 'sessoes'`);
       await pool.execute(
         'INSERT INTO sessoes (operador_id, token, expiracao) VALUES ($1, $2, $3)',
         [operador.id, token, dataExpiracao]
       );
-      console.log(`✅ [OPERADOR LOGIN] Sessão salva na tabela 'sessoes' com sucesso`);
     } catch (error: any) {
-      console.log(`⚠️ [OPERADOR LOGIN] Erro ao salvar na tabela 'sessoes': ${error.code} - ${error.message}`);
       // Se a tabela sessoes não existir, usar sessoes_empresa
       if (error.code === '42P01') { // Tabela não existe
-        console.log(`💾 [OPERADOR LOGIN] Tentando inserir na tabela 'sessoes_empresa' como fallback`);
         await pool.execute(
           'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES ($1, $2, $3)',
           [operador.empresa_id, token, dataExpiracao]
         );
-        console.log(`✅ [OPERADOR LOGIN] Sessão salva na tabela 'sessoes_empresa' com sucesso`);
       } else {
-        console.log(`❌ [OPERADOR LOGIN] Erro não relacionado à tabela: ${error.message}`);
         throw error;
       }
     }
 
     // Atualizar status para online
-    console.log(`📊 [OPERADOR LOGIN] Atualizando status do operador para 'Aguardando Chamada'`);
     await pool.execute(
       'UPDATE operadores SET status_operacional = $1 WHERE id = $2',
       ['Aguardando Chamada', operador.id]
     );
-    console.log(`✅ [OPERADOR LOGIN] Status atualizado com sucesso`);
 
     // Preparar dados do operador
-    console.log(`📋 [OPERADOR LOGIN] Preparando dados do operador para resposta`);
     let operadorData: any = {
       id: operador.id,
       nome: operador.nome,

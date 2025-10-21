@@ -46,26 +46,19 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
       process.env.JWT_SECRET || 'seu_jwt_secret_super_seguro_aqui',
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' } as jwt.SignOptions
     );
-    console.log(`🎫 [GESTOR LOGIN] Token JWT gerado com sucesso`);
-
     const dataExpiracao = new Date();
     dataExpiracao.setHours(dataExpiracao.getHours() + 24);
 
-    console.log(`💾 [GESTOR LOGIN] Tentando salvar sessão para gestor ID: ${gestor.id}, Empresa ID: ${gestor.empresa_id}`);
     try {
       await pool.execute(
         'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES ($1, $2, $3)',
         [gestor.empresa_id, token, dataExpiracao]
       );
-      console.log(`✅ [GESTOR LOGIN] Sessão salva na tabela 'sessoes_empresa' com sucesso`);
     } catch (error: any) {
-      console.error(`⚠️ [GESTOR LOGIN] Erro ao salvar sessão do gestor: ${error.message}`);
-      console.error(`⚠️ [GESTOR LOGIN] Stack trace:`, error.stack);
       // Continuar mesmo se falhar ao salvar sessão
     }
 
     // Preparar dados do gestor (sem campos de gamificação)
-    console.log(`📋 [GESTOR LOGIN] Preparando dados do gestor para resposta`);
     const gestorData: any = {
       id: gestor.id,
       nome: gestor.nome,
@@ -77,7 +70,6 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
       data_atualizacao: gestor.data_atualizacao
     };
 
-    console.log(`🎉 [GESTOR LOGIN] Login realizado com sucesso para: ${email}`);
     res.json({
       success: true,
       message: 'Login realizado com sucesso',

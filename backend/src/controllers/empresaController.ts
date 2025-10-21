@@ -7,17 +7,10 @@ import { ApiResponse, AuthRequest } from '../types';
 // Cadastro de empresa
 export const cadastrarEmpresa = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log('🚀 [CADASTRO EMPRESA] Controller chamado!');
-    console.log('🚀 [CADASTRO EMPRESA] Headers:', req.headers);
-    console.log('🚀 [CADASTRO EMPRESA] Body:', req.body);
-    
     const { nome, email, senha, telefone, cnpj, endereco, cidade, estado, cep } = req.body;
-    
-    console.log(`🏢 [CADASTRO EMPRESA] Tentativa de cadastro para: ${email}`);
 
     // Validações básicas
     if (!nome || !email || !senha || !cnpj) {
-      console.log(`❌ [CADASTRO EMPRESA] Dados incompletos`);
       res.status(400).json({
         success: false,
         message: 'Nome, email, senha e CNPJ são obrigatórios'
@@ -26,14 +19,12 @@ export const cadastrarEmpresa = async (req: Request, res: Response): Promise<voi
     }
 
     // Verificar se email já existe
-    console.log(`🔍 [CADASTRO EMPRESA] Verificando se email já existe: ${email}`);
     const [empresasExistentes] = await pool.execute(
       'SELECT id FROM empresas WHERE email = $1',
       [email]
     );
 
     if ((empresasExistentes as any[]).length > 0) {
-      console.log(`❌ [CADASTRO EMPRESA] Email já cadastrado: ${email}`);
       res.status(400).json({
         success: false,
         message: 'Email já cadastrado'
@@ -42,32 +33,16 @@ export const cadastrarEmpresa = async (req: Request, res: Response): Promise<voi
     }
 
     // Hash da senha
-    console.log(`🔐 [CADASTRO EMPRESA] Gerando hash da senha`);
     const senhaHash = await bcrypt.hash(senha, 10);
 
     // Inserir empresa no banco
-    console.log(`💾 [CADASTRO EMPRESA] Inserindo empresa no banco`);
-    console.log(`💾 [CADASTRO EMPRESA] Dados:`, {
-      nome,
-      email,
-      telefone: telefone || null,
-      cnpj,
-      endereco: endereco || null,
-      cidade: cidade || null,
-      estado: estado || null,
-      cep: cep || null
-    });
-    
     const [result] = await pool.execute(
       `INSERT INTO empresas (nome, email, senha, telefone, cnpj, endereco, cidade, estado, cep, status, data_criacao) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW()) RETURNING id`,
       [nome, email, senhaHash, telefone || null, cnpj, endereco || null, cidade || null, estado || null, cep || null, 'Ativo']
     );
 
-    console.log(`💾 [CADASTRO EMPRESA] Resultado da inserção:`, result);
     const empresaId = (result as any[])[0]?.id;
-
-    console.log(`✅ [CADASTRO EMPRESA] Empresa cadastrada com sucesso - ID: ${empresaId}`);
 
     res.status(201).json({
       success: true,
