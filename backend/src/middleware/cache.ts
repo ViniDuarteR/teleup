@@ -12,7 +12,7 @@ interface CacheOptions {
 export const cacheMiddleware = (options: CacheOptions = {}) => {
   const { ttl = 300, key } = options; // 5 minutos por padrão
 
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     // Gerar chave do cache
     const cacheKey = key || `${req.method}:${req.originalUrl}:${JSON.stringify(req.query)}`;
     
@@ -20,7 +20,8 @@ export const cacheMiddleware = (options: CacheOptions = {}) => {
     const cached = cache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp) < cached.ttl * 1000) {
       console.log(`🚀 [CACHE] Hit para: ${cacheKey}`);
-      return res.json(cached.data);
+      res.json(cached.data);
+      return;
     }
 
     // Interceptar a resposta para salvar no cache
