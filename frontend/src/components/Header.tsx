@@ -124,7 +124,7 @@ const Header = ({ operador }: HeaderProps) => {
                 Nv.{operador.nivel || 1}
               </div>
               <div className="text-xs text-muted-foreground">
-                {operador.pontos_totais?.toLocaleString() || '0'} pts
+                {operador.pontos_totais || 0} pts
               </div>
             </div>
             

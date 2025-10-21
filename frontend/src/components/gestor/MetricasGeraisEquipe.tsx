@@ -116,7 +116,7 @@ const MetricasGeraisEquipe = ({ metricas }: MetricasGeraisEquipeProps) => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-xp">
-            {metricas.totalPontosEquipe?.toLocaleString() || '0'}
+            {metricas.totalPontosEquipe || 0}
           </div>
           <p className="text-xs text-muted-foreground">
             Pontos hoje

@@ -52,7 +52,7 @@ const PainelGamificacao = ({ missoes, conquistas, pontos }: PainelGamificacaoPro
           <span className="text-sm text-muted-foreground">Pontos Disponíveis</span>
         </div>
         <div className="text-3xl font-bold text-xp text-glow">
-          {pontos?.toLocaleString() || '0'}
+          {pontos || 0}
         </div>
         <Button 
           variant="secondary" 
