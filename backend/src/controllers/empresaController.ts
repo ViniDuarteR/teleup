@@ -269,7 +269,8 @@ export const listarGestoresEmpresa = async (req: AuthRequest, res: Response<ApiR
         g.data_criacao, 
         g.data_atualizacao,
         g.data_ultimo_login,
-        COALESCE(COUNT(o.id), 0) as total_operadores
+        COALESCE(COUNT(o.id), 0) as total_operadores,
+        COALESCE(COUNT(CASE WHEN o.status_operacional = 'Online' THEN o.id END), 0) as operadores_online
       FROM gestores g
       LEFT JOIN operadores o ON o.gestor_id = g.id
       WHERE g.empresa_id = $1

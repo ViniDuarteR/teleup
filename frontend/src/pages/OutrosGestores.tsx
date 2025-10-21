@@ -201,13 +201,13 @@ const OutrosGestores = () => {
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-green-400">
-                      {gestores.reduce((total, gestor) => total + gestor.total_operadores, 0)}
+                      {gestores.reduce((total, gestor) => total + (gestor.total_operadores || 0), 0)}
                     </div>
                     <div className="text-sm text-gray-400">Total de Operadores</div>
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-blue-400">
-                      {gestores.reduce((total, gestor) => total + gestor.operadores_online, 0)}
+                      {gestores.reduce((total, gestor) => total + (gestor.operadores_online || 0), 0)}
                     </div>
                     <div className="text-sm text-gray-400">Operadores Online</div>
                   </div>
