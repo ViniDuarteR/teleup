@@ -7,10 +7,8 @@ import { ApiResponse, LoginRequest, LoginResponse } from '../types';
 export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Response): Promise<void> => {
   try {
     const { email, senha } = req.body;
-    console.log(`🔐 [GESTOR LOGIN] Tentativa de login iniciada para: ${email}`);
 
     if (!email || !senha) {
-      console.log(`❌ [GESTOR LOGIN] Dados incompletos - Email: ${!!email}, Senha: ${!!senha}`);
       res.status(400).json({
         success: false,
         message: 'Email e senha são obrigatórios'
@@ -18,16 +16,12 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
       return;
     }
 
-    console.log(`🔍 [GESTOR LOGIN] Buscando gestor no banco de dados para: ${email}`);
     const [gestores] = await pool.execute(
       'SELECT * FROM gestores WHERE email = $1 AND status = $2',
       [email, 'Ativo']
     );
 
-    console.log(`📊 [GESTOR LOGIN] Resultado da busca: ${(gestores as any[]).length} gestor(es) encontrado(s)`);
-
     if ((gestores as any[]).length === 0) {
-      console.log(`❌ [GESTOR LOGIN] Gestor não encontrado ou inativo para: ${email}`);
       res.status(401).json({
         success: false,
         message: 'Credenciais inválidas'
@@ -36,14 +30,10 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
     }
 
     const gestor = (gestores as any[])[0];
-    console.log(`✅ [GESTOR LOGIN] Gestor encontrado - ID: ${gestor.id}, Nome: ${gestor.nome}, Status: ${gestor.status}`);
 
-    console.log(`🔐 [GESTOR LOGIN] Verificando senha para gestor ID: ${gestor.id}`);
     const senhaValida = await bcrypt.compare(senha, gestor.senha);
-    console.log(`🔐 [GESTOR LOGIN] Senha válida: ${senhaValida}`);
     
     if (!senhaValida) {
-      console.log(`❌ [GESTOR LOGIN] Senha inválida para gestor: ${email}`);
       res.status(401).json({
         success: false,
         message: 'Credenciais inválidas'
@@ -51,7 +41,6 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
       return;
     }
 
-    console.log(`🎫 [GESTOR LOGIN] Gerando token JWT para gestor ID: ${gestor.id}`);
     const token = jwt.sign(
       { gestorId: gestor.id, email: gestor.email, tipo: 'gestor' },
       process.env.JWT_SECRET || 'seu_jwt_secret_super_seguro_aqui',

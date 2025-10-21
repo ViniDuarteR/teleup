@@ -2,6 +2,7 @@ import express from 'express';
 import { authenticateToken, requireGestor } from '../middleware/auth';
 import { pool } from '../config/database';
 import { AuthRequest } from '../types';
+import { cacheMiddleware, clearCacheOnWrite } from '../middleware/cache';
 
 const router = express.Router();
 
@@ -9,8 +10,8 @@ const router = express.Router();
 router.use(authenticateToken as any);
 router.use(requireGestor as any);
 
-// Rota para métricas da equipe
-router.get('/metricas-equipe', async (req: AuthRequest, res) => {
+// Rota para métricas da equipe (com cache de 3 minutos)
+router.get('/metricas-equipe', cacheMiddleware({ ttl: 180 }), async (req: AuthRequest, res) => {
   try {
     console.log('🔍 [METRICAS EQUIPE] Iniciando busca de métricas');
     const gestorId = req.operador?.id;

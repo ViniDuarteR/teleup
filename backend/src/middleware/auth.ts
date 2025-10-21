@@ -24,34 +24,14 @@ export const authenticateToken = async (
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'seu_jwt_secret_super_seguro_aqui') as any;
     
-    // Verificar se a sessão ainda está ativa no banco (opcional para produção)
-    try {
-      let sessions: any[] = [];
-      
-      if (decoded.tipo === 'gestor') {
-        // Para gestores, verificar sessoes_empresa
-        const [empresaSessions] = await pool.execute(
-          'SELECT * FROM sessoes_empresa WHERE empresa_id = (SELECT empresa_id FROM gestores WHERE id = $1) AND token = $2 AND ativo = TRUE AND expiracao > NOW()',
-          [decoded.gestorId, token]
-        );
-        sessions = empresaSessions as any[];
-      } else {
-        // Para operadores, verificar sessoes
-        const [operadorSessions] = await pool.execute(
-          'SELECT * FROM sessoes WHERE operador_id = $1 AND token = $2 AND ativo = TRUE AND expiracao > NOW()',
-          [decoded.operadorId, token]
-        );
-        sessions = operadorSessions as any[];
-      }
-    } catch (error: any) {
-      // Continuar mesmo se falhar ao verificar sessão
-    }
+    // Verificação de sessão removida para melhor performance
+    // O JWT já contém as informações necessárias e tem expiração
 
     // Verificar se é gestor ou operador
     if (decoded.tipo === 'gestor') {
-      // Buscar dados do gestor
+      // Buscar apenas dados essenciais do gestor
       const [gestores] = await pool.execute(
-        'SELECT id, nome, email, status, avatar, data_criacao, data_atualizacao FROM gestores WHERE id = $1 AND status = $2',
+        'SELECT id, nome, email, status FROM gestores WHERE id = $1 AND status = $2',
         [decoded.gestorId, 'Ativo']
       );
 
@@ -70,10 +50,7 @@ export const authenticateToken = async (
         nome: gestor.nome,
         email: gestor.email,
         tipo: 'gestor',
-        status: gestor.status,
-        avatar: gestor.avatar,
-        data_criacao: gestor.data_criacao,
-        data_atualizacao: gestor.data_atualizacao
+        status: gestor.status
       } as any;
       req.user = {
         id: gestor.id,
@@ -81,17 +58,13 @@ export const authenticateToken = async (
         tipo: 'gestor'
       };
     } else {
-      // Buscando dados do operador
-      // Buscar dados do operador
+      // Buscar apenas dados essenciais do operador
       const [operadores] = await pool.execute(
-        'SELECT id, nome, email, nivel, xp, pontos_totais, status, avatar, tempo_online, data_criacao, data_atualizacao FROM operadores WHERE id = $1',
+        'SELECT id, nome, email, nivel, pontos_totais, status FROM operadores WHERE id = $1',
         [decoded.operadorId]
       );
 
-      // Operadores encontrados
-
       if ((operadores as Operador[]).length === 0) {
-        // Operador não encontrado
         res.status(401).json({ 
           success: false, 
           message: 'Operador não encontrado' 
@@ -100,7 +73,6 @@ export const authenticateToken = async (
       }
 
       const operador = (operadores as Operador[])[0];
-      // Operador encontrado
       
       req.operador = operador;
       req.user = {
