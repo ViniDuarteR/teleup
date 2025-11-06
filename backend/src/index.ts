@@ -260,10 +260,11 @@ const startServer = async () => {
     }
 
     // Iniciar servidor
-    server.listen(PORT, () => {
+    // Railway requer que o servidor escute em 0.0.0.0
+    server.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Servidor rodando na porta ${PORT}`);
-      console.log(`📊 API disponível em http://localhost:${PORT}`);
-      console.log(`🔌 WebSocket disponível em ws://localhost:${PORT}`);
+      console.log(`📊 API disponível em http://0.0.0.0:${PORT}`);
+      console.log(`🔌 WebSocket disponível em ws://0.0.0.0:${PORT}`);
       console.log(`🌐 Ambiente: ${process.env.NODE_ENV || 'development'}`);
     });
   } catch (error) {
@@ -273,6 +274,7 @@ const startServer = async () => {
 };
 
 // Iniciar servidor apenas se não estiver no Vercel
+// Railway não define VERCEL, então o servidor será iniciado normalmente
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   startServer();
 }

@@ -4,7 +4,8 @@
   "description": "API para o projeto TeleUp",
   "main": "dist/index.js",
   "scripts": {
-    "start": "node scripts/init-database.js && node dist/index.js",
+    "start": "node dist/index.js",
+    "start:init": "node scripts/init-database.js && node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "npx tsc",
     "build:watch": "tsc --watch",
