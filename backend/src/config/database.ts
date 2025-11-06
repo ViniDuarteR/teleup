@@ -3,8 +3,24 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Função para limpar a URL do MongoDB (remove prefixos indesejados)
+function cleanMongoUri(uri: string | undefined): string {
+  if (!uri) return 'mongodb://localhost:27017/teleup';
+  
+  // Remove prefixos como "DATABASE_URL=" ou "MONGODB_URI=" se presentes
+  let cleaned = uri.trim();
+  if (cleaned.startsWith('DATABASE_URL=')) {
+    cleaned = cleaned.substring('DATABASE_URL='.length);
+  }
+  if (cleaned.startsWith('MONGODB_URI=')) {
+    cleaned = cleaned.substring('MONGODB_URI='.length);
+  }
+  
+  return cleaned.trim();
+}
+
 // Configuração de conexão MongoDB
-const MONGODB_URI = process.env.MONGODB_URI || process.env.DATABASE_URL || 'mongodb://localhost:27017/teleup';
+const MONGODB_URI = cleanMongoUri(process.env.MONGODB_URI || process.env.DATABASE_URL);
 
 // Opções de conexão
 const mongooseOptions = {

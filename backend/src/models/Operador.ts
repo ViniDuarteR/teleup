@@ -55,7 +55,7 @@ OperadorSchema.pre('save', function(next) {
 // Índices
 OperadorSchema.index({ empresa_id: 1 });
 OperadorSchema.index({ gestor_id: 1 });
-OperadorSchema.index({ email: 1 });
+// Índice de email já criado automaticamente pelo unique: true
 
 export const Operador = mongoose.model<IOperador>('Operador', OperadorSchema);
 

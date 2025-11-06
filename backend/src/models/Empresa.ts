@@ -42,9 +42,7 @@ EmpresaSchema.pre('save', function(next) {
   next();
 });
 
-// Índices
-EmpresaSchema.index({ email: 1 });
-EmpresaSchema.index({ cnpj: 1 });
+// Índices já criados automaticamente pelo unique: true
 
 export const Empresa = mongoose.model<IEmpresa>('Empresa', EmpresaSchema);
 

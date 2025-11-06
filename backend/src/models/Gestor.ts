@@ -36,7 +36,7 @@ GestorSchema.pre('save', function(next) {
 
 // Índices
 GestorSchema.index({ empresa_id: 1 });
-GestorSchema.index({ email: 1 });
+// Índice de email já criado automaticamente pelo unique: true
 
 export const Gestor = mongoose.model<IGestor>('Gestor', GestorSchema);
 
