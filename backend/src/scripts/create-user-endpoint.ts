@@ -1,76 +1,60 @@
-import { Pool } from 'pg';
+import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-
-// Este script pode ser executado como uma função serverless no Vercel
-// ou você pode usar a DATABASE_URL do seu ambiente de produção
+import { Empresa, Gestor, Operador } from '../models';
 
 async function createUserHandler() {
-  let pool;
-  
   try {
-    console.log('🔐 Conectando ao banco Neon...');
+    console.log('🔐 Conectando ao MongoDB...');
     
-    // Para usar localmente, defina a DATABASE_URL do Neon
-    const databaseUrl = process.env.DATABASE_URL;
+    const databaseUrl = process.env.MONGODB_URI || process.env.DATABASE_URL;
     
     if (!databaseUrl) {
-      throw new Error('DATABASE_URL não configurada. Use a string de conexão do Neon.');
+      throw new Error('MONGODB_URI ou DATABASE_URL não configurada.');
     }
     
-    // Configuração para Neon (PostgreSQL na nuvem)
-    pool = new Pool({
-      connectionString: databaseUrl,
-      ssl: { rejectUnauthorized: false }
-    });
+    await mongoose.connect(databaseUrl);
+    console.log('✅ Conectado ao MongoDB');
     
-    // Testar conexão
-    await pool.query('SELECT 1');
-    console.log('✅ Conectado ao banco Neon');
-    
-    // Hash da senha (password)
     const hashedPassword = await bcrypt.hash('password', 10);
     console.log('🔑 Senha hasheada criada');
     
     // Verificar se empresa TeleUp existe
-    const empresaResult = await pool.query(
-      'SELECT id FROM empresas WHERE email = $1',
-      ['contato@teleup.com']
-    );
+    let empresa = await Empresa.findOne({ email: 'contato@teleup.com' });
     
     let empresaId;
-    if (empresaResult.rows.length === 0) {
+    if (!empresa) {
       console.log('🏢 Empresa não encontrada, criando...');
-      const empresaInsert = await pool.query(
-        'INSERT INTO empresas (nome, email, senha, status) VALUES ($1, $2, $3, $4) RETURNING id',
-        ['TeleUp', 'contato@teleup.com', hashedPassword, 'Ativo']
-      );
-      empresaId = empresaInsert.rows[0].id;
-      console.log('✅ Empresa criada com ID:', empresaId);
+      empresa = await Empresa.create({
+        nome: 'TeleUp',
+        email: 'contato@teleup.com',
+        senha: hashedPassword,
+        status: 'Ativo'
+      });
+      empresaId = empresa._id;
+      console.log('✅ Empresa criada com ID:', empresaId.toString());
     } else {
-      empresaId = empresaResult.rows[0].id;
-      console.log('✅ Empresa encontrada com ID:', empresaId);
+      empresaId = empresa._id;
+      console.log('✅ Empresa encontrada com ID:', empresaId.toString());
     }
     
     // Verificar se gestor já existe
-    const gestorResult = await pool.query(
-      'SELECT id FROM gestores WHERE email = $1',
-      ['hyttalo@teleup.com']
-    );
+    let gestor = await Gestor.findOne({ email: 'hyttalo@teleup.com' });
     
-    if (gestorResult.rows.length === 0) {
+    if (!gestor) {
       console.log('👤 Gestor não encontrado, criando...');
-      const gestorInsert = await pool.query(
-        'INSERT INTO gestores (empresa_id, nome, email, senha, status) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-        [empresaId, 'Hyttalo Costa', 'hyttalo@teleup.com', hashedPassword, 'Ativo']
-      );
-      console.log('✅ Gestor criado com ID:', gestorInsert.rows[0].id);
+      gestor = await Gestor.create({
+        empresa_id: empresaId,
+        nome: 'Hyttalo Costa',
+        email: 'hyttalo@teleup.com',
+        senha: hashedPassword,
+        status: 'Ativo'
+      });
+      console.log('✅ Gestor criado com ID:', gestor._id.toString());
     } else {
-      console.log('✅ Gestor já existe com ID:', gestorResult.rows[0].id);
-      
-      // Atualizar senha do gestor existente
-      await pool.query(
-        'UPDATE gestores SET senha = $1, data_atualizacao = NOW() WHERE email = $2',
-        [hashedPassword, 'hyttalo@teleup.com']
+      console.log('✅ Gestor já existe com ID:', gestor._id.toString());
+      await Gestor.updateOne(
+        { _id: gestor._id },
+        { senha: hashedPassword }
       );
       console.log('🔑 Senha do gestor atualizada');
     }
@@ -83,32 +67,37 @@ async function createUserHandler() {
       { nome: 'Vinicius Oliveira', email: 'vinicius@teleup.com', pa: 'PA004', carteira: 'C004' }
     ];
     
-    const gestorId = gestorResult.rows.length > 0 ? gestorResult.rows[0].id : 1;
-    
-    for (const operador of operadores) {
-      const operadorResult = await pool.query(
-        'SELECT id FROM operadores WHERE email = $1',
-        [operador.email]
-      );
+    for (const operadorData of operadores) {
+      let operador = await Operador.findOne({ email: operadorData.email });
       
-      if (operadorResult.rows.length === 0) {
-        console.log(`👤 Operador ${operador.nome} não encontrado, criando...`);
-        const operadorInsert = await pool.query(
-          'INSERT INTO operadores (empresa_id, gestor_id, nome, email, senha, pa, carteira, nivel, xp, pontos_totais, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id',
-          [empresaId, gestorId, operador.nome, operador.email, hashedPassword, operador.pa, operador.carteira, 1, 0, 0, 'Ativo']
-        );
-        console.log(`✅ Operador ${operador.nome} criado com ID:`, operadorInsert.rows[0].id);
+      if (!operador) {
+        console.log(`👤 Operador ${operadorData.nome} não encontrado, criando...`);
+        operador = await Operador.create({
+          empresa_id: empresaId,
+          gestor_id: gestor._id,
+          nome: operadorData.nome,
+          email: operadorData.email,
+          senha: hashedPassword,
+          pa: operadorData.pa,
+          carteira: operadorData.carteira,
+          nivel: 1,
+          xp: 0,
+          pontos_totais: 0,
+          status: 'Ativo',
+          status_operacional: 'Offline'
+        });
+        console.log(`✅ Operador ${operadorData.nome} criado com ID:`, operador._id.toString());
       } else {
-        console.log(`✅ Operador ${operador.nome} já existe com ID:`, operadorResult.rows[0].id);
-        
-        // Atualizar senha do operador existente
-        await pool.query(
-          'UPDATE operadores SET senha = $1, data_atualizacao = NOW() WHERE email = $2',
-          [hashedPassword, operador.email]
+        console.log(`✅ Operador ${operadorData.nome} já existe com ID:`, operador._id.toString());
+        await Operador.updateOne(
+          { _id: operador._id },
+          { senha: hashedPassword }
         );
-        console.log(`🔑 Senha do operador ${operador.nome} atualizada`);
+        console.log(`🔑 Senha do operador ${operadorData.nome} atualizada`);
       }
     }
+    
+    await mongoose.disconnect();
     
     return {
       success: true,
@@ -131,10 +120,6 @@ async function createUserHandler() {
       success: false,
       error: error.message
     };
-  } finally {
-    if (pool) {
-      await pool.end();
-    }
   }
 }
 

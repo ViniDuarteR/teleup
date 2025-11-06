@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { pool } from '../config/database';
+import mongoose from 'mongoose';
+import { Operador, Sessao, Chamada } from '../models';
 import { AuthRequest, LoginRequest, LoginResponse, DashboardData, ApiResponse } from '../types';
 
 // Login do operador
@@ -18,20 +19,15 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
     }
     
     // Buscar operador por email
-    const [operadores] = await pool.execute(
-      'SELECT * FROM operadores WHERE email = $1',
-      [email]
-    );
+    const operador = await Operador.findOne({ email });
 
-    if ((operadores as any[]).length === 0) {
+    if (!operador) {
       res.status(401).json({
         success: false,
         message: 'Credenciais inválidas'
       });
       return;
     }
-
-    const operador = (operadores as any[])[0];
 
     // Verificar senha
     const senhaValida = await bcrypt.compare(senha, operador.senha);
@@ -46,7 +42,7 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
 
     // Gerar token JWT
     const token = jwt.sign(
-      { operadorId: operador.id, email: operador.email, tipo: 'operador' },
+      { operadorId: operador._id.toString(), email: operador.email, tipo: 'operador' },
       process.env.JWT_SECRET || 'seu_jwt_secret_super_seguro_aqui',
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' } as jwt.SignOptions
     );
@@ -55,49 +51,34 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
     const dataExpiracao = new Date();
     dataExpiracao.setHours(dataExpiracao.getHours() + 24);
 
-    // Verificar se a tabela sessoes existe, se não, usar sessoes_empresa
-    try {
-      await pool.execute(
-        'INSERT INTO sessoes (operador_id, token, expiracao) VALUES ($1, $2, $3)',
-        [operador.id, token, dataExpiracao]
-      );
-    } catch (error: any) {
-      // Se a tabela sessoes não existir, usar sessoes_empresa
-      if (error.code === '42P01') { // Tabela não existe
-        await pool.execute(
-          'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES ($1, $2, $3)',
-          [operador.empresa_id, token, dataExpiracao]
-        );
-      } else {
-        throw error;
-      }
-    }
+    await Sessao.create({
+      operador_id: operador._id,
+      token,
+      expiracao: dataExpiracao,
+      ativo: true
+    });
 
     // Atualizar status para online
-    await pool.execute(
-      'UPDATE operadores SET status_operacional = $1 WHERE id = $2',
-      ['Aguardando Chamada', operador.id]
-    );
+    operador.status_operacional = 'Aguardando Chamada';
+    await operador.save();
 
     // Preparar dados do operador
-    let operadorData: any = {
-      id: operador.id,
+    const operadorData: any = {
+      id: operador._id.toString(),
       nome: operador.nome,
       email: operador.email,
-      tipo: 'operador', // Todos os usuários da tabela operadores são operadores
+      tipo: 'operador',
       status: operador.status,
       status_operacional: 'Aguardando Chamada' as const,
       avatar: operador.avatar,
       data_criacao: operador.data_criacao,
-      data_atualizacao: operador.data_atualizacao
+      data_atualizacao: operador.data_atualizacao,
+      nivel: operador.nivel,
+      xp_atual: operador.xp,
+      xp_proximo_nivel: operador.nivel * 100,
+      pontos_totais: operador.pontos_totais,
+      tempo_online: operador.tempo_online
     };
-
-    // Adicionar campos de gamificação para operadores
-    operadorData.nivel = operador.nivel;
-    operadorData.xp_atual = operador.xp;
-    operadorData.xp_proximo_nivel = operador.nivel * 100; // Calcular baseado no nível
-    operadorData.pontos_totais = operador.pontos_totais;
-    operadorData.tempo_online = operador.tempo_online;
 
     console.log(`🎉 [OPERADOR LOGIN] Login realizado com sucesso para: ${email}`);
     res.json({
@@ -113,25 +94,6 @@ export const login = async (req: Request<{}, ApiResponse<LoginResponse>, LoginRe
     console.error(`❌ [OPERADOR LOGIN] Erro no login do operador ${req.body?.email}:`, error);
     console.error(`❌ [OPERADOR LOGIN] Stack trace:`, error.stack);
     
-    // Verificar se é erro de conexão com banco
-    if (error?.code === 'ECONNREFUSED' || error?.code === 'ENOTFOUND') {
-      console.log(`❌ [OPERADOR LOGIN] Erro de conexão com banco de dados`);
-      res.status(500).json({
-        success: false,
-        message: 'Erro de conexão com banco de dados'
-      });
-      return;
-    }
-    
-    // Verificar se é erro de query
-    if (error?.code && error.code.startsWith('23')) {
-      res.status(400).json({
-        success: false,
-        message: 'Dados inválidos fornecidos'
-      });
-      return;
-    }
-    
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -145,15 +107,16 @@ export const logout = async (req: AuthRequest, res: Response<ApiResponse>): Prom
     const { token } = req;
 
     // Desativar sessão
-    await pool.execute(
-      'UPDATE sessoes SET ativo = FALSE WHERE token = $1',
-      [token]
+    await Sessao.updateOne(
+      { token },
+      { ativo: false }
     );
 
     // Atualizar status para offline
-    await pool.execute(
-      'UPDATE operadores SET status_operacional = $1 WHERE id = $2',
-      ['Offline', req.operador.id]
+    const operadorId = new mongoose.Types.ObjectId(req.operador.id);
+    await Operador.updateOne(
+      { _id: operadorId },
+      { status_operacional: 'Offline' }
     );
 
     res.json({
@@ -173,15 +136,12 @@ export const logout = async (req: AuthRequest, res: Response<ApiResponse>): Prom
 // Obter dados do dashboard do operador
 export const getDashboard = async (req: AuthRequest, res: Response<ApiResponse<DashboardData>>): Promise<void> => {
   try {
-    const operadorId = req.operador.id;
+    const operadorId = new mongoose.Types.ObjectId(req.operador.id);
 
     // Buscar dados do operador
-    const [operadores] = await pool.execute(
-      'SELECT id, nome, email, nivel, xp, pontos_totais, status, status_operacional, avatar, tempo_online, data_criacao, data_atualizacao FROM operadores WHERE id = $1',
-      [operadorId]
-    );
+    const operador = await Operador.findById(operadorId);
 
-    if ((operadores as any[]).length === 0) {
+    if (!operador) {
       res.status(404).json({
         success: false,
         message: 'Operador não encontrado'
@@ -189,60 +149,35 @@ export const getDashboard = async (req: AuthRequest, res: Response<ApiResponse<D
       return;
     }
 
-    const operador = (operadores as any[])[0];
-
-    // Buscar metas ativas
-    const [metas] = await pool.execute(`
-      SELECT * FROM metas 
-      WHERE operador_id = $1 AND concluida = FALSE 
-      AND data_inicio <= CURDATE() AND data_fim >= CURDATE()
-      ORDER BY data_inicio DESC
-    `, [operadorId]);
-
-    // Buscar missões ativas
-    const [missoes] = await pool.execute(`
-      SELECT m.*, pm.progresso_atual, pm.concluida
-      FROM missoes m
-      LEFT JOIN progresso_missoes pm ON m.id = pm.missao_id AND pm.operador_id = $1
-      WHERE m.ativa = TRUE AND (pm.concluida = FALSE OR pm.concluida IS NULL)
-      ORDER BY m.tipo, m.data_inicio
-    `, [operadorId]);
-
-    // Buscar conquistas desbloqueadas
-    const [conquistas] = await pool.execute(`
-      SELECT c.*, oc.data_desbloqueio
-      FROM conquistas c
-      INNER JOIN operador_conquistas oc ON c.id = oc.conquista_id
-      WHERE oc.operador_id = $1
-      ORDER BY oc.data_desbloqueio DESC
-      LIMIT 5
-    `, [operadorId]);
-
     // Buscar estatísticas do dia
-    const [statsHoje] = await pool.execute(`
-      SELECT 
-        COUNT(*) as chamadas_hoje,
-        COALESCE(SUM(duracao_segundos), 0) as tempo_total_segundos,
-        COALESCE(AVG(satisfacao_cliente), 0) as satisfacao_media,
-        COALESCE(SUM(CASE WHEN resolvida = TRUE THEN 1 ELSE 0 END), 0) as resolucoes
-      FROM chamadas 
-      WHERE operador_id = $1 AND DATE(inicio_chamada) = CURDATE()
-    `, [operadorId]);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const amanha = new Date(hoje);
+    amanha.setDate(amanha.getDate() + 1);
 
-    const estatisticas = (statsHoje as any[])[0];
+    const chamadasHoje = await Chamada.find({
+      operador_id: operadorId,
+      inicio_chamada: { $gte: hoje, $lt: amanha }
+    });
+
+    const chamadas_hoje = chamadasHoje.length;
+    const tempo_total_segundos = chamadasHoje.reduce((sum, c) => sum + (c.duracao || 0), 0);
+    const satisfacao_media = chamadasHoje.length > 0
+      ? chamadasHoje.reduce((sum, c) => sum + (c.satisfacao_cliente || 0), 0) / chamadasHoje.length
+      : 0;
 
     res.json({
       success: true,
       data: {
         operador: {
-          id: operador.id,
+          id: operador._id.toString(),
           nome: operador.nome,
           email: operador.email,
           tipo: 'operador',
           avatar: operador.avatar,
           nivel: operador.nivel,
-          xp_atual: operador.xp_atual,
-          xp_proximo_nivel: operador.xp_proximo_nivel,
+          xp_atual: operador.xp,
+          xp_proximo_nivel: operador.nivel * 100,
           pontos_totais: operador.pontos_totais,
           status: operador.status,
           status_operacional: operador.status_operacional,
@@ -250,21 +185,14 @@ export const getDashboard = async (req: AuthRequest, res: Response<ApiResponse<D
           data_criacao: operador.data_criacao,
           data_atualizacao: operador.data_atualizacao
         },
-        metas: metas as any[],
-        missoes: (missoes as any[]).map(m => ({
-          ...m,
-          progresso_atual: m.progresso_atual || 0,
-          concluida: m.concluida || false
-        })),
-        conquistas: (conquistas as any[]).map(c => ({
-          ...c,
-          desbloqueada: true
-        })),
+        metas: [],
+        missoes: [],
+        conquistas: [],
         estatisticas: {
-          chamadas_hoje: estatisticas.chamadas_hoje,
-          tempo_total: Math.floor(estatisticas.tempo_total_segundos / 60), // em minutos
-          satisfacao_media: Math.round(estatisticas.satisfacao_media * 10) / 10,
-          resolucoes: estatisticas.resolucoes
+          chamadas_hoje,
+          tempo_total: Math.floor(tempo_total_segundos / 60),
+          satisfacao_media: Math.round(satisfacao_media * 10) / 10,
+          resolucoes: 0
         }
       }
     });
@@ -294,9 +222,10 @@ export const updateStatus = async (req: AuthRequest, res: Response<ApiResponse<{
     }
     
     // Atualizar status operacional
-    await pool.execute(
-      'UPDATE operadores SET status_operacional = $1 WHERE id = $2',
-      [status, req.operador.id]
+    const operadorId = new mongoose.Types.ObjectId(req.operador.id);
+    await Operador.updateOne(
+      { _id: operadorId },
+      { status_operacional: status }
     );
 
     res.json({
@@ -319,31 +248,25 @@ export const getRanking = async (req: AuthRequest, res: Response<ApiResponse<{ r
   try {
     const { periodo = 'semana' } = req.query;
 
-    let campoPontos = 'pontos_semana';
-    if (periodo === 'mes') {
-      campoPontos = 'pontos_mes';
-    }
+    // Buscar operadores ordenados por pontos
+    const operadores = await Operador.find()
+      .sort({ pontos_totais: -1 })
+      .limit(20)
+      .select('nome avatar nivel pontos_totais');
 
-    const [ranking] = await pool.execute(`
-      SELECT 
-        r.posicao,
-        o.id,
-        o.nome,
-        o.avatar,
-        o.nivel,
-        r.${campoPontos} as pontos,
-        r.chamadas_semana,
-        r.chamadas_mes
-      FROM ranking r
-      INNER JOIN operadores o ON r.operador_id = o.id
-      ORDER BY r.${campoPontos} DESC
-      LIMIT 20
-    `);
+    const ranking = operadores.map((op, index) => ({
+      posicao: index + 1,
+      id: op._id.toString(),
+      nome: op.nome,
+      avatar: op.avatar,
+      nivel: op.nivel,
+      pontos: op.pontos_totais
+    }));
 
     res.json({
       success: true,
       data: {
-        ranking: ranking as any[],
+        ranking,
         periodo: periodo as string
       }
     });

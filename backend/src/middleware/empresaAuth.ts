@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { pool } from '../config/database';
+import mongoose from 'mongoose';
+import { Empresa, Sessao } from '../models';
 import { AuthRequest } from '../types';
 
 export const authenticateEmpresa = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
@@ -28,12 +29,15 @@ export const authenticateEmpresa = async (req: AuthRequest, res: Response, next:
     }
 
     // Verificar se a sessão ainda está ativa
-    const [sessoes] = await pool.execute(
-      'SELECT * FROM sessoes_empresa WHERE empresa_id = $1 AND token = $2 AND ativo = TRUE AND expiracao > NOW()',
-      [decoded.empresaId, token]
-    );
+    const empresaId = new mongoose.Types.ObjectId(decoded.empresaId);
+    const sessao = await Sessao.findOne({
+      empresa_id: empresaId,
+      token,
+      ativo: true,
+      expiracao: { $gt: new Date() }
+    });
 
-    if ((sessoes as any[]).length === 0) {
+    if (!sessao) {
       res.status(401).json({
         success: false,
         message: 'Sessão expirada ou inválida'
@@ -42,12 +46,10 @@ export const authenticateEmpresa = async (req: AuthRequest, res: Response, next:
     }
 
     // Buscar dados da empresa
-    const [empresas] = await pool.execute(
-      'SELECT id, nome, email, status, avatar, data_ultimo_login FROM empresas WHERE id = $1 AND status = $2',
-      [decoded.empresaId, 'Ativo']
-    );
-
-    const empresa = (empresas as any[])[0];
+    const empresa = await Empresa.findOne({
+      _id: empresaId,
+      status: 'Ativo'
+    });
 
     if (!empresa) {
       res.status(401).json({
@@ -58,13 +60,18 @@ export const authenticateEmpresa = async (req: AuthRequest, res: Response, next:
     }
 
     // Adicionar dados da empresa ao request
-    req.empresa = empresa;
+    req.empresa = {
+      id: empresa._id.toString(),
+      nome: empresa.nome,
+      email: empresa.email,
+      status: empresa.status,
+      data_ultimo_login: empresa.data_ultimo_login
+    };
     req.token = token;
 
     next();
   } catch (error: any) {
-    console.error(`❌ [EMPRESA AUTH] Erro na autenticação da empresa para ${req.method} ${req.path}:`, error);
-    console.error(`❌ [EMPRESA AUTH] Stack trace:`, error.stack);
+    console.error(`❌ [EMPRESA AUTH] Erro na autenticação da empresa:`, error);
     res.status(401).json({
       success: false,
       message: 'Token inválido'

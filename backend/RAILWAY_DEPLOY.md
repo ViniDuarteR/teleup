@@ -6,7 +6,7 @@ Este documento contém as instruções para fazer o deploy do backend no Railway
 
 1. Conta no [Railway](https://railway.app)
 2. Repositório Git conectado ao Railway
-3. Banco de dados PostgreSQL (pode ser criado no Railway ou usar um externo como Neon)
+3. Banco de dados MongoDB (pode ser criado no Railway ou usar um externo como MongoDB Atlas)
 
 ## 🚀 Passos para Deploy
 
@@ -24,10 +24,10 @@ No Railway, vá em **Variables** e adicione as seguintes variáveis:
 
 #### Obrigatórias:
 
-- `DATABASE_URL` - String de conexão do PostgreSQL
-  - Exemplo: `postgresql://user:password@host:port/database?sslmode=require`
-  - Se usar Neon: copie a connection string do dashboard do Neon
-  - Se usar PostgreSQL do Railway: será criada automaticamente como `${{Postgres.DATABASE_URL}}`
+- `MONGODB_URI` ou `DATABASE_URL` - String de conexão do MongoDB
+  - Exemplo: `mongodb+srv://user:password@cluster.mongodb.net/teleup?retryWrites=true&w=majority`
+  - Se usar MongoDB Atlas: copie a connection string do dashboard do Atlas
+  - Se usar MongoDB do Railway: será criada automaticamente como `${{Mongo.DATABASE_URL}}`
 
 - `JWT_SECRET` - Chave secreta para assinar tokens JWT
   - Gere uma string aleatória segura
@@ -78,11 +78,11 @@ Após o deploy, o Railway fornecerá uma URL pública. Teste:
 2. Clique em **Generate Domain** ou adicione um domínio customizado
 3. Configure o DNS conforme as instruções
 
-### Banco de Dados PostgreSQL no Railway
+### Banco de Dados MongoDB no Railway
 
 1. No projeto Railway, clique em **+ New**
-2. Selecione **Database** → **Add PostgreSQL**
-3. O Railway criará automaticamente a variável `DATABASE_URL`
+2. Selecione **Database** → **Add MongoDB**
+3. O Railway criará automaticamente a variável `DATABASE_URL` ou `MONGODB_URI`
 4. Use essa variável nas configurações do backend
 
 ## 📝 Estrutura de Arquivos
@@ -97,9 +97,9 @@ Os seguintes arquivos foram criados para o deploy:
 
 ### Erro de conexão com banco
 
-- Verifique se `DATABASE_URL` está configurada corretamente
-- Certifique-se de que o banco aceita conexões externas
-- Verifique se o SSL está configurado (Neon requer SSL)
+- Verifique se `MONGODB_URI` ou `DATABASE_URL` está configurada corretamente
+- Certifique-se de que o banco aceita conexões externas (MongoDB Atlas requer whitelist de IPs)
+- Verifique se a string de conexão está no formato correto: `mongodb+srv://...` ou `mongodb://...`
 
 ### Servidor não inicia
 

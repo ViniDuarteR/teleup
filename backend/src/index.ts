@@ -6,7 +6,8 @@ import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 
 // Importar configurações
-import { testConnection, pool } from './config/database';
+import { testConnection, connectDatabase } from './config/database';
+import mongoose from 'mongoose';
 
 // Importar rotas
 import authRoutes from './routes/auth';
@@ -139,17 +140,18 @@ app.get('/api/health', async (req, res) => {
     // Testar conexão com banco
     const dbConnected = await testConnection();
     
-    // Verificar tabelas essenciais
-    let tablesStatus: any = {};
-    if (dbConnected) {
+    // Verificar coleções essenciais
+    let collectionsStatus: any = {};
+    if (dbConnected && mongoose.connection.readyState === 1) {
       try {
-        const tables = ['empresas', 'operadores', 'gestores', 'sessoes', 'sessoes_empresa'];
-        for (const table of tables) {
-          const result = await pool.execute(`SELECT COUNT(*) as count FROM ${table}`);
-          tablesStatus[table] = parseInt((result[0] as any)[0].count);
+        const db = mongoose.connection.db;
+        const collections = ['empresas', 'operadores', 'gestores', 'sessoes', 'chamadas'];
+        for (const collection of collections) {
+          const count = await db.collection(collection).countDocuments();
+          collectionsStatus[collection] = count;
         }
       } catch (error: any) {
-        tablesStatus = { error: error.message };
+        collectionsStatus = { error: error.message };
       }
     }
     
@@ -161,11 +163,11 @@ app.get('/api/health', async (req, res) => {
       environment: process.env.NODE_ENV || 'development',
       database: {
         connected: dbConnected,
-        tables: tablesStatus
+        collections: collectionsStatus
       },
       variables: {
         hasJwtSecret: !!process.env.JWT_SECRET,
-        hasDatabaseUrl: !!process.env.DATABASE_URL,
+        hasDatabaseUrl: !!process.env.DATABASE_URL || !!process.env.MONGODB_URI,
         corsOrigin: process.env.CORS_ORIGIN
       }
     });
@@ -252,7 +254,10 @@ app.use('*', (req, res) => {
 // Inicializar servidor
 const startServer = async () => {
   try {
-    // Testar conexão com banco de dados
+    // Conectar ao banco de dados MongoDB
+    await connectDatabase();
+    
+    // Testar conexão
     const dbConnected = await testConnection();
     if (!dbConnected) {
       console.error('❌ Falha ao conectar com o banco de dados');

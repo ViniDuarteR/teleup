@@ -1,70 +1,48 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
+import { Recompensa, Compra, Operador, Gestor } from '../models';
 import { AuthRequest } from '../types';
-import { pool } from '../config/database';
 
-// Buscar todas as recompensas disponíveis da empresa
 export const getRecompensas = async (req: AuthRequest, res: Response) => {
   try {
-    console.log('🔍 [GET RECOMPENSAS] Buscando recompensas');
+    let empresaId: mongoose.Types.ObjectId | null = null;
     
-    let empresaId = 1; // Default
-    
-    // Se for gestor, buscar empresa do gestor
     if (req.user?.tipo === 'gestor') {
-      const gestorId = req.user.id;
-      const [empresaResult] = await pool.execute(
-        'SELECT empresa_id FROM gestores WHERE id = $1',
-        [gestorId]
-      );
-      
-      const empresa = empresaResult as any[];
-      if (empresa.length > 0) {
-        empresaId = empresa[0].empresa_id;
-      }
+      const gestorId = new mongoose.Types.ObjectId(req.user.id);
+      const gestor = await Gestor.findById(gestorId);
+      if (gestor) empresaId = gestor.empresa_id;
     } else if (req.user?.tipo === 'operador') {
-      // Se for operador, buscar empresa do operador
-      const operadorId = req.user.id;
-      const [empresaResult] = await pool.execute(
-        'SELECT empresa_id FROM operadores WHERE id = $1',
-        [operadorId]
-      );
-      
-      const empresa = empresaResult as any[];
-      if (empresa.length > 0) {
-        empresaId = empresa[0].empresa_id;
-      }
+      const operadorId = new mongoose.Types.ObjectId(req.user.id);
+      const operador = await Operador.findById(operadorId);
+      if (operador) empresaId = operador.empresa_id;
     }
-    
-    console.log('🔍 [GET RECOMPENSAS] Empresa ID:', empresaId);
-    
-    const query = `
-      SELECT 
-        id,
-        titulo as nome,
-        descricao,
-        categoria,
-        preco,
-        tipo,
-        raridade,
-        imagem,
-        disponivel,
-        quantidade_restante,
-        criado_em as data_criacao
-      FROM recompensas 
-      WHERE disponivel = true AND empresa_id = $1
-      ORDER BY raridade DESC, preco ASC
-    `;
 
-    const [rows] = await pool.execute(query, [empresaId]);
-    
-    console.log('✅ [GET RECOMPENSAS] Recompensas encontradas:', rows.length);
-    
+    const query: any = { disponivel: true };
+    if (empresaId) {
+      query.empresa_id = empresaId;
+    }
+
+    const recompensas = await Recompensa.find(query)
+      .sort({ raridade: -1, preco: 1 });
+
     res.json({
       success: true,
-      data: rows
+      data: recompensas.map(r => ({
+        id: r._id.toString(),
+        nome: r.titulo,
+        descricao: r.descricao,
+        categoria: r.categoria,
+        preco: r.preco,
+        tipo: r.tipo,
+        raridade: r.raridade,
+        imagem: r.imagem,
+        disponivel: r.disponivel,
+        quantidade_restante: r.quantidade_restante,
+        data_criacao: r.criado_em
+      }))
     });
   } catch (error) {
-    console.error('❌ [GET RECOMPENSAS] Erro ao buscar recompensas:', error);
+    console.error('❌ [GET RECOMPENSAS] Erro:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -72,182 +50,121 @@ export const getRecompensas = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Buscar compras do operador
 export const getCompras = async (req: AuthRequest, res: Response) => {
   try {
-    const operadorId = req.user?.id;
-    
-    if (!operadorId) {
-      return res.status(401).json({
-        success: false,
-        message: 'Usuário não autenticado'
-      });
-    }
+    const operadorId = new mongoose.Types.ObjectId(req.user?.id || '');
 
-    const query = `
-      SELECT 
-        c.id,
-        c.recompensa_id,
-        c.operador_id,
-        c.data_compra,
-        c.status,
-        r.nome as recompensa_nome,
-        r.categoria,
-        r.preco
-      FROM compras c
-      JOIN recompensas r ON c.recompensa_id = r.id
-      WHERE c.operador_id = $1
-      ORDER BY c.data_compra DESC
-    `;
+    const compras = await Compra.find({ operador_id: operadorId })
+      .populate('recompensa_id', 'titulo categoria preco')
+      .sort({ data_compra: -1 });
 
-    const [rows] = await pool.execute(query, [operadorId]);
-    
-    return res.json({
+    res.json({
       success: true,
-      data: rows
+      data: compras.map(c => ({
+        id: c._id.toString(),
+        recompensa_id: c.recompensa_id.toString(),
+        operador_id: c.operador_id.toString(),
+        data_compra: c.data_compra,
+        status: c.status,
+        recompensa_nome: (c.recompensa_id as any)?.titulo,
+        categoria: (c.recompensa_id as any)?.categoria,
+        preco: (c.recompensa_id as any)?.preco
+      }))
     });
   } catch (error) {
     console.error('Erro ao buscar compras:', error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
     });
   }
 };
 
-// Comprar recompensa
 export const comprarRecompensa = async (req: AuthRequest, res: Response) => {
   try {
-    
-    const operadorId = req.user?.id;
+    const operadorId = new mongoose.Types.ObjectId(req.user?.id || '');
     const { recompensa_id } = req.body;
-    
-    if (!operadorId) {
-      return res.status(401).json({
-        success: false,
-        message: 'Usuário não autenticado'
-      });
-    }
 
-    // Buscar informações da recompensa
-    const [recompensaRows] = await pool.execute(
-      'SELECT * FROM recompensas WHERE id = $1 AND disponivel = true',
-      [recompensa_id]
-    );
-    
-    if (!Array.isArray(recompensaRows) || recompensaRows.length === 0) {
+    const recompensa = await Recompensa.findById(recompensa_id);
+    if (!recompensa || !recompensa.disponivel) {
       return res.status(404).json({
         success: false,
         message: 'Recompensa não encontrada ou indisponível'
       });
     }
-    
-    const recompensa = recompensaRows[0] as any;
-    
-    // Verificar se já possui a recompensa
-    const [compraExistente] = await pool.execute(
-      'SELECT id FROM compras WHERE operador_id = $1 AND recompensa_id = $2',
-      [operadorId, recompensa_id]
-    );
-    
-    if (Array.isArray(compraExistente) && compraExistente.length > 0) {
+
+    const compraExistente = await Compra.findOne({ operador_id: operadorId, recompensa_id });
+    if (compraExistente) {
       return res.status(400).json({
         success: false,
         message: 'Você já possui esta recompensa'
       });
     }
-    
-    // Buscar pontos do operador
-    const [operadorRows] = await pool.execute(
-      'SELECT pontos_totais FROM operadores WHERE id = $1',
-      [operadorId]
-    );
-    
-    if (!Array.isArray(operadorRows) || operadorRows.length === 0) {
+
+    const operador = await Operador.findById(operadorId);
+    if (!operador) {
       return res.status(404).json({
         success: false,
         message: 'Operador não encontrado'
       });
     }
-    
-    const operador = operadorRows[0] as any;
-    
+
     if (operador.pontos_totais < recompensa.preco) {
       return res.status(400).json({
         success: false,
         message: 'Pontos insuficientes para comprar esta recompensa'
       });
     }
-    
-    // Verificar quantidade restante
+
     if (recompensa.quantidade_restante !== null && recompensa.quantidade_restante <= 0) {
       return res.status(400).json({
         success: false,
         message: 'Recompensa esgotada'
       });
     }
-    
-    // Realizar a compra
-    const [result] = await pool.execute(
-      'INSERT INTO compras (operador_id, recompensa_id, data_compra, status) VALUES ($1, $2, NOW(), \'aprovada\') RETURNING id',
-      [operadorId, recompensa_id]
+
+    const compra = await Compra.create({
+      operador_id: operadorId,
+      recompensa_id,
+      preco_pago: recompensa.preco,
+      status: 'aprovada',
+      data_compra: new Date()
+    });
+
+    await Operador.updateOne(
+      { _id: operadorId },
+      { $inc: { pontos_totais: -recompensa.preco } }
     );
-    
-    // Deduzir pontos do operador
-    await pool.execute(
-      'UPDATE operadores SET pontos_totais = pontos_totais - $1 WHERE id = $2',
-      [recompensa.preco, operadorId]
-    );
-    
-    // Atualizar quantidade restante se aplicável
+
     if (recompensa.quantidade_restante !== null) {
-      await pool.execute(
-        'UPDATE recompensas SET quantidade_restante = quantidade_restante - 1 WHERE id = $1',
-        [recompensa_id]
+      await Recompensa.updateOne(
+        { _id: recompensa_id },
+        { $inc: { quantidade_restante: -1 } }
       );
     }
-    
+
     return res.json({
       success: true,
       message: 'Compra realizada com sucesso!',
       data: {
-        compra_id: (result as any).insertId,
+        compra_id: compra._id.toString(),
         pontos_gastos: recompensa.preco,
         pontos_restantes: operador.pontos_totais - recompensa.preco
       }
     });
-    
   } catch (error) {
     console.error('Erro ao comprar recompensa:', error);
     return res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
     });
-  } finally {
   }
 };
 
-// Criar nova recompensa (apenas para gestores)
 export const criarRecompensa = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    console.log('🔍 [CRIAR RECOMPENSA] Iniciando criação de recompensa');
-    console.log('🔍 [CRIAR RECOMPENSA] Headers:', req.headers);
-    console.log('🔍 [CRIAR RECOMPENSA] Body recebido:', req.body);
-    console.log('🔍 [CRIAR RECOMPENSA] User:', req.user);
-    console.log('🔍 [CRIAR RECOMPENSA] File:', req.file);
-    
-    const {
-      nome,
-      descricao,
-      categoria,
-      preco,
-      tipo,
-      raridade,
-      imagem,
-      quantidade_restante
-    } = req.body;
-    
-    // Validar campos obrigatórios
+    const { nome, descricao, categoria, preco, tipo, raridade, imagem, quantidade_restante } = req.body;
+
     if (!nome || !preco) {
       res.status(400).json({
         success: false,
@@ -255,100 +172,45 @@ export const criarRecompensa = async (req: AuthRequest, res: Response): Promise<
       });
       return;
     }
-    
-    // Processar arquivo de imagem se houver
-    let caminhoImagem = imagem || null;
-    if (req.file) {
-      console.log('🔍 [CRIAR RECOMPENSA] Arquivo recebido:', req.file);
-      console.log('🔍 [CRIAR RECOMPENSA] Nome do arquivo:', req.file.filename);
-      console.log('🔍 [CRIAR RECOMPENSA] Caminho do arquivo:', req.file.path);
-      console.log('🔍 [CRIAR RECOMPENSA] Tamanho do arquivo:', req.file.size);
-      
-      // Em produção (Vercel), usar apenas o nome do arquivo
-      // Em desenvolvimento, usar o caminho completo
-      const isProduction = process.env.NODE_ENV === 'production';
-      caminhoImagem = isProduction 
-        ? req.file.filename 
-        : `/uploads/recompensas/${req.file.filename}`;
-      
-      console.log('🔍 [CRIAR RECOMPENSA] Caminho da imagem definido:', caminhoImagem);
-    } else {
-      console.log('🔍 [CRIAR RECOMPENSA] Nenhum arquivo de imagem recebido');
-    }
-    
-    // Obter empresa_id do gestor logado
-    const gestorId = req.user?.id;
-    console.log('🔍 [CRIAR RECOMPENSA] Gestor ID:', gestorId);
-    
-    // Buscar empresa do gestor
-    const [empresaResult] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = $1',
-      [gestorId]
-    );
-    
-    const empresa = empresaResult as any[];
-    if (empresa.length === 0) {
+
+    const gestorId = new mongoose.Types.ObjectId(req.user?.id || '');
+    const gestor = await Gestor.findById(gestorId);
+    if (!gestor) {
       res.status(404).json({
         success: false,
         message: 'Empresa do gestor não encontrada'
       });
       return;
     }
-    
-    const empresaId = empresa[0].empresa_id;
-    console.log('🔍 [CRIAR RECOMPENSA] Empresa ID:', empresaId);
-    
-    // Mapear campos do frontend para a estrutura da tabela
-    const titulo = nome; // O campo na tabela é 'titulo', não 'nome'
-    
-    // Validar categoria contra o ENUM do banco
+
+    let caminhoImagem = imagem || null;
+    if (req.file) {
+      caminhoImagem = req.file.filename;
+    }
+
     const categoriasValidas = ['Produtos', 'Servicos', 'Vouchers', 'Outros'];
     const categoriaFinal = categoriasValidas.includes(categoria) ? categoria : 'Outros';
-    
-    console.log('🔍 [CRIAR RECOMPENSA] Categoria recebida:', categoria);
-    console.log('🔍 [CRIAR RECOMPENSA] Categoria final:', categoriaFinal);
-    
-    console.log('🔍 [CRIAR RECOMPENSA] Dados mapeados:', {
-      titulo,
+
+    const recompensa = await Recompensa.create({
+      titulo: nome,
       descricao,
       categoria: categoriaFinal,
       preco,
-      empresaId
+      tipo: tipo || 'item',
+      raridade: raridade || 'comum',
+      imagem: caminhoImagem,
+      disponivel: true,
+      quantidade_restante: quantidade_restante || null,
+      empresa_id: gestor.empresa_id
     });
-    
-    const query = `
-      INSERT INTO recompensas (
-        titulo, descricao, categoria, preco, tipo, raridade, 
-        imagem, disponivel, quantidade_restante, empresa_id, criado_em
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, NOW()) RETURNING id
-    `;
-    
-    const [result] = await pool.execute(query, [
-      titulo, descricao, categoriaFinal, preco, tipo || 'item', raridade || 'comum',
-      caminhoImagem, quantidade_restante || null, empresaId
-    ]);
-    
-    console.log('✅ [CRIAR RECOMPENSA] Recompensa criada com sucesso, ID:', (result as any)[0]?.id);
-    
+
     res.json({
       success: true,
       message: 'Recompensa criada com sucesso!',
-      data: {
-        id: (result as any)[0]?.id
-      }
+      data: { id: recompensa._id.toString() }
     });
   } catch (error: any) {
-    console.error('❌ [CRIAR RECOMPENSA] Erro ao criar recompensa:', error);
-    console.error('❌ [CRIAR RECOMPENSA] Stack trace:', error?.stack);
-    
-    // Log detalhado do erro para debug
-    if (error.code) {
-      console.error('❌ [CRIAR RECOMPENSA] Código do erro:', error.code);
-    }
-    if (error.detail) {
-      console.error('❌ [CRIAR RECOMPENSA] Detalhes do erro:', error.detail);
-    }
-    
+    console.error('❌ [CRIAR RECOMPENSA] Erro:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -356,129 +218,46 @@ export const criarRecompensa = async (req: AuthRequest, res: Response): Promise<
   }
 };
 
-// Atualizar recompensa (apenas para gestores)
 export const atualizarRecompensa = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    console.log('🔍 [ATUALIZAR RECOMPENSA] Função chamada');
-    console.log('🔍 [ATUALIZAR RECOMPENSA] Params:', req.params);
-    console.log('🔍 [ATUALIZAR RECOMPENSA] Body:', req.body);
-    console.log('🔍 [ATUALIZAR RECOMPENSA] File:', req.file);
-    console.log('🔍 [ATUALIZAR RECOMPENSA] User:', req.user);
-    
     const { id } = req.params;
-    const {
-      nome,
-      descricao,
-      categoria,
-      preco,
-      tipo,
-      raridade,
-      imagem,
-      quantidade_restante,
-      disponivel
-    } = req.body;
-    
-    // Obter empresa_id do gestor logado
-    const gestorId = req.user?.id;
-    
-    // Buscar empresa do gestor
-    const [empresaResult] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = $1',
-      [gestorId]
-    );
-    
-    const empresa = empresaResult as any[];
-    if (empresa.length === 0) {
+    const { nome, descricao, categoria, preco, tipo, raridade, imagem, quantidade_restante, disponivel } = req.body;
+
+    const gestorId = new mongoose.Types.ObjectId(req.user?.id || '');
+    const gestor = await Gestor.findById(gestorId);
+    if (!gestor) {
       res.status(404).json({
         success: false,
         message: 'Empresa do gestor não encontrada'
       });
       return;
     }
-    
-    const empresaId = empresa[0].empresa_id;
-    
-    // Verificar se a recompensa pertence à empresa do gestor
-    const [recompensaResult] = await pool.execute(
-      'SELECT id FROM recompensas WHERE id = $1 AND empresa_id = $2',
-      [id, empresaId]
-    );
-    
-    if (!Array.isArray(recompensaResult) || recompensaResult.length === 0) {
+
+    const recompensa = await Recompensa.findOne({ _id: id, empresa_id: gestor.empresa_id });
+    if (!recompensa) {
       res.status(404).json({
         success: false,
         message: 'Recompensa não encontrada'
       });
       return;
     }
-    
-    // Construir query de atualização dinamicamente
-    const updateFields = [];
-    const updateValues = [];
-    let paramIndex = 1;
-    
-    if (nome !== undefined) {
-      updateFields.push(`titulo = $${paramIndex++}`);
-      updateValues.push(nome);
-    }
-    if (descricao !== undefined) {
-      updateFields.push(`descricao = $${paramIndex++}`);
-      updateValues.push(descricao);
-    }
+
+    const updateData: any = {};
+    if (nome !== undefined) updateData.titulo = nome;
+    if (descricao !== undefined) updateData.descricao = descricao;
     if (categoria !== undefined) {
-      // Validar categoria contra o ENUM do banco
       const categoriasValidas = ['Produtos', 'Servicos', 'Vouchers', 'Outros'];
-      const categoriaFinal = categoriasValidas.includes(categoria) ? categoria : 'Outros';
-      console.log('🔍 [ATUALIZAR RECOMPENSA] Categoria recebida:', categoria);
-      console.log('🔍 [ATUALIZAR RECOMPENSA] Categoria final:', categoriaFinal);
-      
-      updateFields.push(`categoria = $${paramIndex++}`);
-      updateValues.push(categoriaFinal);
+      updateData.categoria = categoriasValidas.includes(categoria) ? categoria : 'Outros';
     }
-    if (preco !== undefined) {
-      updateFields.push(`preco = $${paramIndex++}`);
-      updateValues.push(preco);
-    }
-    if (tipo !== undefined) {
-      updateFields.push(`tipo = $${paramIndex++}`);
-      updateValues.push(tipo);
-    }
-    if (raridade !== undefined) {
-      updateFields.push(`raridade = $${paramIndex++}`);
-      updateValues.push(raridade);
-    }
-    if (imagem !== undefined) {
-      updateFields.push(`imagem = $${paramIndex++}`);
-      updateValues.push(imagem);
-    }
-    if (quantidade_restante !== undefined) {
-      updateFields.push(`quantidade_restante = $${paramIndex++}`);
-      updateValues.push(quantidade_restante);
-    }
-    if (disponivel !== undefined) {
-      updateFields.push(`disponivel = $${paramIndex++}`);
-      updateValues.push(disponivel);
-    }
-    
-    if (updateFields.length === 0) {
-      res.status(400).json({
-        success: false,
-        message: 'Nenhum campo para atualizar'
-      });
-      return;
-    }
-    
-    updateValues.push(id);
-    
-    const query = `UPDATE recompensas SET ${updateFields.join(', ')} WHERE id = $${paramIndex}`;
-    
-    console.log('🔍 [ATUALIZAR RECOMPENSA] Executando query:', query);
-    console.log('🔍 [ATUALIZAR RECOMPENSA] Com valores:', updateValues);
-    
-    await pool.execute(query, updateValues);
-    
-    console.log('✅ [ATUALIZAR RECOMPENSA] Recompensa atualizada com sucesso!');
-    
+    if (preco !== undefined) updateData.preco = preco;
+    if (tipo !== undefined) updateData.tipo = tipo;
+    if (raridade !== undefined) updateData.raridade = raridade;
+    if (imagem !== undefined) updateData.imagem = imagem;
+    if (quantidade_restante !== undefined) updateData.quantidade_restante = quantidade_restante;
+    if (disponivel !== undefined) updateData.disponivel = disponivel;
+
+    await Recompensa.updateOne({ _id: id }, updateData);
+
     res.json({
       success: true,
       message: 'Recompensa atualizada com sucesso!'
@@ -492,48 +271,30 @@ export const atualizarRecompensa = async (req: AuthRequest, res: Response): Prom
   }
 };
 
-// Excluir recompensa (apenas para gestores)
 export const excluirRecompensa = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    
-    // Obter empresa_id do gestor logado
-    const gestorId = req.user?.id;
-    
-    // Buscar empresa do gestor
-    const [empresaResult] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = $1',
-      [gestorId]
-    );
-    
-    const empresa = empresaResult as any[];
-    if (empresa.length === 0) {
+    const gestorId = new mongoose.Types.ObjectId(req.user?.id || '');
+    const gestor = await Gestor.findById(gestorId);
+    if (!gestor) {
       res.status(404).json({
         success: false,
         message: 'Empresa do gestor não encontrada'
       });
       return;
     }
-    
-    const empresaId = empresa[0].empresa_id;
-    
-    // Verificar se a recompensa pertence à empresa do gestor
-    const [recompensaResult] = await pool.execute(
-      'SELECT id FROM recompensas WHERE id = $1 AND empresa_id = $2',
-      [id, empresaId]
-    );
-    
-    if (!Array.isArray(recompensaResult) || recompensaResult.length === 0) {
+
+    const recompensa = await Recompensa.findOne({ _id: id, empresa_id: gestor.empresa_id });
+    if (!recompensa) {
       res.status(404).json({
         success: false,
         message: 'Recompensa não encontrada'
       });
       return;
     }
-    
-    // Excluir a recompensa
-    await pool.execute('DELETE FROM recompensas WHERE id = $1', [id]);
-    
+
+    await Recompensa.deleteOne({ _id: id });
+
     res.json({
       success: true,
       message: 'Recompensa excluída com sucesso!'
@@ -547,59 +308,38 @@ export const excluirRecompensa = async (req: AuthRequest, res: Response): Promis
   }
 };
 
-// Toggle disponibilidade da recompensa (apenas para gestores)
 export const toggleDisponibilidade = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    
-    // Obter empresa_id do gestor logado
-    const gestorId = req.user?.id;
-    
-    // Buscar empresa do gestor
-    const [empresaResult] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = $1',
-      [gestorId]
-    );
-    
-    const empresa = empresaResult as any[];
-    if (empresa.length === 0) {
+    const gestorId = new mongoose.Types.ObjectId(req.user?.id || '');
+    const gestor = await Gestor.findById(gestorId);
+    if (!gestor) {
       res.status(404).json({
         success: false,
         message: 'Empresa do gestor não encontrada'
       });
       return;
     }
-    
-    const empresaId = empresa[0].empresa_id;
-    
-    // Verificar se a recompensa pertence à empresa do gestor
-    const [recompensaResult] = await pool.execute(
-      'SELECT id, disponivel FROM recompensas WHERE id = $1 AND empresa_id = $2',
-      [id, empresaId]
-    );
-    
-    if (!Array.isArray(recompensaResult) || recompensaResult.length === 0) {
+
+    const recompensa = await Recompensa.findOne({ _id: id, empresa_id: gestor.empresa_id });
+    if (!recompensa) {
       res.status(404).json({
         success: false,
         message: 'Recompensa não encontrada'
       });
       return;
     }
-    
-    const recompensa = recompensaResult[0] as any;
-    const novaDisponibilidade = !recompensa.disponivel;
-    
-    // Atualizar disponibilidade
-    await pool.execute(
-      'UPDATE recompensas SET disponivel = $1 WHERE id = $2',
-      [novaDisponibilidade, id]
+
+    await Recompensa.updateOne(
+      { _id: id },
+      { disponivel: !recompensa.disponivel }
     );
-    
+
     res.json({
       success: true,
-      message: `Recompensa ${novaDisponibilidade ? 'disponibilizada' : 'indisponibilizada'} com sucesso!`,
+      message: `Recompensa ${!recompensa.disponivel ? 'disponibilizada' : 'indisponibilizada'} com sucesso!`,
       data: {
-        disponivel: novaDisponibilidade
+        disponivel: !recompensa.disponivel
       }
     });
   } catch (error) {

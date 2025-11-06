@@ -2,7 +2,7 @@ import { Request } from 'express';
 
 // Tipos de banco de dados
 export interface Operador {
-  id: number;
+  id: string;
   nome: string;
   email: string;
   senha: string;
@@ -14,14 +14,14 @@ export interface Operador {
   pontos_totais: number;
   status: 'Ativo' | 'Inativo' | 'Suspenso';
   status_operacional: 'Aguardando Chamada' | 'Em Chamada' | 'Em Pausa' | 'Offline';
-  tempo_online: string;
+  tempo_online: number;
   data_criacao: Date;
   data_atualizacao: Date;
 }
 
 export interface Chamada {
-  id: number;
-  operador_id: number;
+  id: string;
+  operador_id: string;
   numero_cliente?: string;
   inicio_chamada: Date;
   fim_chamada?: Date;
@@ -35,8 +35,8 @@ export interface Chamada {
 }
 
 export interface Meta {
-  id: number;
-  operador_id: number;
+  id: string;
+  operador_id: string;
   tipo_meta: 'Chamadas Atendidas' | 'Tempo de Conversa' | 'Resolucoes' | 'Satisfacao Cliente';
   valor_atual: number;
   valor_meta: number;
@@ -48,7 +48,7 @@ export interface Meta {
 }
 
 export interface Missao {
-  id: number;
+  id: string;
   titulo: string;
   descricao: string;
   tipo: 'Diaria' | 'Semanal' | 'Mensal' | 'Especial';
@@ -60,9 +60,9 @@ export interface Missao {
 }
 
 export interface OperadorMissao {
-  id: number;
-  operador_id: number;
-  missao_id: number;
+  id: string;
+  operador_id: string;
+  missao_id: string;
   progresso_atual: number;
   concluida: boolean;
   data_inicio: Date;
@@ -70,7 +70,7 @@ export interface OperadorMissao {
 }
 
 export interface Conquista {
-  id: number;
+  id: string;
   titulo: string;
   descricao: string;
   icone: string;
@@ -81,15 +81,15 @@ export interface Conquista {
 }
 
 export interface OperadorConquista {
-  id: number;
-  operador_id: number;
-  conquista_id: number;
+  id: string;
+  operador_id: string;
+  conquista_id: string;
   data_desbloqueio: Date;
 }
 
 export interface Ranking {
-  id: number;
-  operador_id: number;
+  id: string;
+  operador_id: string;
   posicao: number;
   pontos_semana: number;
   pontos_mes: number;
@@ -99,8 +99,8 @@ export interface Ranking {
 }
 
 export interface Sessao {
-  id: number;
-  operador_id: number;
+  id: string;
+  operador_id: string;
   token: string;
   data_criacao: Date;
   data_expiracao: Date;
@@ -110,7 +110,7 @@ export interface Sessao {
 // Tipos de requisição
 export interface AuthRequest extends Request {
   user?: {
-    id: number;
+    id: string;
     email: string;
     tipo: string;
   };
@@ -159,7 +159,7 @@ export interface IniciarChamadaRequest {
 }
 
 export interface FinalizarChamadaRequest {
-  chamada_id: number;
+  chamada_id: string;
   satisfacao_cliente?: number;
   resolvida: boolean;
   observacoes?: string;
@@ -203,16 +203,16 @@ export interface OperadorDesempenho extends Omit<Operador, 'senha'> {
 
 // Tipos para WebSocket
 export interface SocketData {
-  operador_id: number;
+  operador_id: string;
   status?: string;
-  chamada_id?: number;
+  chamada_id?: string;
   pontos_ganhos?: number;
   nova_conquista?: Conquista;
 }
 
 // Tipos para empresa
 export interface Empresa {
-  id: number;
+  id: string;
   nome: string;
   email: string;
   status: string;

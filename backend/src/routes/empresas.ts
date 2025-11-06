@@ -2,8 +2,6 @@ import express from 'express';
 import { 
   listarGestoresEmpresa, 
   criarGestorEmpresa, 
-  atualizarGestorEmpresa,
-  excluirGestorEmpresa,
   listarOperadoresEmpresa, 
   getDashboardEmpresa,
   atualizarAvatarEmpresa
@@ -26,8 +24,6 @@ router.put('/avatar', uploadAvatarEmpresa.single('avatar'), atualizarAvatarEmpre
 // Gerenciar gestores
 router.get('/gestores', listarGestoresEmpresa as any);
 router.post('/gestores', criarGestorEmpresa as any);
-router.put('/gestores/:id', atualizarGestorEmpresa as any);
-router.delete('/gestores/:id', excluirGestorEmpresa as any);
 
 // Visualizar operadores
 router.get('/operadores', listarOperadoresEmpresa as any);

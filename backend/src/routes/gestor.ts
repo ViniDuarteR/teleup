@@ -1,96 +1,80 @@
 import express from 'express';
+import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
 import { authenticateToken, requireGestor } from '../middleware/auth';
-import { pool } from '../config/database';
+import { Gestor, Operador, Chamada } from '../models';
 import { AuthRequest } from '../types';
-import { cacheMiddleware, clearCacheOnWrite } from '../middleware/cache';
+import { cacheMiddleware } from '../middleware/cache';
 
 const router = express.Router();
 
-// Todas as rotas precisam de autenticação e nível de gestor
 router.use(authenticateToken as any);
 router.use(requireGestor as any);
 
 // Rota para métricas da equipe (com cache de 3 minutos)
 router.get('/metricas-equipe', cacheMiddleware({ ttl: 180 }), async (req: AuthRequest, res) => {
   try {
-    console.log('🔍 [METRICAS EQUIPE] Iniciando busca de métricas');
-    const gestorId = req.operador?.id;
-    console.log('🔍 [METRICAS EQUIPE] Gestor ID:', gestorId);
+    const gestorId = new mongoose.Types.ObjectId(req.operador?.id || '');
     
-    if (!gestorId) {
-      console.log('❌ [METRICAS EQUIPE] Gestor não autenticado');
-      return res.status(401).json({ success: false, message: 'Gestor não autenticado' });
+    const gestor = await Gestor.findById(gestorId);
+    if (!gestor) {
+      return res.status(404).json({ success: false, message: 'Gestor não encontrado' });
     }
 
-    // Buscar empresa do gestor
-    const [gestorEmpresa] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = $1',
-      [gestorId]
-    );
-    
-    const empresa = gestorEmpresa as any[];
-    if (empresa.length === 0) {
-      return res.status(404).json({ success: false, message: 'Empresa do gestor não encontrada' });
-    }
+    const empresaId = gestor.empresa_id;
 
-    const empresaId = empresa[0].empresa_id;
+    const total_operadores = await Operador.countDocuments({ empresa_id: empresaId });
+    const operadores_online = await Operador.countDocuments({
+      empresa_id: empresaId,
+      status_operacional: 'Aguardando Chamada'
+    });
+    const operadores_em_chamada = await Operador.countDocuments({
+      empresa_id: empresaId,
+      status_operacional: 'Em Chamada'
+    });
+    const operadores_em_pausa = await Operador.countDocuments({
+      empresa_id: empresaId,
+      status_operacional: 'Em Pausa'
+    });
+    const operadores_offline = await Operador.countDocuments({
+      empresa_id: empresaId,
+      status_operacional: 'Offline'
+    });
 
-    // Buscar métricas da equipe
-    const [operadores] = await pool.execute(
-      'SELECT COUNT(*) as total_operadores FROM operadores WHERE empresa_id = $1',
-      [empresaId]
-    );
+    const chamadasAtivas = await Chamada.countDocuments({ status: 'Em Andamento' });
 
-    const [operadoresOnline] = await pool.execute(
-      'SELECT COUNT(*) as online FROM operadores WHERE empresa_id = $1 AND status_operacional = $2',
-      [empresaId, 'Aguardando Chamada']
-    );
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const amanha = new Date(hoje);
+    amanha.setDate(amanha.getDate() + 1);
 
-    const [operadoresEmChamada] = await pool.execute(
-      'SELECT COUNT(*) as em_chamada FROM operadores WHERE empresa_id = $1 AND status_operacional = $2',
-      [empresaId, 'Em Chamada']
-    );
+    const chamadasHoje = await Chamada.countDocuments({
+      inicio_chamada: { $gte: hoje, $lt: amanha }
+    });
 
-    const [operadoresEmPausa] = await pool.execute(
-      'SELECT COUNT(*) as em_pausa FROM operadores WHERE empresa_id = $1 AND status_operacional = $2',
-      [empresaId, 'Em Pausa']
-    );
+    const chamadas = await Chamada.find({
+      satisfacao_cliente: { $exists: true, $ne: null }
+    });
 
-    const [operadoresOffline] = await pool.execute(
-      'SELECT COUNT(*) as offline FROM operadores WHERE empresa_id = $1 AND status_operacional = $2',
-      [empresaId, 'Offline']
-    );
-
-    const [chamadasAtivas] = await pool.execute(
-      'SELECT COUNT(*) as ativas FROM chamadas WHERE status = $1',
-      ['Em Andamento']
-    );
-
-    const [chamadasHoje] = await pool.execute(
-      'SELECT COUNT(*) as hoje FROM chamadas WHERE DATE(inicio_chamada) = CURRENT_DATE',
-      []
-    );
-
-    const [satisfacaoMedia] = await pool.execute(
-      'SELECT COALESCE(AVG(satisfacao_cliente), 0) as media FROM chamadas WHERE satisfacao_cliente IS NOT NULL',
-      []
-    );
+    const satisfacaoMedia = chamadas.length > 0
+      ? chamadas.reduce((sum, c) => sum + (c.satisfacao_cliente || 0), 0) / chamadas.length
+      : 0;
 
     return res.json({
       success: true,
       data: {
-        total_operadores: (operadores as any[])[0].total_operadores,
-        operadores_online: (operadoresOnline as any[])[0].online,
-        operadores_em_chamada: (operadoresEmChamada as any[])[0].em_chamada,
-        operadores_em_pausa: (operadoresEmPausa as any[])[0].em_pausa,
-        operadores_offline: (operadoresOffline as any[])[0].offline,
-        chamadas_ativas: (chamadasAtivas as any[])[0].ativas,
-        chamadas_hoje: (chamadasHoje as any[])[0].hoje,
-        satisfacao_media_geral: parseFloat((satisfacaoMedia as any[])[0].media) || 0,
-        meta_diaria_chamadas: 50, // Valor padrão
-        meta_atingida: (chamadasHoje as any[])[0].hoje,
-        tempo_medio_atendimento: 5.2, // Valor padrão
-        taxa_resolucao: 87.5 // Valor padrão
+        total_operadores,
+        operadores_online,
+        operadores_em_chamada,
+        operadores_em_pausa,
+        operadores_offline,
+        chamadas_ativas: chamadasAtivas,
+        chamadas_hoje: chamadasHoje,
+        satisfacao_media_geral: Math.round(satisfacaoMedia * 10) / 10,
+        meta_diaria_chamadas: 50,
+        meta_atingida: chamadasHoje,
+        tempo_medio_atendimento: 5.2,
+        taxa_resolucao: 87.5
       }
     });
   } catch (error) {
@@ -102,63 +86,57 @@ router.get('/metricas-equipe', cacheMiddleware({ ttl: 180 }), async (req: AuthRe
 // Rota para listar operadores
 router.get('/operadores', async (req: AuthRequest, res) => {
   try {
-    console.log('🔍 [GESTOR OPERADORES] Iniciando busca de operadores');
-    const gestorId = req.operador?.id;
-    console.log('🔍 [GESTOR OPERADORES] Gestor ID:', gestorId);
+    const gestorId = new mongoose.Types.ObjectId(req.operador?.id || '');
     
-    if (!gestorId) {
-      console.log('❌ [GESTOR OPERADORES] Gestor não autenticado');
-      return res.status(401).json({ success: false, message: 'Gestor não autenticado' });
+    const gestor = await Gestor.findById(gestorId);
+    if (!gestor) {
+      return res.status(404).json({ success: false, message: 'Gestor não encontrado' });
     }
 
-    // Buscar empresa do gestor
-    const [gestorEmpresa] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = $1',
-      [gestorId]
-    );
-    
-    const empresa = gestorEmpresa as any[];
-    if (empresa.length === 0) {
-      return res.status(404).json({ success: false, message: 'Empresa do gestor não encontrada' });
-    }
+    const empresaId = gestor.empresa_id;
 
-    const empresaId = empresa[0].empresa_id;
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const amanha = new Date(hoje);
+    amanha.setDate(amanha.getDate() + 1);
 
-    // Buscar operadores da empresa com métricas
-    console.log('🔍 [GESTOR OPERADORES] Buscando operadores da empresa...');
-    const [operadores] = await pool.execute(
-      `SELECT 
-         o.id, 
-         o.nome, 
-         o.email, 
-         o.nivel, 
-         o.pontos_totais, 
-         o.status,
-         o.status_operacional, 
-         o.avatar, 
-         COALESCE(o.tempo_online, 0) as tempo_online_minutos,
-         COALESCE(c.chamadas_hoje, 0) as chamadas_hoje,
-         COALESCE(c.satisfacao_media, 0) as satisfacao_media
-       FROM operadores o
-       LEFT JOIN (
-         SELECT 
-           operador_id,
-           COUNT(*) as chamadas_hoje,
-           AVG(satisfacao_cliente) as satisfacao_media
-         FROM chamadas 
-         WHERE DATE(inicio_chamada) = CURRENT_DATE
-         GROUP BY operador_id
-       ) c ON o.id = c.operador_id
-       WHERE o.empresa_id = $1
-       ORDER BY o.pontos_totais DESC`,
-      [empresaId]
-    );
-    
-    console.log('🔍 [GESTOR OPERADORES] Operadores encontrados:', (operadores as any[]).length);
+    const operadores = await Operador.find({ empresa_id: empresaId })
+      .sort({ pontos_totais: -1 })
+      .select('nome email nivel pontos_totais status status_operacional avatar tempo_online');
+
+    const operadoresComMetricas = await Promise.all(operadores.map(async (op) => {
+      const chamadasHoje = await Chamada.countDocuments({
+        operador_id: op._id,
+        inicio_chamada: { $gte: hoje, $lt: amanha }
+      });
+
+      const chamadas = await Chamada.find({
+        operador_id: op._id,
+        satisfacao_cliente: { $exists: true, $ne: null }
+      });
+
+      const satisfacaoMedia = chamadas.length > 0
+        ? chamadas.reduce((sum, c) => sum + (c.satisfacao_cliente || 0), 0) / chamadas.length
+        : 0;
+
+      return {
+        id: op._id.toString(),
+        nome: op.nome,
+        email: op.email,
+        nivel: op.nivel,
+        pontos_totais: op.pontos_totais,
+        status: op.status,
+        status_operacional: op.status_operacional,
+        avatar: op.avatar,
+        tempo_online_minutos: op.tempo_online,
+        chamadas_hoje: chamadasHoje,
+        satisfacao_media: Math.round(satisfacaoMedia * 10) / 10
+      };
+    }));
 
     return res.json({
       success: true,
-      data: operadores as any[]
+      data: operadoresComMetricas
     });
   } catch (error) {
     console.error('Erro ao buscar operadores:', error);
@@ -169,79 +147,51 @@ router.get('/operadores', async (req: AuthRequest, res) => {
 // Rota para criar novo operador
 router.post('/operadores', async (req: AuthRequest, res) => {
   try {
-    console.log('🔍 [GESTOR CREATE] Iniciando criação de operador');
-    console.log('🔍 [GESTOR CREATE] Body recebido:', req.body);
-    
     const { nome, email, senha, nivel = 1, pa = '', carteira = '' } = req.body;
-    const gestorId = req.operador?.id;
-    
-    console.log('🔍 [GESTOR CREATE] Gestor ID:', gestorId);
-    console.log('🔍 [GESTOR CREATE] Dados extraídos:', { nome, email, nivel, pa, carteira });
-    
-    if (!gestorId) {
-      console.log('❌ [GESTOR CREATE] Gestor não autenticado');
-      return res.status(401).json({ success: false, message: 'Gestor não autenticado' });
-    }
+    const gestorId = new mongoose.Types.ObjectId(req.operador?.id || '');
 
     if (!nome || !email || !senha) {
-      console.log('❌ [GESTOR CREATE] Dados obrigatórios faltando');
       return res.status(400).json({ success: false, message: 'Nome, email e senha são obrigatórios' });
     }
 
-    // Buscar empresa do gestor
-    console.log('🔍 [GESTOR CREATE] Buscando empresa do gestor...');
-    const [gestorEmpresa] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = $1',
-      [gestorId]
-    );
-    
-    const empresa = gestorEmpresa as any[];
-    console.log('🔍 [GESTOR CREATE] Empresa encontrada:', empresa);
-    
-    if (empresa.length === 0) {
-      console.log('❌ [GESTOR CREATE] Empresa do gestor não encontrada');
-      return res.status(404).json({ success: false, message: 'Empresa do gestor não encontrada' });
+    const gestor = await Gestor.findById(gestorId);
+    if (!gestor) {
+      return res.status(404).json({ success: false, message: 'Gestor não encontrado' });
     }
 
-    const empresaId = empresa[0].empresa_id;
-    console.log('🔍 [GESTOR CREATE] Empresa ID:', empresaId);
+    const empresaId = gestor.empresa_id;
 
-    // Verificar se email já existe
-    const [emailExists] = await pool.execute(
-      'SELECT id FROM operadores WHERE email = $1 AND empresa_id = $2',
-      [email, empresaId]
-    );
-
-    if ((emailExists as any[]).length > 0) {
+    const emailExists = await Operador.findOne({ email, empresa_id: empresaId });
+    if (emailExists) {
       return res.status(400).json({ success: false, message: 'Email já cadastrado nesta empresa' });
     }
 
-    // Hash da senha
-    const bcrypt = require('bcryptjs');
     const senhaHash = await bcrypt.hash(senha, 10);
 
-    // Calcular XP necessário para o próximo nível
-    const xpProximoNivel = nivel * 100;
+    const operador = await Operador.create({
+      nome,
+      email,
+      senha: senhaHash,
+      nivel,
+      xp: 0,
+      pontos_totais: 0,
+      status: 'Ativo',
+      avatar: 'avatar1.png',
+      tempo_online: 0,
+      empresa_id: empresaId,
+      gestor_id: gestorId,
+      pa,
+      carteira,
+      status_operacional: 'Offline'
+    });
 
-    // Inserir novo operador
-    const [result] = await pool.execute(
-      `INSERT INTO operadores (nome, email, senha, nivel, xp_atual, xp_proximo_nivel, 
-                              pontos_totais, status, avatar, tempo_online, empresa_id, gestor_id, pa, carteira)
-       VALUES ($1, $2, $3, $4, 0, $5, 0, 'Ativo', 'avatar1.png', 0, $6, $7, $8, $9) RETURNING id`,
-      [nome, email, senhaHash, nivel, xpProximoNivel, empresaId, gestorId, pa, carteira]
-    );
-
-    const insertResult = result as any;
-    console.log('✅ [GESTOR CREATE] Operador criado com sucesso, ID:', insertResult.insertId);
-    
     return res.status(201).json({
       success: true,
       message: 'Operador criado com sucesso',
-      data: { id: insertResult.insertId }
+      data: { id: operador._id.toString() }
     });
   } catch (error: any) {
-    console.error('❌ [GESTOR CREATE] Erro ao criar operador:', error);
-    console.error('❌ [GESTOR CREATE] Stack trace:', error?.stack);
+    console.error('❌ [GESTOR CREATE] Erro:', error);
     return res.status(500).json({ success: false, message: 'Erro interno do servidor' });
   }
 });
@@ -249,41 +199,27 @@ router.post('/operadores', async (req: AuthRequest, res) => {
 // Rota para alterar status do operador
 router.patch('/operador/:id/status', async (req: AuthRequest, res) => {
   try {
-    const operadorId = req.params.id;
+    const operadorId = new mongoose.Types.ObjectId(req.params.id);
     const { status } = req.body;
-    const gestorId = req.operador?.id;
-    
-    if (!gestorId) {
-      return res.status(401).json({ success: false, message: 'Gestor não autenticado' });
+    const gestorId = new mongoose.Types.ObjectId(req.operador?.id || '');
+
+    const gestor = await Gestor.findById(gestorId);
+    if (!gestor) {
+      return res.status(404).json({ success: false, message: 'Gestor não encontrado' });
     }
 
-    // Buscar empresa do gestor
-    const [gestorEmpresa] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = $1',
-      [gestorId]
-    );
-    
-    const empresa = gestorEmpresa as any[];
-    if (empresa.length === 0) {
-      return res.status(404).json({ success: false, message: 'Empresa do gestor não encontrada' });
-    }
+    const operador = await Operador.findOne({
+      _id: operadorId,
+      empresa_id: gestor.empresa_id
+    });
 
-    const empresaId = empresa[0].empresa_id;
-
-    // Verificar se o operador pertence à mesma empresa
-    const [operadorResult] = await pool.execute(
-      'SELECT id FROM operadores WHERE id = $1 AND empresa_id = $2',
-      [operadorId, empresaId]
-    );
-
-    if ((operadorResult as any[]).length === 0) {
+    if (!operador) {
       return res.status(404).json({ success: false, message: 'Operador não encontrado' });
     }
 
-    // Atualizar status do operador
-    await pool.execute(
-      'UPDATE operadores SET status_operacional = $1 WHERE id = $2',
-      [status, operadorId]
+    await Operador.updateOne(
+      { _id: operadorId },
+      { status_operacional: status }
     );
 
     return res.json({
@@ -299,57 +235,50 @@ router.patch('/operador/:id/status', async (req: AuthRequest, res) => {
 // Rota para listar outros gestores da empresa
 router.get('/outros-gestores', async (req: AuthRequest, res) => {
   try {
-    console.log('🔍 [GESTOR OUTROS] Iniciando busca de outros gestores');
-    const gestorId = req.operador?.id;
-    console.log('🔍 [GESTOR OUTROS] Gestor ID:', gestorId);
-    
-    if (!gestorId) {
-      console.log('❌ [GESTOR OUTROS] Gestor não autenticado');
-      return res.status(401).json({ success: false, message: 'Gestor não autenticado' });
+    const gestorId = new mongoose.Types.ObjectId(req.operador?.id || '');
+
+    const gestor = await Gestor.findById(gestorId);
+    if (!gestor) {
+      return res.status(404).json({ success: false, message: 'Gestor não encontrado' });
     }
 
-    // Buscar empresa do gestor
-    const [gestorEmpresa] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = $1',
-      [gestorId]
-    );
-    
-    const empresa = gestorEmpresa as any[];
-    if (empresa.length === 0) {
-      return res.status(404).json({ success: false, message: 'Empresa do gestor não encontrada' });
-    }
+    const empresaId = gestor.empresa_id;
 
-    const empresaId = empresa[0].empresa_id;
-
-    // Buscar outros gestores da mesma empresa (excluindo o próprio)
-    const [outrosGestores] = await pool.execute(`
-      SELECT 
-        g.id,
-        g.nome,
-        g.email,
-        g.status,
-        g.data_criacao,
-        COALESCE(COUNT(o.id), 0)::INTEGER as total_operadores,
-        COALESCE(COUNT(CASE WHEN o.status_operacional = 'Aguardando Chamada' THEN o.id END), 0)::INTEGER as operadores_online
-      FROM gestores g
-      LEFT JOIN operadores o ON o.gestor_id = g.id
-      WHERE g.empresa_id = $1 AND g.id != $2
-      GROUP BY g.id, g.nome, g.email, g.status, g.data_criacao
-      ORDER BY g.data_criacao DESC
-    `, [empresaId, gestorId]);
-
-    // Converter strings para números
-    const gestoresFormatados = (outrosGestores as any[]).map(gestor => ({
-      ...gestor,
-      total_operadores: parseInt(gestor.total_operadores) || 0,
-      operadores_online: parseInt(gestor.operadores_online) || 0
-    }));
-
-    console.log('✅ [GESTOR OUTROS] Outros gestores encontrados:', gestoresFormatados.length);
+    const outrosGestores = await Gestor.aggregate([
+      { $match: { empresa_id: empresaId, _id: { $ne: gestorId } } },
+      {
+        $lookup: {
+          from: 'operadores',
+          localField: '_id',
+          foreignField: 'gestor_id',
+          as: 'operadores'
+        }
+      },
+      {
+        $project: {
+          id: { $toString: '$_id' },
+          nome: 1,
+          email: 1,
+          status: 1,
+          data_criacao: 1,
+          total_operadores: { $size: '$operadores' },
+          operadores_online: {
+            $size: {
+              $filter: {
+                input: '$operadores',
+                as: 'op',
+                cond: { $eq: ['$$op.status_operacional', 'Aguardando Chamada'] }
+              }
+            }
+          }
+        }
+      },
+      { $sort: { data_criacao: -1 } }
+    ]);
 
     return res.json({
       success: true,
-      data: gestoresFormatados
+      data: outrosGestores
     });
   } catch (error) {
     console.error('Erro ao buscar outros gestores:', error);

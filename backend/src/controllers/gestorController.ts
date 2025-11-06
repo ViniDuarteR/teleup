@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { pool } from '../config/database';
-import { ApiResponse, LoginRequest, LoginResponse } from '../types';
+import mongoose from 'mongoose';
+import { Gestor, Operador, Sessao } from '../models';
+import { ApiResponse, LoginRequest } from '../types';
 
 export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Response): Promise<void> => {
   try {
@@ -16,20 +17,15 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
       return;
     }
 
-    const [gestores] = await pool.execute(
-      'SELECT * FROM gestores WHERE email = $1 AND status = $2',
-      [email, 'Ativo']
-    );
+    const gestor = await Gestor.findOne({ email, status: 'Ativo' });
 
-    if ((gestores as any[]).length === 0) {
+    if (!gestor) {
       res.status(401).json({
         success: false,
         message: 'Credenciais inválidas'
       });
       return;
     }
-
-    const gestor = (gestores as any[])[0];
 
     const senhaValida = await bcrypt.compare(senha, gestor.senha);
     
@@ -42,25 +38,23 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
     }
 
     const token = jwt.sign(
-      { gestorId: gestor.id, email: gestor.email, tipo: 'gestor' },
+      { gestorId: gestor._id.toString(), email: gestor.email, tipo: 'gestor' },
       process.env.JWT_SECRET || 'seu_jwt_secret_super_seguro_aqui',
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' } as jwt.SignOptions
     );
+
     const dataExpiracao = new Date();
     dataExpiracao.setHours(dataExpiracao.getHours() + 24);
 
-    try {
-      await pool.execute(
-        'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES ($1, $2, $3)',
-        [gestor.empresa_id, token, dataExpiracao]
-      );
-    } catch (error: any) {
-      // Continuar mesmo se falhar ao salvar sessão
-    }
+    await Sessao.create({
+      empresa_id: gestor.empresa_id,
+      token,
+      expiracao: dataExpiracao,
+      ativo: true
+    });
 
-    // Preparar dados do gestor (sem campos de gamificação)
     const gestorData: any = {
-      id: gestor.id,
+      id: gestor._id.toString(),
       nome: gestor.nome,
       email: gestor.email,
       tipo: 'gestor',
@@ -80,27 +74,7 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
     });
 
   } catch (error: any) {
-    console.error(`❌ [GESTOR LOGIN] Erro no login do gestor ${req.body?.email}:`, error);
-    console.error(`❌ [GESTOR LOGIN] Stack trace:`, error.stack);
-    
-    // Verificar se é erro de conexão com banco
-    if (error?.code === 'ECONNREFUSED' || error?.code === 'ENOTFOUND' || error?.message?.includes('connect')) {
-      console.log(`❌ [GESTOR LOGIN] Erro de conexão com banco de dados`);
-      res.status(500).json({
-        success: false,
-        message: 'Erro de conexão com banco de dados'
-      });
-      return;
-    }
-    
-    // Verificar se é erro de query
-    if (error?.code && error.code.startsWith('23')) {
-      res.status(400).json({
-        success: false,
-        message: 'Dados inválidos fornecidos'
-      });
-      return;
-    }
+    console.error(`❌ [GESTOR LOGIN] Erro no login do gestor:`, error);
     
     res.status(500).json({
       success: false,
@@ -113,16 +87,10 @@ export const loginGestor = async (req: Request<{}, any, LoginRequest>, res: Resp
 // Listar gestores da empresa
 export const listarGestores = async (req: any, res: Response): Promise<void> => {
   try {
-    const gestorId = req.operador.id;
+    const gestorId = new mongoose.Types.ObjectId(req.operador.id);
     
-    // Buscar empresa do gestor logado
-    const [empresaResult] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = $1',
-      [gestorId]
-    );
-    
-    const empresa = empresaResult as any[];
-    if (empresa.length === 0) {
+    const gestorAtual = await Gestor.findById(gestorId);
+    if (!gestorAtual) {
       res.status(404).json({
         success: false,
         message: 'Gestor não encontrado'
@@ -130,21 +98,18 @@ export const listarGestores = async (req: any, res: Response): Promise<void> => 
       return;
     }
 
-    const empresaId = empresa[0].empresa_id;
+    const gestores = await Gestor.find({ empresa_id: gestorAtual.empresa_id })
+      .select('nome email status avatar data_criacao data_atualizacao')
+      .sort({ nome: 1 });
 
-    // Buscar todos os gestores da empresa
-    const [gestores] = await pool.execute(
-      `SELECT id, nome, email, status, avatar, data_criacao, data_atualizacao
-       FROM gestores 
-       WHERE empresa_id = $1 
-       ORDER BY nome`,
-      [empresaId]
-    );
-
-    // Processar avatares para URLs completas
-    const gestoresComAvatar = (gestores as any[]).map(gestor => ({
-      ...gestor,
-      avatar: gestor.avatar ? `${process.env.API_BASE_URL || 'https://teleup-backend.vercel.app'}/uploads/${gestor.avatar}` : `${process.env.API_BASE_URL || 'https://teleup-backend.vercel.app'}/avatar_gestor.png`
+    const gestoresComAvatar = gestores.map(gestor => ({
+      id: gestor._id.toString(),
+      nome: gestor.nome,
+      email: gestor.email,
+      status: gestor.status,
+      avatar: gestor.avatar ? `${process.env.API_BASE_URL || 'https://teleup-backend.vercel.app'}/uploads/${gestor.avatar}` : `${process.env.API_BASE_URL || 'https://teleup-backend.vercel.app'}/avatar_gestor.png`,
+      data_criacao: gestor.data_criacao,
+      data_atualizacao: gestor.data_atualizacao
     }));
 
     res.json({
@@ -164,16 +129,10 @@ export const listarGestores = async (req: any, res: Response): Promise<void> => 
 export const criarGestor = async (req: any, res: Response): Promise<void> => {
   try {
     const { nome, email, senha } = req.body;
-    const gestorId = req.operador.id;
+    const gestorId = new mongoose.Types.ObjectId(req.operador.id);
 
-    // Buscar empresa do gestor logado
-    const [empresaResult] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = $1',
-      [gestorId]
-    );
-    
-    const empresa = empresaResult as any[];
-    if (empresa.length === 0) {
+    const gestorAtual = await Gestor.findById(gestorId);
+    if (!gestorAtual) {
       res.status(404).json({
         success: false,
         message: 'Gestor não encontrado'
@@ -181,15 +140,11 @@ export const criarGestor = async (req: any, res: Response): Promise<void> => {
       return;
     }
 
-    const empresaId = empresa[0].empresa_id;
+    const empresaId = gestorAtual.empresa_id;
 
-    // Verificar se email já existe
-    const [emailExists] = await pool.execute(
-      'SELECT id FROM gestores WHERE email = $1 AND empresa_id = $2',
-      [email, empresaId]
-    );
+    const emailExists = await Gestor.findOne({ email, empresa_id: empresaId });
 
-    if ((emailExists as any[]).length > 0) {
+    if (emailExists) {
       res.status(400).json({
         success: false,
         message: 'Email já cadastrado nesta empresa'
@@ -197,21 +152,21 @@ export const criarGestor = async (req: any, res: Response): Promise<void> => {
       return;
     }
 
-    // Hash da senha
     const senhaHash = await bcrypt.hash(senha, 10);
 
-    // Inserir novo gestor
-    const [result] = await pool.execute(
-      `INSERT INTO gestores (nome, email, senha, status, avatar, empresa_id)
-       VALUES ($1, $2, $3, 'Ativo', 'avatar1.png', $4) RETURNING id`,
-      [nome, email, senhaHash, empresaId]
-    );
+    const gestor = await Gestor.create({
+      nome,
+      email,
+      senha: senhaHash,
+      status: 'Ativo',
+      avatar: 'avatar1.png',
+      empresa_id: empresaId
+    });
 
-    const insertResult = result as any;
     res.status(201).json({
       success: true,
       message: 'Gestor criado com sucesso',
-      data: { id: insertResult[0]?.id }
+      data: { id: gestor._id.toString() }
     });
 
   } catch (error) {
@@ -228,23 +183,10 @@ export const atualizarGestor = async (req: any, res: Response): Promise<void> =>
   try {
     const { id } = req.params;
     const { nome, email, status } = req.body;
-    const gestorId = req.operador.id;
+    const gestorId = new mongoose.Types.ObjectId(req.operador.id);
 
-    // Verificar se o gestor pertence à mesma empresa
-    const [gestorResult] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = $1',
-      [id]
-    );
-    
-    const [currentGestorResult] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = $1',
-      [gestorId]
-    );
-
-    const gestor = gestorResult as any[];
-    const currentGestor = currentGestorResult as any[];
-
-    if (gestor.length === 0 || currentGestor.length === 0) {
+    const gestorAtual = await Gestor.findById(gestorId);
+    if (!gestorAtual) {
       res.status(404).json({
         success: false,
         message: 'Gestor não encontrado'
@@ -252,7 +194,17 @@ export const atualizarGestor = async (req: any, res: Response): Promise<void> =>
       return;
     }
 
-    if (gestor[0].empresa_id !== currentGestor[0].empresa_id) {
+    const gestorParaAtualizar = await Gestor.findById(id);
+
+    if (!gestorParaAtualizar) {
+      res.status(404).json({
+        success: false,
+        message: 'Gestor não encontrado'
+      });
+      return;
+    }
+
+    if (!gestorParaAtualizar.empresa_id.equals(gestorAtual.empresa_id)) {
       res.status(403).json({
         success: false,
         message: 'Acesso negado'
@@ -260,10 +212,9 @@ export const atualizarGestor = async (req: any, res: Response): Promise<void> =>
       return;
     }
 
-    // Atualizar gestor
-    await pool.execute(
-      'UPDATE gestores SET nome = $1, email = $2, status = $3 WHERE id = $4',
-      [nome, email, status, id]
+    await Gestor.updateOne(
+      { _id: id },
+      { nome, email, status }
     );
 
     res.json({
@@ -284,10 +235,9 @@ export const atualizarGestor = async (req: any, res: Response): Promise<void> =>
 export const excluirGestor = async (req: any, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const gestorId = req.operador.id;
+    const gestorId = new mongoose.Types.ObjectId(req.operador.id);
 
-    // Não permitir excluir a si mesmo
-    if (parseInt(id) === gestorId) {
+    if (id === gestorId.toString()) {
       res.status(400).json({
         success: false,
         message: 'Não é possível excluir seu próprio usuário'
@@ -295,21 +245,8 @@ export const excluirGestor = async (req: any, res: Response): Promise<void> => {
       return;
     }
 
-    // Verificar se o gestor pertence à mesma empresa
-    const [gestorResult] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = $1',
-      [id]
-    );
-    
-    const [currentGestorResult] = await pool.execute(
-      'SELECT empresa_id FROM gestores WHERE id = $1',
-      [gestorId]
-    );
-
-    const gestor = gestorResult as any[];
-    const currentGestor = currentGestorResult as any[];
-
-    if (gestor.length === 0 || currentGestor.length === 0) {
+    const gestorAtual = await Gestor.findById(gestorId);
+    if (!gestorAtual) {
       res.status(404).json({
         success: false,
         message: 'Gestor não encontrado'
@@ -317,7 +254,17 @@ export const excluirGestor = async (req: any, res: Response): Promise<void> => {
       return;
     }
 
-    if (gestor[0].empresa_id !== currentGestor[0].empresa_id) {
+    const gestorParaExcluir = await Gestor.findById(id);
+
+    if (!gestorParaExcluir) {
+      res.status(404).json({
+        success: false,
+        message: 'Gestor não encontrado'
+      });
+      return;
+    }
+
+    if (!gestorParaExcluir.empresa_id.equals(gestorAtual.empresa_id)) {
       res.status(403).json({
         success: false,
         message: 'Acesso negado'
@@ -325,8 +272,7 @@ export const excluirGestor = async (req: any, res: Response): Promise<void> => {
       return;
     }
 
-    // Excluir gestor
-    await pool.execute('DELETE FROM gestores WHERE id = $1', [id]);
+    await Gestor.deleteOne({ _id: id });
 
     res.json({
       success: true,
@@ -342,134 +288,36 @@ export const excluirGestor = async (req: any, res: Response): Promise<void> => {
   }
 };
 
-// Logout do gestor
-export const logoutGestor = async (req: any, res: Response): Promise<void> => {
-  try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    
-    if (token) {
-      await pool.execute(
-        'UPDATE sessoes SET ativo = FALSE WHERE token = $1',
-        [token]
-      );
-    }
-
-    res.json({
-      success: true,
-      message: 'Logout realizado com sucesso'
-    });
-  } catch (error) {
-    console.error('Erro no logout do gestor:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-};
-
 // Obter operadores gerenciados pelo gestor
 export const getOperadoresGerenciados = async (req: any, res: Response): Promise<void> => {
   try {
-    const gestorId = req.operador.id;
+    const gestorId = new mongoose.Types.ObjectId(req.operador.id);
     
-    // Buscar operadores atribuídos ao gestor
-    const [operadores] = await pool.execute(
-      `SELECT o.id, o.nome, o.email, o.nivel, o.xp_atual, o.xp_proximo_nivel, 
-              o.pontos_totais, o.status, o.avatar, o.tempo_online, o.pa, o.carteira,
-              o.data_criacao, o.data_atualizacao
-       FROM operadores o
-       INNER JOIN operador_gestor og ON o.id = og.operador_id
-       WHERE og.gestor_id = $1 AND og.ativo = TRUE
-       ORDER BY o.pontos_totais DESC`,
-      [gestorId]
-    );
+    const operadores = await Operador.find({ gestor_id: gestorId })
+      .sort({ pontos_totais: -1 })
+      .select('nome email nivel xp pontos_totais status avatar tempo_online pa carteira data_criacao data_atualizacao');
 
     res.json({
       success: true,
-      data: operadores
+      data: operadores.map(op => ({
+        id: op._id.toString(),
+        nome: op.nome,
+        email: op.email,
+        nivel: op.nivel,
+        xp_atual: op.xp,
+        xp_proximo_nivel: op.nivel * 100,
+        pontos_totais: op.pontos_totais,
+        status: op.status,
+        avatar: op.avatar,
+        tempo_online: op.tempo_online,
+        pa: op.pa,
+        carteira: op.carteira,
+        data_criacao: op.data_criacao,
+        data_atualizacao: op.data_atualizacao
+      }))
     });
   } catch (error) {
     console.error('Erro ao buscar operadores gerenciados:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-};
-
-// Atribuir operador ao gestor
-export const atribuirOperador = async (req: any, res: Response): Promise<void> => {
-  try {
-    const { operadorId } = req.body;
-    const gestorId = req.operador.id;
-
-    // Verificar se o operador existe
-    const [operadorResult] = await pool.execute(
-      'SELECT id FROM operadores WHERE id = $1',
-      [operadorId]
-    );
-
-    if ((operadorResult as any[]).length === 0) {
-      res.status(404).json({
-        success: false,
-        message: 'Operador não encontrado'
-      });
-      return;
-    }
-
-    // Verificar se já está atribuído
-    const [atribuicaoResult] = await pool.execute(
-      'SELECT id FROM operador_gestor WHERE operador_id = $1 AND gestor_id = $2 AND ativo = TRUE',
-      [operadorId, gestorId]
-    );
-
-    if ((atribuicaoResult as any[]).length > 0) {
-      res.status(400).json({
-        success: false,
-        message: 'Operador já está atribuído a este gestor'
-      });
-      return;
-    }
-
-    // Atribuir operador ao gestor
-    await pool.execute(
-      'INSERT INTO operador_gestor (operador_id, gestor_id, data_atribuicao, ativo) VALUES ($1, $2, NOW(), TRUE)',
-      [operadorId, gestorId]
-    );
-
-    res.json({
-      success: true,
-      message: 'Operador atribuído com sucesso'
-    });
-
-  } catch (error) {
-    console.error('Erro ao atribuir operador:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-};
-
-// Remover operador do gestor
-export const removerOperador = async (req: any, res: Response): Promise<void> => {
-  try {
-    const { operadorId } = req.body;
-    const gestorId = req.operador.id;
-
-    // Remover atribuição
-    await pool.execute(
-      'UPDATE operador_gestor SET ativo = FALSE WHERE operador_id = $1 AND gestor_id = $2',
-      [operadorId, gestorId]
-    );
-
-    res.json({
-      success: true,
-      message: 'Operador removido com sucesso'
-    });
-
-  } catch (error) {
-    console.error('Erro ao remover operador:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'

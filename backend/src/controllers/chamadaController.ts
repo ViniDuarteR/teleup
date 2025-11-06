@@ -1,12 +1,13 @@
 import { Response } from 'express';
-import { pool } from '../config/database';
+import mongoose from 'mongoose';
+import { Chamada, Operador } from '../models';
 import { AuthRequest, IniciarChamadaRequest, FinalizarChamadaRequest, ApiResponse } from '../types';
 
 // Iniciar uma nova chamada
-export const iniciarChamada = async (req: AuthRequest, res: Response<ApiResponse<{ chamada_id: number; operador_id: number; status: string }>>): Promise<void> => {
+export const iniciarChamada = async (req: AuthRequest, res: Response<ApiResponse<{ chamada_id: string; operador_id: string; status: string }>>): Promise<void> => {
   try {
     const { numero_cliente, tipo_chamada = 'Entrada' } = req.body as IniciarChamadaRequest;
-    const operadorId = req.operador.id;
+    const operadorId = new mongoose.Types.ObjectId(req.operador.id);
 
     // Verificar se operador está disponível
     if (req.operador.status_operacional !== 'Aguardando Chamada') {
@@ -18,25 +19,26 @@ export const iniciarChamada = async (req: AuthRequest, res: Response<ApiResponse
     }
 
     // Criar nova chamada
-    const [result] = await pool.execute(`
-      INSERT INTO chamadas (operador_id, numero_cliente, tipo_chamada, status) 
-      VALUES ($1, $2, $3, 'Em Andamento') RETURNING id
-    `, [operadorId, numero_cliente, tipo_chamada]);
-
-    const chamadaId = (result as any)[0]?.id;
+    const chamada = await Chamada.create({
+      operador_id: operadorId,
+      numero_cliente,
+      tipo_chamada,
+      status: 'Em Andamento',
+      inicio_chamada: new Date()
+    });
 
     // Atualizar status do operador
-    await pool.execute(
-      'UPDATE operadores SET status_operacional = $1 WHERE id = $2',
-      ['Em Chamada', operadorId]
+    await Operador.updateOne(
+      { _id: operadorId },
+      { status_operacional: 'Em Chamada' }
     );
 
     res.json({
       success: true,
       message: 'Chamada iniciada com sucesso',
       data: {
-        chamada_id: chamadaId,
-        operador_id: operadorId,
+        chamada_id: chamada._id.toString(),
+        operador_id: req.operador.id,
         status: 'Em Chamada'
       }
     });
@@ -54,15 +56,17 @@ export const iniciarChamada = async (req: AuthRequest, res: Response<ApiResponse
 export const finalizarChamada = async (req: AuthRequest, res: Response<ApiResponse<{ duracao_segundos: number; pontos_ganhos: number; status: string }>>): Promise<void> => {
   try {
     const { chamada_id, satisfacao_cliente, resolvida, observacoes } = req.body as FinalizarChamadaRequest;
-    const operadorId = req.operador.id;
+    const operadorId = new mongoose.Types.ObjectId(req.operador.id);
+    const chamadaObjectId = new mongoose.Types.ObjectId(chamada_id);
 
     // Buscar chamada
-    const [chamadas] = await pool.execute(
-      'SELECT * FROM chamadas WHERE id = $1 AND operador_id = $2 AND status = \'Em Andamento\'',
-      [chamada_id, operadorId]
-    );
+    const chamada = await Chamada.findOne({
+      _id: chamadaObjectId,
+      operador_id: operadorId,
+      status: 'Em Andamento'
+    });
 
-    if ((chamadas as any[]).length === 0) {
+    if (!chamada) {
       res.status(404).json({
         success: false,
         message: 'Chamada não encontrada ou já finalizada'
@@ -70,9 +74,8 @@ export const finalizarChamada = async (req: AuthRequest, res: Response<ApiRespon
       return;
     }
 
-    const chamada = (chamadas as any[])[0];
     const agora = new Date();
-    const duracaoSegundos = Math.floor((agora.getTime() - new Date(chamada.inicio_chamada).getTime()) / 1000);
+    const duracaoSegundos = Math.floor((agora.getTime() - chamada.inicio_chamada.getTime()) / 1000);
 
     // Calcular pontos baseado na duração e satisfação
     let pontosGanhos = 10; // Base
@@ -81,27 +84,30 @@ export const finalizarChamada = async (req: AuthRequest, res: Response<ApiRespon
     if (satisfacao_cliente === 5) pontosGanhos += 10;
 
     // Finalizar chamada
-    await pool.execute(`
-      UPDATE chamadas 
-      SET fim_chamada = $1, duracao_segundos = $2, status = 'Finalizada', 
-          satisfacao_cliente = $3, resolvida = $4, observacoes = $5, pontos_ganhos = $6
-      WHERE id = $7
-    `, [agora, duracaoSegundos, satisfacao_cliente, resolvida, observacoes, pontosGanhos, chamada_id]);
+    await Chamada.updateOne(
+      { _id: chamadaObjectId },
+      {
+        fim_chamada: agora,
+        duracao_segundos: duracaoSegundos,
+        status: 'Finalizada',
+        satisfacao_cliente,
+        resolvida,
+        observacoes,
+        pontos_ganhos: pontosGanhos
+      }
+    );
 
     // Atualizar pontos do operador
-    await pool.execute(
-      'UPDATE operadores SET pontos_totais = pontos_totais + $1 WHERE id = $2',
-      [pontosGanhos, operadorId]
+    await Operador.updateOne(
+      { _id: operadorId },
+      { $inc: { pontos_totais: pontosGanhos } }
     );
 
     // Atualizar status do operador
-    await pool.execute(
-      'UPDATE operadores SET status_operacional = $1 WHERE id = $2',
-      ['Aguardando Chamada', operadorId]
+    await Operador.updateOne(
+      { _id: operadorId },
+      { status_operacional: 'Aguardando Chamada' }
     );
-
-    // Verificar e atualizar missões
-    await verificarMissoes(operadorId, 'chamada', 1);
 
     res.json({
       success: true,
@@ -126,45 +132,50 @@ export const finalizarChamada = async (req: AuthRequest, res: Response<ApiRespon
 export const getHistorico = async (req: AuthRequest, res: Response<ApiResponse<{ chamadas: any[]; paginacao: { total: number; limite: number; offset: number } }>>): Promise<void> => {
   try {
     const { data_inicio, data_fim, limite = 50, offset = 0 } = req.query;
-    const operadorId = req.operador.id;
+    const operadorId = new mongoose.Types.ObjectId(req.operador.id);
 
-    let whereClause = 'WHERE operador_id = $1';
-    let params: any[] = [operadorId];
-    let paramIndex = 2;
+    const query: any = { operador_id: operadorId };
 
-    if (data_inicio) {
-      whereClause += ` AND DATE(inicio_chamada) >= $${paramIndex}`;
-      params.push(data_inicio);
-      paramIndex++;
+    if (data_inicio || data_fim) {
+      query.inicio_chamada = {};
+      if (data_inicio) {
+        const inicio = new Date(data_inicio as string);
+        inicio.setHours(0, 0, 0, 0);
+        query.inicio_chamada.$gte = inicio;
+      }
+      if (data_fim) {
+        const fim = new Date(data_fim as string);
+        fim.setHours(23, 59, 59, 999);
+        query.inicio_chamada.$lte = fim;
+      }
     }
 
-    if (data_fim) {
-      whereClause += ` AND DATE(inicio_chamada) <= $${paramIndex}`;
-      params.push(data_fim);
-      paramIndex++;
-    }
+    const chamadas = await Chamada.find(query)
+      .sort({ inicio_chamada: -1 })
+      .limit(parseInt(limite as string))
+      .skip(parseInt(offset as string))
+      .select('numero_cliente inicio_chamada fim_chamada duracao_segundos tipo_chamada status satisfacao_cliente resolvida observacoes pontos_ganhos');
 
-    const [chamadas] = await pool.execute(`
-      SELECT 
-        id, numero_cliente, inicio_chamada, fim_chamada, duracao_segundos,
-        tipo_chamada, status, satisfacao_cliente, resolvida, observacoes, pontos_ganhos
-      FROM chamadas 
-      ${whereClause}
-      ORDER BY inicio_chamada DESC
-      LIMIT $1 OFFSET $2
-    `, [...params, parseInt(limite as string), parseInt(offset as string)]);
-
-    // Buscar total de registros para paginação
-    const [total] = await pool.execute(`
-      SELECT COUNT(*) as total FROM chamadas ${whereClause}
-    `, params);
+    const total = await Chamada.countDocuments(query);
 
     res.json({
       success: true,
       data: {
-        chamadas: chamadas as any[],
+        chamadas: chamadas.map(c => ({
+          id: c._id.toString(),
+          numero_cliente: c.numero_cliente,
+          inicio_chamada: c.inicio_chamada,
+          fim_chamada: c.fim_chamada,
+          duracao_segundos: c.duracao_segundos,
+          tipo_chamada: c.tipo_chamada,
+          status: c.status,
+          satisfacao_cliente: c.satisfacao_cliente,
+          resolvida: c.resolvida,
+          observacoes: c.observacoes,
+          pontos_ganhos: c.pontos_ganhos
+        })),
         paginacao: {
-          total: (total as any[])[0].total,
+          total,
           limite: parseInt(limite as string),
           offset: parseInt(offset as string)
         }
@@ -192,49 +203,55 @@ export const getEstatisticas = async (req: AuthRequest, res: Response<ApiRespons
 }>>): Promise<void> => {
   try {
     const { periodo = 'hoje' } = req.query;
-    const operadorId = req.operador.id;
+    const operadorId = new mongoose.Types.ObjectId(req.operador.id);
 
-    let whereClause = 'WHERE operador_id = $1';
-    let params: any[] = [operadorId];
+    const agora = new Date();
+    let dataInicio: Date;
 
     switch (periodo) {
       case 'hoje':
-        whereClause += ' AND DATE(inicio_chamada) = CURDATE()';
+        dataInicio = new Date(agora);
+        dataInicio.setHours(0, 0, 0, 0);
         break;
       case 'semana':
-        whereClause += ' AND YEARWEEK(inicio_chamada) = YEARWEEK(NOW())';
+        dataInicio = new Date(agora);
+        dataInicio.setDate(dataInicio.getDate() - 7);
         break;
       case 'mes':
-        whereClause += ' AND YEAR(inicio_chamada) = YEAR(NOW()) AND MONTH(inicio_chamada) = MONTH(NOW())';
+        dataInicio = new Date(agora);
+        dataInicio.setMonth(dataInicio.getMonth() - 1);
         break;
+      default:
+        dataInicio = new Date(agora);
+        dataInicio.setHours(0, 0, 0, 0);
     }
 
-    const [stats] = await pool.execute(`
-      SELECT 
-        COUNT(*) as total_chamadas,
-        COALESCE(SUM(duracao_segundos), 0) as tempo_total_segundos,
-        COALESCE(AVG(duracao_segundos), 0) as tempo_medio_segundos,
-        COALESCE(AVG(satisfacao_cliente), 0) as satisfacao_media,
-        COALESCE(SUM(CASE WHEN resolvida = TRUE THEN 1 ELSE 0 END), 0) as total_resolucoes,
-        COALESCE(SUM(pontos_ganhos), 0) as pontos_ganhos
-      FROM chamadas 
-      ${whereClause}
-    `, params);
+    const chamadas = await Chamada.find({
+      operador_id: operadorId,
+      inicio_chamada: { $gte: dataInicio }
+    });
 
-    const estatisticas = (stats as any[])[0];
+    const total_chamadas = chamadas.length;
+    const tempo_total_segundos = chamadas.reduce((sum, c) => sum + (c.duracao_segundos || 0), 0);
+    const tempo_medio_segundos = total_chamadas > 0 ? tempo_total_segundos / total_chamadas : 0;
+    const satisfacao_media = chamadas.length > 0
+      ? chamadas.reduce((sum, c) => sum + (c.satisfacao_cliente || 0), 0) / chamadas.length
+      : 0;
+    const total_resolucoes = chamadas.filter(c => c.resolvida).length;
+    const pontos_ganhos = chamadas.reduce((sum, c) => sum + (c.pontos_ganhos || 0), 0);
 
     res.json({
       success: true,
       data: {
         periodo: periodo as string,
-        total_chamadas: estatisticas.total_chamadas,
-        tempo_total_minutos: Math.floor(estatisticas.tempo_total_segundos / 60),
-        tempo_medio_minutos: Math.floor(estatisticas.tempo_medio_segundos / 60),
-        satisfacao_media: Math.round(estatisticas.satisfacao_media * 10) / 10,
-        taxa_resolucao: estatisticas.total_chamadas > 0 
-          ? Math.round((estatisticas.total_resolucoes / estatisticas.total_chamadas) * 100) 
+        total_chamadas,
+        tempo_total_minutos: Math.floor(tempo_total_segundos / 60),
+        tempo_medio_minutos: Math.floor(tempo_medio_segundos / 60),
+        satisfacao_media: Math.round(satisfacao_media * 10) / 10,
+        taxa_resolucao: total_chamadas > 0
+          ? Math.round((total_resolucoes / total_chamadas) * 100)
           : 0,
-        pontos_ganhos: estatisticas.pontos_ganhos
+        pontos_ganhos
       }
     });
 
@@ -244,60 +261,5 @@ export const getEstatisticas = async (req: AuthRequest, res: Response<ApiRespons
       success: false,
       message: 'Erro interno do servidor'
     });
-  }
-};
-
-// Função auxiliar para verificar missões
-const verificarMissoes = async (operadorId: number, tipo: string, valor: number): Promise<void> => {
-  try {
-    // Buscar missões ativas do operador
-    const [missoes] = await pool.execute(`
-      SELECT m.*, pm.progresso_atual, pm.concluida
-      FROM missoes m
-      LEFT JOIN progresso_missoes pm ON m.id = pm.missao_id AND pm.operador_id = $1
-      WHERE m.ativa = TRUE AND (pm.concluida = FALSE OR pm.concluida IS NULL)
-    `, [operadorId]);
-
-    for (const missao of (missoes as any[])) {
-      let novoProgresso = missao.progresso_atual || 0;
-      
-      // Atualizar progresso baseado no tipo de ação
-      if (tipo === 'chamada') {
-        novoProgresso += valor;
-      }
-
-      if (novoProgresso >= missao.meta_valor) {
-        // Missão concluída
-        if (missao.concluida) {
-          // Atualizar progresso
-          await pool.execute(
-            'UPDATE progresso_missoes SET progresso_atual = $1 WHERE operador_id = $2 AND missao_id = $3',
-            [novoProgresso, operadorId, missao.id]
-          );
-        } else {
-          // Criar ou atualizar registro
-          await pool.execute(`
-            INSERT INTO progresso_missoes (operador_id, missao_id, progresso_atual, concluida, data_conclusao)
-            VALUES ($1, $2, $3, TRUE, NOW())
-            ON DUPLICATE KEY UPDATE progresso_atual = $4, concluida = TRUE, data_conclusao = NOW()
-          `, [operadorId, missao.id, novoProgresso, novoProgresso]);
-
-          // Adicionar pontos da missão
-          await pool.execute(
-            'UPDATE operadores SET pontos_totais = pontos_totais + $1 WHERE id = $2',
-            [missao.pontos_recompensa, operadorId]
-          );
-        }
-      } else {
-        // Atualizar progresso
-        await pool.execute(`
-          INSERT INTO progresso_missoes (operador_id, missao_id, progresso_atual, concluida)
-          VALUES ($1, $2, $3, FALSE)
-          ON DUPLICATE KEY UPDATE progresso_atual = $4
-        `, [operadorId, missao.id, novoProgresso, novoProgresso]);
-      }
-    }
-  } catch (error) {
-    console.error('Erro ao verificar missões:', error);
   }
 };

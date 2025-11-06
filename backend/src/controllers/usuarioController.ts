@@ -1,82 +1,62 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { pool } from '../config/database';
-import { AuthRequest, ApiResponse, Operador } from '../types';
+import mongoose from 'mongoose';
+import { Operador, Gestor, Empresa } from '../models';
+import { AuthRequest, ApiResponse, Operador as OperadorType } from '../types';
 
-// Listar todos os usuários da empresa
-export const listarUsuarios = async (req: AuthRequest, res: Response<ApiResponse<Operador[]>>): Promise<void> => {
+export const listarUsuarios = async (req: AuthRequest, res: Response<ApiResponse<OperadorType[]>>): Promise<void> => {
   try {
-    // Se for gestor, buscar operadores da mesma empresa
+    let empresaId: mongoose.Types.ObjectId | null = null;
+
     if (req.operador.tipo === 'gestor') {
-      const gestorId = req.operador.id;
-      
-      // Buscar empresa do gestor
-      const [gestorEmpresa] = await pool.execute(
-        'SELECT empresa_id FROM gestores WHERE id = $1',
-        [gestorId]
-      );
-      
-      const empresa = gestorEmpresa as any[];
-      if (empresa.length === 0) {
+      const gestorId = new mongoose.Types.ObjectId(req.operador.id);
+      const gestor = await Gestor.findById(gestorId);
+      if (!gestor) {
         res.status(404).json({
           success: false,
           message: 'Gestor não encontrado'
         });
         return;
       }
-
-      const empresaId = empresa[0].empresa_id;
-
-      // Buscar operadores da empresa do gestor
-      const [operadores] = await pool.execute(
-        `SELECT id, nome, email, nivel, xp_atual, xp_proximo_nivel, pontos_totais, 
-                status, status_operacional, avatar, tempo_online, data_criacao, data_atualizacao, pa, carteira
-         FROM operadores 
-         WHERE empresa_id = $1
-         ORDER BY pontos_totais DESC`,
-        [empresaId]
-      );
-
-      res.json({
-        success: true,
-        data: operadores as Operador[]
-      });
-      return;
+      empresaId = gestor.empresa_id;
+    } else {
+      const operadorId = new mongoose.Types.ObjectId(req.operador.id);
+      const operador = await Operador.findById(operadorId);
+      if (!operador) {
+        res.status(404).json({
+          success: false,
+          message: 'Operador não encontrado'
+        });
+        return;
+      }
+      empresaId = operador.empresa_id;
     }
 
-    // Se for operador, buscar operadores da mesma empresa
-    const operadorId = req.operador.id;
-    
-    // Buscar empresa do operador logado
-    const [empresaResult] = await pool.execute(
-      'SELECT empresa_id FROM operadores WHERE id = $1',
-      [operadorId]
-    );
-    
-    const empresa = empresaResult as any[];
-    if (empresa.length === 0) {
-      res.status(404).json({
-        success: false,
-        message: 'Operador não encontrado'
-      });
-      return;
-    }
-
-    const empresaId = empresa[0].empresa_id;
-
-    // Buscar todos os operadores da empresa
-    const [operadores] = await pool.execute(
-      `SELECT id, nome, email, nivel, xp_atual, xp_proximo_nivel, pontos_totais, 
-              status, avatar, tempo_online, data_criacao, data_atualizacao, pa, carteira
-       FROM operadores 
-       WHERE empresa_id = $1 
-       ORDER BY pontos_totais DESC`,
-      [empresaId]
-    );
+    const operadores = await Operador.find({ empresa_id: empresaId })
+      .sort({ pontos_totais: -1 })
+      .select('nome email nivel xp pontos_totais status status_operacional avatar tempo_online pa carteira data_criacao data_atualizacao');
 
     res.json({
       success: true,
-      data: operadores as Operador[]
+      data: operadores.map(op => ({
+        id: op._id.toString(),
+        nome: op.nome,
+        email: op.email,
+        tipo: 'operador' as const,
+        nivel: op.nivel,
+        xp_atual: op.xp,
+        xp_proximo_nivel: op.nivel * 100,
+        pontos_totais: op.pontos_totais,
+        status: op.status,
+        status_operacional: op.status_operacional,
+        avatar: op.avatar,
+        tempo_online: op.tempo_online,
+        pa: op.pa,
+        carteira: op.carteira,
+        data_criacao: op.data_criacao,
+        data_atualizacao: op.data_atualizacao,
+        senha: '' // Campo obrigatório mas não exposto
+      }))
     });
   } catch (error) {
     console.error('Erro ao listar usuários:', error);
@@ -87,16 +67,10 @@ export const listarUsuarios = async (req: AuthRequest, res: Response<ApiResponse
   }
 };
 
-// Criar novo usuário
-export const criarUsuario = async (req: Request, res: Response<ApiResponse<{ id: number }>>): Promise<void> => {
+export const criarUsuario = async (req: Request, res: Response<ApiResponse<{ id: string }>>): Promise<void> => {
   try {
-    console.log('🔍 [USUARIO CREATE] Iniciando criação de usuário');
-    console.log('🔍 [USUARIO CREATE] Body recebido:', req.body);
-    
     const { nome, email, senha, nivel = 1, pa = '', carteira = '', empresa_id } = req.body;
-    console.log('🔍 [USUARIO CREATE] Dados extraídos:', { nome, email, nivel, pa, carteira, empresa_id });
-    
-    // Validar campos obrigatórios
+
     if (!nome || !email || !senha) {
       res.status(400).json({
         success: false,
@@ -104,24 +78,24 @@ export const criarUsuario = async (req: Request, res: Response<ApiResponse<{ id:
       });
       return;
     }
-    
-    let empresaId = empresa_id || 1; // Usar empresa_id do body ou default
-    
-    // Se não foi fornecida empresa_id, usar a primeira empresa disponível
-    if (!empresa_id) {
-      const [empresas] = await pool.execute('SELECT id FROM empresas LIMIT 1');
-      if ((empresas as any[]).length > 0) {
-        empresaId = (empresas as any[])[0].id;
+
+    let empresaId: mongoose.Types.ObjectId;
+    if (empresa_id) {
+      empresaId = new mongoose.Types.ObjectId(empresa_id);
+    } else {
+      const empresa = await Empresa.findOne();
+      if (!empresa) {
+        res.status(404).json({
+          success: false,
+          message: 'Nenhuma empresa encontrada'
+        });
+        return;
       }
+      empresaId = new mongoose.Types.ObjectId(empresa._id.toString());
     }
 
-    // Verificar se email já existe
-    const [emailExists] = await pool.execute(
-      'SELECT id FROM operadores WHERE email = $1 AND empresa_id = $2',
-      [email, empresaId]
-    );
-
-    if ((emailExists as any[]).length > 0) {
+    const emailExists = await Operador.findOne({ email, empresa_id: empresaId });
+    if (emailExists) {
       res.status(400).json({
         success: false,
         message: 'Email já cadastrado nesta empresa'
@@ -129,32 +103,31 @@ export const criarUsuario = async (req: Request, res: Response<ApiResponse<{ id:
       return;
     }
 
-    // Hash da senha
     const senhaHash = await bcrypt.hash(senha, 10);
 
-    // Calcular XP necessário para o próximo nível
-    const xpProximoNivel = nivel * 100;
+    const operador = await Operador.create({
+      nome,
+      email,
+      senha: senhaHash,
+      nivel,
+      xp: 0,
+      pontos_totais: 0,
+      status: 'Ativo',
+      avatar: 'avatar1.png',
+      tempo_online: 0,
+      empresa_id: empresaId,
+      pa,
+      carteira,
+      status_operacional: 'Offline'
+    });
 
-    // Inserir novo operador
-    console.log('🔍 [USUARIO CREATE] Inserindo operador no banco...');
-    const [result] = await pool.execute(
-      `INSERT INTO operadores (nome, email, senha, nivel, xp_atual, xp_proximo_nivel, 
-                              pontos_totais, status, avatar, tempo_online, empresa_id, gestor_id, pa, carteira)
-       VALUES ($1, $2, $3, $4, 0, $5, 0, 'Ativo', 'avatar1.png', 0, $6, NULL, $7, $8) RETURNING id`,
-      [nome, email, senhaHash, nivel, xpProximoNivel, empresaId, pa, carteira]
-    );
-
-    const insertResult = result as any;
-    console.log('✅ [USUARIO CREATE] Usuário criado com sucesso, ID:', insertResult[0]?.id);
-    
     res.status(201).json({
       success: true,
       message: 'Usuário criado com sucesso',
-      data: { id: insertResult[0]?.id }
+      data: { id: operador._id.toString() }
     });
   } catch (error: any) {
-    console.error('❌ [USUARIO CREATE] Erro ao criar usuário:', error);
-    console.error('❌ [USUARIO CREATE] Stack trace:', error?.stack);
+    console.error('❌ [USUARIO CREATE] Erro:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
@@ -162,21 +135,14 @@ export const criarUsuario = async (req: Request, res: Response<ApiResponse<{ id:
   }
 };
 
-// Atualizar usuário
 export const atualizarUsuario = async (req: AuthRequest, res: Response<ApiResponse<void>>): Promise<void> => {
   try {
     const { id } = req.params;
     const { nome, email, nivel, status } = req.body;
-    const operadorId = req.operador.id;
+    const operadorId = new mongoose.Types.ObjectId(req.operador.id);
 
-    // Buscar empresa do operador logado
-    const [empresaResult] = await pool.execute(
-      'SELECT empresa_id FROM operadores WHERE id = $1',
-      [operadorId]
-    );
-    
-    const empresa = empresaResult as any[];
-    if (empresa.length === 0) {
+    const operadorAtual = await Operador.findById(operadorId);
+    if (!operadorAtual) {
       res.status(404).json({
         success: false,
         message: 'Operador não encontrado'
@@ -184,15 +150,8 @@ export const atualizarUsuario = async (req: AuthRequest, res: Response<ApiRespon
       return;
     }
 
-    const empresaId = empresa[0].empresa_id;
-
-    // Verificar se o usuário pertence à mesma empresa
-    const [usuarioResult] = await pool.execute(
-      'SELECT id FROM operadores WHERE id = $1 AND empresa_id = $2',
-      [id, empresaId]
-    );
-
-    if ((usuarioResult as any[]).length === 0) {
+    const usuarioParaAtualizar = await Operador.findById(id);
+    if (!usuarioParaAtualizar) {
       res.status(404).json({
         success: false,
         message: 'Usuário não encontrado'
@@ -200,14 +159,21 @@ export const atualizarUsuario = async (req: AuthRequest, res: Response<ApiRespon
       return;
     }
 
-    // Verificar se email já existe (exceto para o próprio usuário)
-    if (email) {
-      const [emailExists] = await pool.execute(
-        'SELECT id FROM operadores WHERE email = $1 AND empresa_id = $2 AND id != $3',
-        [email, empresaId, id]
-      );
+    if (!usuarioParaAtualizar.empresa_id.equals(operadorAtual.empresa_id)) {
+      res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+      return;
+    }
 
-      if ((emailExists as any[]).length > 0) {
+    if (email) {
+      const emailExists = await Operador.findOne({
+        email,
+        empresa_id: operadorAtual.empresa_id,
+        _id: { $ne: id }
+      });
+      if (emailExists) {
         res.status(400).json({
           success: false,
           message: 'Email já cadastrado nesta empresa'
@@ -216,43 +182,16 @@ export const atualizarUsuario = async (req: AuthRequest, res: Response<ApiRespon
       }
     }
 
-    // Atualizar usuário
-    const updateFields = [];
-    const updateValues = [];
-
-    if (nome) {
-      updateFields.push('nome = ?');
-      updateValues.push(nome);
-    }
-    if (email) {
-      updateFields.push('email = ?');
-      updateValues.push(email);
-    }
+    const updateData: any = {};
+    if (nome) updateData.nome = nome;
+    if (email) updateData.email = email;
     if (nivel) {
-      updateFields.push('nivel = ?');
-      updateFields.push('xp_proximo_nivel = ?');
-      updateValues.push(nivel, nivel * 100);
+      updateData.nivel = nivel;
+      updateData.xp_proximo_nivel = nivel * 100;
     }
-    if (status) {
-      updateFields.push('status = ?');
-      updateValues.push(status);
-    }
+    if (status) updateData.status = status;
 
-    if (updateFields.length === 0) {
-      res.status(400).json({
-        success: false,
-        message: 'Nenhum campo para atualizar'
-      });
-      return;
-    }
-
-    updateFields.push('data_atualizacao = CURRENT_TIMESTAMP');
-    updateValues.push(id);
-
-    await pool.execute(
-      `UPDATE operadores SET ${updateFields.join(', ')} WHERE id = $${updateValues.length}`,
-      updateValues
-    );
+    await Operador.updateOne({ _id: id }, updateData);
 
     res.json({
       success: true,
@@ -267,14 +206,12 @@ export const atualizarUsuario = async (req: AuthRequest, res: Response<ApiRespon
   }
 };
 
-// Excluir usuário
 export const excluirUsuario = async (req: AuthRequest, res: Response<ApiResponse<void>>): Promise<void> => {
   try {
     const { id } = req.params;
-    const operadorId = req.operador.id;
+    const operadorId = new mongoose.Types.ObjectId(req.operador.id);
 
-    // Não permitir excluir a si mesmo
-    if (parseInt(id) === operadorId) {
+    if (id === operadorId.toString()) {
       res.status(400).json({
         success: false,
         message: 'Não é possível excluir seu próprio usuário'
@@ -282,14 +219,8 @@ export const excluirUsuario = async (req: AuthRequest, res: Response<ApiResponse
       return;
     }
 
-    // Buscar empresa do operador logado
-    const [empresaResult] = await pool.execute(
-      'SELECT empresa_id FROM operadores WHERE id = $1',
-      [operadorId]
-    );
-    
-    const empresa = empresaResult as any[];
-    if (empresa.length === 0) {
+    const operadorAtual = await Operador.findById(operadorId);
+    if (!operadorAtual) {
       res.status(404).json({
         success: false,
         message: 'Operador não encontrado'
@@ -297,15 +228,8 @@ export const excluirUsuario = async (req: AuthRequest, res: Response<ApiResponse
       return;
     }
 
-    const empresaId = empresa[0].empresa_id;
-
-    // Verificar se o usuário pertence à mesma empresa
-    const [usuarioResult] = await pool.execute(
-      'SELECT id FROM operadores WHERE id = $1 AND empresa_id = $2',
-      [id, empresaId]
-    );
-
-    if ((usuarioResult as any[]).length === 0) {
+    const usuarioParaExcluir = await Operador.findById(id);
+    if (!usuarioParaExcluir) {
       res.status(404).json({
         success: false,
         message: 'Usuário não encontrado'
@@ -313,8 +237,15 @@ export const excluirUsuario = async (req: AuthRequest, res: Response<ApiResponse
       return;
     }
 
-    // Excluir usuário (cascade vai excluir dados relacionados)
-    await pool.execute('DELETE FROM operadores WHERE id = $1', [id]);
+    if (!usuarioParaExcluir.empresa_id.equals(operadorAtual.empresa_id)) {
+      res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+      return;
+    }
+
+    await Operador.deleteOne({ _id: id });
 
     res.json({
       success: true,
@@ -329,21 +260,14 @@ export const excluirUsuario = async (req: AuthRequest, res: Response<ApiResponse
   }
 };
 
-// Redefinir senha
 export const redefinirSenha = async (req: AuthRequest, res: Response<ApiResponse<void>>): Promise<void> => {
   try {
     const { id } = req.params;
     const { novaSenha } = req.body;
-    const operadorId = req.operador.id;
+    const operadorId = new mongoose.Types.ObjectId(req.operador.id);
 
-    // Buscar empresa do operador logado
-    const [empresaResult] = await pool.execute(
-      'SELECT empresa_id FROM operadores WHERE id = $1',
-      [operadorId]
-    );
-    
-    const empresa = empresaResult as any[];
-    if (empresa.length === 0) {
+    const operadorAtual = await Operador.findById(operadorId);
+    if (!operadorAtual) {
       res.status(404).json({
         success: false,
         message: 'Operador não encontrado'
@@ -351,15 +275,8 @@ export const redefinirSenha = async (req: AuthRequest, res: Response<ApiResponse
       return;
     }
 
-    const empresaId = empresa[0].empresa_id;
-
-    // Verificar se o usuário pertence à mesma empresa
-    const [usuarioResult] = await pool.execute(
-      'SELECT id FROM operadores WHERE id = $1 AND empresa_id = $2',
-      [id, empresaId]
-    );
-
-    if ((usuarioResult as any[]).length === 0) {
+    const usuarioParaAtualizar = await Operador.findById(id);
+    if (!usuarioParaAtualizar) {
       res.status(404).json({
         success: false,
         message: 'Usuário não encontrado'
@@ -367,13 +284,19 @@ export const redefinirSenha = async (req: AuthRequest, res: Response<ApiResponse
       return;
     }
 
-    // Hash da nova senha
+    if (!usuarioParaAtualizar.empresa_id.equals(operadorAtual.empresa_id)) {
+      res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+      return;
+    }
+
     const senhaHash = await bcrypt.hash(novaSenha, 10);
 
-    // Atualizar senha
-    await pool.execute(
-      'UPDATE operadores SET senha = $1, data_atualizacao = CURRENT_TIMESTAMP WHERE id = $2',
-      [senhaHash, id]
+    await Operador.updateOne(
+      { _id: id },
+      { senha: senhaHash }
     );
 
     res.json({

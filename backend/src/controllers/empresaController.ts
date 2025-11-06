@@ -1,7 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { pool } from '../config/database';
+import mongoose from 'mongoose';
+import { Empresa, Gestor, Operador, Sessao, Chamada } from '../models';
 import { ApiResponse, AuthRequest } from '../types';
 
 // Cadastro de empresa
@@ -9,7 +10,6 @@ export const cadastrarEmpresa = async (req: Request, res: Response): Promise<voi
   try {
     const { nome, email, senha, telefone, cnpj, endereco, cidade, estado, cep } = req.body;
 
-    // Validações básicas
     if (!nome || !email || !senha || !cnpj) {
       res.status(400).json({
         success: false,
@@ -19,12 +19,9 @@ export const cadastrarEmpresa = async (req: Request, res: Response): Promise<voi
     }
 
     // Verificar se email já existe
-    const [empresasExistentes] = await pool.execute(
-      'SELECT id FROM empresas WHERE email = $1',
-      [email]
-    );
+    const empresaExistente = await Empresa.findOne({ email });
 
-    if ((empresasExistentes as any[]).length > 0) {
+    if (empresaExistente) {
       res.status(400).json({
         success: false,
         message: 'Email já cadastrado'
@@ -35,20 +32,25 @@ export const cadastrarEmpresa = async (req: Request, res: Response): Promise<voi
     // Hash da senha
     const senhaHash = await bcrypt.hash(senha, 10);
 
-    // Inserir empresa no banco
-    const [result] = await pool.execute(
-      `INSERT INTO empresas (nome, email, senha, telefone, cnpj, endereco, cidade, estado, cep, status, data_criacao) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW()) RETURNING id`,
-      [nome, email, senhaHash, telefone || null, cnpj, endereco || null, cidade || null, estado || null, cep || null, 'Ativo']
-    );
-
-    const empresaId = (result as any[])[0]?.id;
+    // Criar empresa
+    const empresa = await Empresa.create({
+      nome,
+      email,
+      senha: senhaHash,
+      telefone: telefone || null,
+      cnpj,
+      endereco: endereco || null,
+      cidade: cidade || null,
+      estado: estado || null,
+      cep: cep || null,
+      status: 'Ativo'
+    });
 
     res.status(201).json({
       success: true,
       message: 'Empresa cadastrada com sucesso',
       data: {
-        id: empresaId,
+        id: empresa._id.toString(),
         nome,
         email
       }
@@ -56,22 +58,11 @@ export const cadastrarEmpresa = async (req: Request, res: Response): Promise<voi
 
   } catch (error: any) {
     console.error(`❌ [CADASTRO EMPRESA] Erro no cadastro da empresa:`, error);
-    console.error(`❌ [CADASTRO EMPRESA] Stack trace:`, error.stack);
 
-    // Verificar se é erro de conexão com banco
-    if (error?.code === 'ECONNREFUSED' || error?.code === 'ENOTFOUND') {
-      res.status(503).json({
-        success: false,
-        message: 'Erro de conexão com o banco de dados'
-      });
-      return;
-    }
-
-    // Verificar se é erro de query
-    if (error?.code && error.code.startsWith('23')) {
+    if (error.code === 11000) {
       res.status(400).json({
         success: false,
-        message: 'Dados inválidos fornecidos'
+        message: 'Email ou CNPJ já cadastrado'
       });
       return;
     }
@@ -88,10 +79,8 @@ export const cadastrarEmpresa = async (req: Request, res: Response): Promise<voi
 export const loginEmpresa = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, senha } = req.body;
-    console.log(`🔐 [EMPRESA LOGIN] Tentativa de login iniciada para: ${email}`);
 
     if (!email || !senha) {
-      console.log(`❌ [EMPRESA LOGIN] Dados incompletos - Email: ${!!email}, Senha: ${!!senha}`);
       res.status(400).json({
         success: false,
         message: 'Email e senha são obrigatórios'
@@ -99,19 +88,10 @@ export const loginEmpresa = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    console.log(`🔍 [EMPRESA LOGIN] Buscando empresa no banco de dados para: ${email}`);
     // Buscar empresa
-    const [empresas] = await pool.execute(
-      'SELECT id, nome, email, senha, status FROM empresas WHERE email = $1 AND status = $2',
-      [email, 'Ativo']
-    );
-
-    console.log(`📊 [EMPRESA LOGIN] Resultado da busca: ${(empresas as any[]).length} empresa(s) encontrada(s)`);
-
-    const empresa = (empresas as any[])[0];
+    const empresa = await Empresa.findOne({ email, status: 'Ativo' });
 
     if (!empresa) {
-      console.log(`❌ [EMPRESA LOGIN] Empresa não encontrada ou inativa para: ${email}`);
       res.status(401).json({
         success: false,
         message: 'Empresa não encontrada ou inativa'
@@ -119,15 +99,10 @@ export const loginEmpresa = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    console.log(`✅ [EMPRESA LOGIN] Empresa encontrada - ID: ${empresa.id}, Nome: ${empresa.nome}, Status: ${empresa.status}`);
-
     // Verificar senha
-    console.log(`🔐 [EMPRESA LOGIN] Verificando senha para empresa ID: ${empresa.id}`);
     const senhaValida = await bcrypt.compare(senha, empresa.senha);
-    console.log(`🔐 [EMPRESA LOGIN] Senha válida: ${senhaValida}`);
     
     if (!senhaValida) {
-      console.log(`❌ [EMPRESA LOGIN] Senha inválida para empresa: ${email}`);
       res.status(401).json({
         success: false,
         message: 'Credenciais inválidas'
@@ -136,53 +111,40 @@ export const loginEmpresa = async (req: Request, res: Response): Promise<void> =
     }
 
     // Gerar token JWT
-    console.log(`🎫 [EMPRESA LOGIN] Gerando token JWT para empresa ID: ${empresa.id}`);
     const token = jwt.sign(
       { 
-        empresaId: empresa.id, 
+        empresaId: empresa._id.toString(), 
         tipo: 'empresa',
         email: empresa.email 
       },
       process.env.JWT_SECRET || 'teleup_secret',
       { expiresIn: '24h' }
     );
-    console.log(`🎫 [EMPRESA LOGIN] Token JWT gerado com sucesso`);
 
     // Salvar sessão
     const expiracao = new Date();
     expiracao.setHours(expiracao.getHours() + 24);
 
-    console.log(`💾 [EMPRESA LOGIN] Tentando salvar sessão para empresa ID: ${empresa.id}`);
-    try {
-      await pool.execute(
-        'INSERT INTO sessoes_empresa (empresa_id, token, expiracao) VALUES ($1, $2, $3)',
-        [empresa.id, token, expiracao]
-      );
-      console.log(`✅ [EMPRESA LOGIN] Sessão salva na tabela 'sessoes_empresa' com sucesso`);
-    } catch (error: any) {
-      console.error(`⚠️ [EMPRESA LOGIN] Erro ao salvar sessão da empresa: ${error.message}`);
-      console.error(`⚠️ [EMPRESA LOGIN] Stack trace:`, error.stack);
-      // Continuar mesmo se falhar ao salvar sessão
-    }
+    await Sessao.create({
+      empresa_id: empresa._id,
+      token,
+      expiracao,
+      ativo: true
+    });
 
     // Atualizar último login
-    console.log(`📊 [EMPRESA LOGIN] Atualizando data do último login para empresa ID: ${empresa.id}`);
-    await pool.execute(
-      'UPDATE empresas SET data_ultimo_login = NOW() WHERE id = $1',
-      [empresa.id]
+    await Empresa.updateOne(
+      { _id: empresa._id },
+      { data_ultimo_login: new Date() }
     );
-    console.log(`✅ [EMPRESA LOGIN] Data do último login atualizada com sucesso`);
 
-    // Preparar dados da empresa (sem senha)
-    console.log(`📋 [EMPRESA LOGIN] Preparando dados da empresa para resposta`);
     const empresaData = {
-      id: empresa.id,
+      id: empresa._id.toString(),
       nome: empresa.nome,
       email: empresa.email,
       status: empresa.status
     };
 
-    console.log(`🎉 [EMPRESA LOGIN] Login realizado com sucesso para: ${email}`);
     res.json({
       success: true,
       message: 'Login realizado com sucesso',
@@ -192,27 +154,7 @@ export const loginEmpresa = async (req: Request, res: Response): Promise<void> =
       }
     });
   } catch (error: any) {
-    console.error(`❌ [EMPRESA LOGIN] Erro no login da empresa ${req.body?.email}:`, error);
-    console.error(`❌ [EMPRESA LOGIN] Stack trace:`, error.stack);
-    
-    // Verificar se é erro de conexão com banco
-    if (error?.code === 'ECONNREFUSED' || error?.code === 'ENOTFOUND') {
-      console.log(`❌ [EMPRESA LOGIN] Erro de conexão com banco de dados`);
-      res.status(500).json({
-        success: false,
-        message: 'Erro de conexão com banco de dados'
-      });
-      return;
-    }
-    
-    // Verificar se é erro de query
-    if (error?.code && error.code.startsWith('23')) {
-      res.status(400).json({
-        success: false,
-        message: 'Dados inválidos fornecidos'
-      });
-      return;
-    }
+    console.error(`❌ [EMPRESA LOGIN] Erro no login da empresa:`, error);
     
     res.status(500).json({
       success: false,
@@ -224,38 +166,46 @@ export const loginEmpresa = async (req: Request, res: Response): Promise<void> =
 // Listar gestores da empresa
 export const listarGestoresEmpresa = async (req: AuthRequest, res: Response<ApiResponse<any[]>>): Promise<void> => {
   try {
-    const empresaId = req.empresa?.id;
+    const empresaId = new mongoose.Types.ObjectId(req.empresa?.id || '');
 
-    if (!empresaId) {
-      res.status(401).json({
-        success: false,
-        message: 'Empresa não autenticada'
-      });
-      return;
-    }
-
-    const [gestores] = await pool.execute(`
-      SELECT 
-        g.id, 
-        g.nome, 
-        g.email, 
-        g.status, 
-        g.avatar, 
-        g.data_criacao, 
-        g.data_atualizacao,
-        g.data_ultimo_login,
-        COALESCE(COUNT(o.id), 0) as total_operadores,
-        COALESCE(COUNT(CASE WHEN o.status_operacional = 'Online' THEN o.id END), 0) as operadores_online
-      FROM gestores g
-      LEFT JOIN operadores o ON o.gestor_id = g.id
-      WHERE g.empresa_id = $1
-      GROUP BY g.id, g.nome, g.email, g.status, g.avatar, g.data_criacao, g.data_atualizacao, g.data_ultimo_login
-      ORDER BY g.data_criacao DESC
-    `, [empresaId]);
+    const gestores = await Gestor.aggregate([
+      { $match: { empresa_id: empresaId } },
+      {
+        $lookup: {
+          from: 'operadores',
+          localField: '_id',
+          foreignField: 'gestor_id',
+          as: 'operadores'
+        }
+      },
+      {
+        $project: {
+          id: { $toString: '$_id' },
+          nome: 1,
+          email: 1,
+          status: 1,
+          avatar: 1,
+          data_criacao: 1,
+          data_atualizacao: 1,
+          data_ultimo_login: 1,
+          total_operadores: { $size: '$operadores' },
+          operadores_online: {
+            $size: {
+              $filter: {
+                input: '$operadores',
+                as: 'op',
+                cond: { $eq: ['$$op.status_operacional', 'Aguardando Chamada'] }
+              }
+            }
+          }
+        }
+      },
+      { $sort: { data_criacao: -1 } }
+    ]);
 
     res.json({
       success: true,
-      data: gestores as any[]
+      data: gestores
     });
   } catch (error) {
     console.error('Erro ao listar gestores da empresa:', error);
@@ -267,26 +217,15 @@ export const listarGestoresEmpresa = async (req: AuthRequest, res: Response<ApiR
 };
 
 // Criar gestor para a empresa
-export const criarGestorEmpresa = async (req: AuthRequest, res: Response<ApiResponse<{ id: number }>>): Promise<void> => {
+export const criarGestorEmpresa = async (req: AuthRequest, res: Response<ApiResponse<{ id: string }>>): Promise<void> => {
   try {
     const { nome, email, senha } = req.body;
-    const empresaId = req.empresa?.id;
-
-    if (!empresaId) {
-      res.status(401).json({
-        success: false,
-        message: 'Empresa não autenticada'
-      });
-      return;
-    }
+    const empresaId = new mongoose.Types.ObjectId(req.empresa?.id || '');
 
     // Verificar se email já existe
-    const [emailExists] = await pool.execute(
-      'SELECT id FROM gestores WHERE email = $1',
-      [email]
-    );
+    const emailExists = await Gestor.findOne({ email });
 
-    if ((emailExists as any[]).length > 0) {
+    if (emailExists) {
       res.status(400).json({
         success: false,
         message: 'Email já cadastrado'
@@ -296,16 +235,19 @@ export const criarGestorEmpresa = async (req: AuthRequest, res: Response<ApiResp
 
     const senhaHash = await bcrypt.hash(senha, 10);
 
-    const [result] = await pool.execute(
-      'INSERT INTO gestores (nome, email, senha, status, avatar, empresa_id) VALUES ($1, $2, $3, $4, $5, $6)',
-      [nome, email, senhaHash, 'Ativo', 'avatar1.png', empresaId]
-    );
+    const gestor = await Gestor.create({
+      nome,
+      email,
+      senha: senhaHash,
+      status: 'Ativo',
+      avatar: 'avatar1.png',
+      empresa_id: empresaId
+    });
 
-    const insertResult = result as any;
     res.status(201).json({
       success: true,
       message: 'Gestor criado com sucesso',
-      data: { id: insertResult.insertId }
+      data: { id: gestor._id.toString() }
     });
   } catch (error) {
     console.error('Erro ao criar gestor:', error);
@@ -319,31 +261,32 @@ export const criarGestorEmpresa = async (req: AuthRequest, res: Response<ApiResp
 // Listar operadores da empresa
 export const listarOperadoresEmpresa = async (req: AuthRequest, res: Response<ApiResponse<any[]>>): Promise<void> => {
   try {
-    const empresaId = req.empresa?.id;
+    const empresaId = new mongoose.Types.ObjectId(req.empresa?.id || '');
 
-    if (!empresaId) {
-      res.status(401).json({
-        success: false,
-        message: 'Empresa não autenticada'
-      });
-      return;
-    }
-
-    const [operadores] = await pool.execute(
-      `SELECT o.id, o.nome, o.email, o.nivel, o.xp_atual, o.xp_proximo_nivel, o.pontos_totais, 
-              o.status, o.avatar, o.tempo_online, o.pa, o.carteira, o.data_criacao,
-              g.nome as gestor_nome, g.email as gestor_email
-       FROM operadores o
-       LEFT JOIN operador_gestor og ON o.id = og.operador_id
-       LEFT JOIN gestores g ON og.gestor_id = g.id
-       WHERE o.empresa_id = $1
-       ORDER BY o.pontos_totais DESC`,
-      [empresaId]
-    );
+    const operadores = await Operador.find({ empresa_id: empresaId })
+      .populate('gestor_id', 'nome email')
+      .sort({ pontos_totais: -1 })
+      .select('nome email nivel xp pontos_totais status avatar tempo_online pa carteira data_criacao');
 
     res.json({
       success: true,
-      data: operadores as any[]
+      data: operadores.map(op => ({
+        id: op._id.toString(),
+        nome: op.nome,
+        email: op.email,
+        nivel: op.nivel,
+        xp_atual: op.xp,
+        xp_proximo_nivel: op.nivel * 100,
+        pontos_totais: op.pontos_totais,
+        status: op.status,
+        avatar: op.avatar,
+        tempo_online: op.tempo_online,
+        pa: op.pa,
+        carteira: op.carteira,
+        data_criacao: op.data_criacao,
+        gestor_nome: (op.gestor_id as any)?.nome,
+        gestor_email: (op.gestor_id as any)?.email
+      }))
     });
   } catch (error) {
     console.error('Erro ao listar operadores da empresa:', error);
@@ -354,267 +297,58 @@ export const listarOperadoresEmpresa = async (req: AuthRequest, res: Response<Ap
   }
 };
 
-// Atualizar gestor da empresa
-export const atualizarGestorEmpresa = async (req: AuthRequest, res: Response<ApiResponse<any>>): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const { nome, email, senha, status } = req.body;
-    const empresaId = req.empresa?.id;
-
-    if (!empresaId) {
-      res.status(401).json({
-        success: false,
-        message: 'Empresa não autenticada'
-      });
-      return;
-    }
-
-    // Verificar se o gestor pertence à empresa
-    const [gestorExists] = await pool.execute(
-      'SELECT id FROM gestores WHERE id = $1 AND empresa_id = $2',
-      [id, empresaId]
-    );
-
-    if ((gestorExists as any[]).length === 0) {
-      res.status(404).json({
-        success: false,
-        message: 'Gestor não encontrado ou não pertence à empresa'
-      });
-      return;
-    }
-
-    // Verificar se email já existe em outro gestor
-    if (email) {
-      const [emailExists] = await pool.execute(
-        'SELECT id FROM gestores WHERE email = $1 AND id != $2',
-        [email, id]
-      );
-
-      if ((emailExists as any[]).length > 0) {
-        res.status(400).json({
-          success: false,
-          message: 'Email já cadastrado por outro gestor'
-        });
-        return;
-      }
-    }
-
-    // Preparar dados para atualização
-    let updateFields = [];
-    let updateValues = [];
-
-    if (nome) {
-      updateFields.push('nome = ?');
-      updateValues.push(nome);
-    }
-
-    if (email) {
-      updateFields.push('email = ?');
-      updateValues.push(email);
-    }
-
-    if (senha) {
-      const senhaHash = await bcrypt.hash(senha, 10);
-      updateFields.push('senha = ?');
-      updateValues.push(senhaHash);
-    }
-
-    if (status) {
-      updateFields.push('status = ?');
-      updateValues.push(status);
-    }
-
-    updateFields.push('data_atualizacao = NOW()');
-    updateValues.push(id);
-
-    if (updateFields.length === 1) { // Apenas data_atualizacao
-      res.status(400).json({
-        success: false,
-        message: 'Nenhum campo para atualizar'
-      });
-      return;
-    }
-
-    await pool.execute(
-      `UPDATE gestores SET ${updateFields.join(', ')} WHERE id = $${updateValues.length}`,
-      updateValues
-    );
-
-    res.json({
-      success: true,
-      message: 'Gestor atualizado com sucesso'
-    });
-  } catch (error) {
-    console.error('Erro ao atualizar gestor:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-};
-
-// Excluir gestor da empresa
-export const excluirGestorEmpresa = async (req: AuthRequest, res: Response<ApiResponse<any>>): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const empresaId = req.empresa?.id;
-
-    if (!empresaId) {
-      res.status(401).json({
-        success: false,
-        message: 'Empresa não autenticada'
-      });
-      return;
-    }
-
-    // Verificar se o gestor pertence à empresa
-    const [gestorExists] = await pool.execute(
-      'SELECT id FROM gestores WHERE id = $1 AND empresa_id = $2',
-      [id, empresaId]
-    );
-
-    if ((gestorExists as any[]).length === 0) {
-      res.status(404).json({
-        success: false,
-        message: 'Gestor não encontrado ou não pertence à empresa'
-      });
-      return;
-    }
-
-    // Verificar se o gestor tem operadores atribuídos
-    const [operadoresAtribuidos] = await pool.execute(
-      'SELECT COUNT(*) as total FROM operador_gestor WHERE gestor_id = $1',
-      [id]
-    );
-
-    if ((operadoresAtribuidos as any[])[0].total > 0) {
-      res.status(400).json({
-        success: false,
-        message: 'Não é possível excluir gestor que possui operadores atribuídos'
-      });
-      return;
-    }
-
-    // Excluir gestor
-    await pool.execute(
-      'DELETE FROM gestores WHERE id = $1 AND empresa_id = $2',
-      [id, empresaId]
-    );
-
-    res.json({
-      success: true,
-      message: 'Gestor excluído com sucesso'
-    });
-  } catch (error) {
-    console.error('Erro ao excluir gestor:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor'
-    });
-  }
-};
-
 // Dashboard da empresa
 export const getDashboardEmpresa = async (req: AuthRequest, res: Response<ApiResponse<any>>): Promise<void> => {
   try {
-    const empresaId = req.empresa?.id;
+    const empresaId = new mongoose.Types.ObjectId(req.empresa?.id || '');
 
-    if (!empresaId) {
-      res.status(401).json({
-        success: false,
-        message: 'Empresa não autenticada'
-      });
-      return;
-    }
+    const totalGestores = await Gestor.countDocuments({ empresa_id: empresaId });
+    const totalOperadores = await Operador.countDocuments({ empresa_id: empresaId });
+    const operadoresOnline = await Operador.countDocuments({
+      empresa_id: empresaId,
+      status_operacional: 'Aguardando Chamada'
+    });
 
-    console.log(`🔍 [DASHBOARD EMPRESA] Buscando dados para empresa ID: ${empresaId}`);
+    // Buscar chamadas de hoje
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const amanha = new Date(hoje);
+    amanha.setDate(amanha.getDate() + 1);
 
-    // Buscar estatísticas da empresa
-    const [totalGestores] = await pool.execute(
-      'SELECT COUNT(*) as total FROM gestores WHERE empresa_id = $1',
-      [empresaId]
-    );
+    const operadoresIds = await Operador.find({ empresa_id: empresaId }).select('_id');
+    const operadoresIdsArray = operadoresIds.map(op => op._id);
 
-    const [totalOperadores] = await pool.execute(
-      'SELECT COUNT(*) as total FROM operadores WHERE empresa_id = $1',
-      [empresaId]
-    );
+    const chamadasHoje = await Chamada.countDocuments({
+      operador_id: { $in: operadoresIdsArray },
+      inicio_chamada: { $gte: hoje, $lt: amanha }
+    });
 
-    const [operadoresOnline] = await pool.execute(
-      'SELECT COUNT(*) as total FROM operadores WHERE empresa_id = $1 AND status_operacional = \'Online\'',
-      [empresaId]
-    );
+    const chamadas = await Chamada.find({
+      operador_id: { $in: operadoresIdsArray }
+    });
 
-    console.log(`📊 [DASHBOARD EMPRESA] Dados básicos: gestores=${(totalGestores as any[])[0].total}, operadores=${(totalOperadores as any[])[0].total}, online=${(operadoresOnline as any[])[0].total}`);
+    const satisfacaoMedia = chamadas.length > 0
+      ? chamadas.reduce((sum, c) => sum + (c.satisfacao_cliente || 0), 0) / chamadas.length
+      : 0;
 
-    // Verificar se tabela chamadas existe antes de fazer queries
-    let chamadasHoje = 0;
-    let satisfacaoMedia = 0;
-    let tempoMedioAtendimento = 0;
-    let taxaResolucao = 0;
+    const tempoMedioAtendimento = chamadas.length > 0
+      ? chamadas.reduce((sum, c) => sum + (c.duracao_segundos || 0), 0) / chamadas.length / 60
+      : 0;
 
-    try {
-      // Buscar chamadas de hoje (através dos operadores da empresa)
-      const [chamadasHojeResult] = await pool.execute(
-        `SELECT COUNT(*) as total FROM chamadas c 
-         INNER JOIN operadores o ON c.operador_id = o.id 
-         WHERE o.empresa_id = $1 AND DATE(c.inicio_chamada) = CURRENT_DATE`,
-        [empresaId]
-      );
-      chamadasHoje = (chamadasHojeResult as any[])[0].total;
-
-      // Buscar satisfação média
-      const [satisfacaoMediaResult] = await pool.execute(
-        `SELECT COALESCE(AVG(c.satisfacao_cliente), 0) as media 
-         FROM chamadas c 
-         INNER JOIN operadores o ON c.operador_id = o.id 
-         WHERE o.empresa_id = $1 AND c.satisfacao_cliente IS NOT NULL`,
-        [empresaId]
-      );
-      satisfacaoMedia = parseFloat((satisfacaoMediaResult as any[])[0].media) || 0;
-
-      // Buscar tempo médio de atendimento
-      const [tempoMedioResult] = await pool.execute(
-        `SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (c.fim_chamada - c.inicio_chamada))/60), 0) as media 
-         FROM chamadas c 
-         INNER JOIN operadores o ON c.operador_id = o.id 
-         WHERE o.empresa_id = $1 AND c.fim_chamada IS NOT NULL`,
-        [empresaId]
-      );
-      tempoMedioAtendimento = Math.round(parseFloat((tempoMedioResult as any[])[0].media)) || 0;
-
-      // Buscar taxa de resolução
-      const [taxaResolucaoResult] = await pool.execute(
-        `SELECT COALESCE(AVG(CASE WHEN c.resolvida = TRUE THEN 100 ELSE 0 END), 0) as taxa 
-         FROM chamadas c 
-         INNER JOIN operadores o ON c.operador_id = o.id 
-         WHERE o.empresa_id = $1`,
-        [empresaId]
-      );
-      taxaResolucao = Math.round(parseFloat((taxaResolucaoResult as any[])[0].taxa)) || 0;
-
-      console.log(`📞 [DASHBOARD EMPRESA] Dados de chamadas: hoje=${chamadasHoje}, satisfacao=${satisfacaoMedia}, tempo=${tempoMedioAtendimento}, resolucao=${taxaResolucao}`);
-
-    } catch (chamadasError) {
-      console.log(`⚠️ [DASHBOARD EMPRESA] Erro ao buscar dados de chamadas (tabela pode não existir):`, chamadasError);
-      // Continuar com valores padrão
-    }
-
-    // Buscar meta diária (usar valor padrão por enquanto)
-    const metaDiaria = 100; // Valor padrão, pode ser configurável depois
+    const taxaResolucao = chamadas.length > 0
+      ? (chamadas.filter(c => c.resolvida).length / chamadas.length) * 100
+      : 0;
 
     const dashboardData = {
-      totalGestores: (totalGestores as any[])[0].total,
-      totalOperadores: (totalOperadores as any[])[0].total,
-      operadoresOnline: (operadoresOnline as any[])[0].total,
-      chamadasHoje: chamadasHoje,
-      metaDiaria: metaDiaria,
-      satisfacaoMedia: satisfacaoMedia,
-      tempoMedioAtendimento: tempoMedioAtendimento,
-      taxaResolucao: taxaResolucao
+      totalGestores,
+      totalOperadores,
+      operadoresOnline,
+      chamadasHoje,
+      metaDiaria: 100,
+      satisfacaoMedia: Math.round(satisfacaoMedia * 10) / 10,
+      tempoMedioAtendimento: Math.round(tempoMedioAtendimento),
+      taxaResolucao: Math.round(taxaResolucao)
     };
-
-    console.log(`✅ [DASHBOARD EMPRESA] Dados finais:`, dashboardData);
 
     res.json({
       success: true,
@@ -632,17 +366,8 @@ export const getDashboardEmpresa = async (req: AuthRequest, res: Response<ApiRes
 // Atualizar avatar da empresa
 export const atualizarAvatarEmpresa = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const empresaId = req.empresa?.id;
+    const empresaId = new mongoose.Types.ObjectId(req.empresa?.id || '');
 
-    if (!empresaId) {
-      res.status(401).json({
-        success: false,
-        message: 'Empresa não autenticada'
-      });
-      return;
-    }
-
-    // Verificar se há arquivo enviado
     if (!req.file) {
       res.status(400).json({
         success: false,
@@ -651,13 +376,11 @@ export const atualizarAvatarEmpresa = async (req: AuthRequest, res: Response): P
       return;
     }
 
-    // Construir URL do avatar
     const avatarUrl = `${req.protocol}://${req.get('host')}/uploads/empresas/${req.file.filename}`;
 
-    // Atualizar avatar no banco
-    await pool.execute(
-      'UPDATE empresas SET avatar = $1, data_atualizacao = NOW() WHERE id = $2',
-      [avatarUrl, empresaId]
+    await Empresa.updateOne(
+      { _id: empresaId },
+      { avatar: avatarUrl }
     );
 
     res.status(200).json({
