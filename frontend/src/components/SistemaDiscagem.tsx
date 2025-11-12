@@ -478,10 +478,10 @@ const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
     <div className="space-y-6">
       <div
         className={cn(
-          "grid items-start gap-4",
+          "grid items-start gap-6",
           listaColapsada
-            ? "lg:grid-cols-[minmax(0,380px)]"
-            : "lg:grid-cols-[minmax(0,380px)_minmax(0,320px)]"
+            ? "lg:grid-cols-[minmax(0,1fr)]"
+            : "lg:grid-cols-[minmax(0,1fr)_360px]"
         )}
       >
         <div className="relative">
@@ -502,31 +502,32 @@ const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
             <Button
               variant="ghost"
               size="icon"
-              className="hidden lg:flex absolute top-4 right-4"
+              className="absolute -right-4 top-10 hidden h-10 w-10 rounded-full border border-primary/40 bg-primary/10 text-primary backdrop-blur lg:flex"
               onClick={() => setListaColapsada(false)}
             >
-              <PanelRightOpen className="h-4 w-4" />
+              <PanelRightOpen className="h-5 w-5" />
               <span className="sr-only">Mostrar lista</span>
             </Button>
           )}
         </div>
 
         {!listaColapsada && (
-          <Card className="flex h-full flex-col space-y-4 p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-                  <PhoneCall className="h-5 w-5 text-primary" />
-                  Lista Telefônica
-                </h3>
-                <p className="text-sm text-muted-foreground">
+          <Card className="relative flex h-full flex-col overflow-hidden border border-primary/10 bg-gradient-to-br from-[#181531] via-[#14102b] to-[#0f0d24] p-0 shadow-lg">
+            <div className="relative flex items-start justify-between gap-4 border-b border-white/5 bg-white/5 px-6 pb-5 pt-6">
+              <div className="space-y-1">
+                <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-primary">
+                  <PhoneCall className="h-3.5 w-3.5" />
+                  Contatos
+                </span>
+                <h3 className="text-lg font-semibold text-foreground">Lista Telefônica</h3>
+                <p className="text-xs text-muted-foreground">
                   Clique em um contato para iniciar uma chamada imediatamente.
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge
                   variant={origemContatos === "api" ? "secondary" : "outline"}
-                  className="uppercase tracking-wide"
+                  className="rounded-full border border-primary/30 bg-primary/10 text-[10px] uppercase tracking-widest text-primary"
                 >
                   {origemContatos === "api" ? "Dados da empresa" : "Mock"}
                 </Badge>
@@ -535,7 +536,7 @@ const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
                   size="icon"
                   onClick={carregarContatos}
                   disabled={carregandoContatos}
-                  className="h-9 w-9"
+                  className="h-9 w-9 rounded-full border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
                 >
                   <RefreshCw className={cn("h-4 w-4", carregandoContatos && "animate-spin")} />
                   <span className="sr-only">Atualizar contatos</span>
@@ -543,7 +544,7 @@ const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="hidden h-9 w-9 lg:flex"
+                  className="hidden h-9 w-9 rounded-full border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 lg:flex"
                   onClick={() => setListaColapsada(true)}
                 >
                   <PanelRightClose className="h-4 w-4" />
@@ -552,28 +553,30 @@ const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
               </div>
             </div>
 
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome, empresa ou telefone..."
-                className="pl-9"
-                value={filtroContato}
-                onChange={(event) => setFiltroContato(event.target.value)}
-              />
+            <div className="border-b border-white/5 px-6 pb-5 pt-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
+                <Input
+                  placeholder="Buscar por nome, empresa ou telefone..."
+                  className="rounded-2xl border border-white/10 bg-white/5 pl-10 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary/60 focus:ring-2 focus:ring-primary/30"
+                  value={filtroContato}
+                  onChange={(event) => setFiltroContato(event.target.value)}
+                />
+              </div>
             </div>
 
-            <ScrollArea className="flex-1 pr-2">
-              <div className="space-y-3">
+            <ScrollArea className="flex-1 px-6 pb-6">
+              <div className="space-y-3 pb-2">
                 {carregandoContatos && (
-                  <div className="py-6 text-center text-sm text-muted-foreground">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 py-6 text-center text-sm text-muted-foreground">
                     Carregando contatos...
                   </div>
                 )}
 
                 {!carregandoContatos && contatosFiltrados.length === 0 && (
-                  <Card className="border-dashed p-6 text-center text-sm text-muted-foreground">
+                  <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-6 text-center text-sm text-muted-foreground">
                     Nenhum contato encontrado com esse filtro.
-                  </Card>
+                  </div>
                 )}
 
                 {!carregandoContatos &&
@@ -585,32 +588,42 @@ const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
                         key={contato.id}
                         onClick={() => handleSelecionarContato(contato)}
                         className={cn(
-                          "w-full text-left rounded-xl border p-4 transition-all",
-                          "hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                          selecionado && "border-primary bg-primary/10 shadow-sm"
+                          "group relative w-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-left transition-all duration-200",
+                          "hover:border-primary/40 hover:bg-primary/5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                          selecionado && "border-primary/60 bg-primary/5 shadow-lg"
                         )}
                         type="button"
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                            <User2 className="h-4 w-4 text-primary" />
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-foreground/90">
+                            <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary shadow-inner">
+                              <User2 className="h-4 w-4" />
+                            </span>
                             {contato.nome}
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge variant="secondary">{contato.segmento}</Badge>
-                            {contato.origem === "mock" && <Badge variant="outline">Mock</Badge>}
+                            <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-primary">
+                              {contato.segmento}
+                            </span>
+                            {contato.origem === "mock" && (
+                              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                                Mock
+                              </span>
+                            )}
                           </div>
                         </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                          <span className="font-mono text-sm text-foreground">{contato.numero}</span>
+                        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-black/20 px-2 py-1 font-mono text-sm text-foreground/90">
+                            {contato.numero}
+                          </span>
                           <span className="flex items-center gap-1">
-                            <Building2 className="h-3 w-3" />
+                            <Building2 className="h-3 w-3 text-primary/80" />
                             {contato.empresa}
                           </span>
                         </div>
                         {contato.observacao && (
-                          <p className="mt-3 text-xs text-muted-foreground">
-                            <NotebookPen className="mr-1 inline-block h-3 w-3 text-primary" />
+                          <p className="mt-3 text-xs text-muted-foreground/90">
+                            <NotebookPen className="mr-1 inline-block h-3 w-3 text-primary/80" />
                             {contato.observacao}
                           </p>
                         )}
