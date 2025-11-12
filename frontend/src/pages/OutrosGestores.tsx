@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/useAuth';
 import HeaderGestor from '@/components/HeaderGestor';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,11 +22,7 @@ const OutrosGestores = () => {
   const [gestores, setGestores] = useState<OutroGestor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    buscarOutrosGestores();
-  }, [token]);
-
-  const buscarOutrosGestores = async () => {
+  const buscarOutrosGestores = useCallback(async () => {
     if (!token) return;
 
     try {
@@ -51,7 +47,11 @@ const OutrosGestores = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    buscarOutrosGestores();
+  }, [buscarOutrosGestores]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {

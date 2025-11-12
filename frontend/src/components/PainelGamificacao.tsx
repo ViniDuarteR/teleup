@@ -1,3 +1,4 @@
+import { type ComponentType, type SVGProps } from "react";
 import { Trophy, Target, Zap, Gift, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +34,7 @@ const PainelGamificacao = ({ missoes, conquistas, pontos }: PainelGamificacaoPro
   const navigate = useNavigate();
   
   const getIcon = (iconName: string) => {
-    const iconMap: Record<string, React.ComponentType<any>> = {
+    const iconMap: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
       phone: Target,
       zap: Zap,
       star: Trophy,
@@ -89,13 +90,18 @@ const PainelGamificacao = ({ missoes, conquistas, pontos }: PainelGamificacaoPro
                 {missaoAtiva.progresso} / {missaoAtiva.meta}
               </span>
               <span className="text-muted-foreground">
-                {Math.round((missaoAtiva.progresso / missaoAtiva.meta) * 100)}%
+                {missaoAtiva.meta > 0 ? Math.round((missaoAtiva.progresso / missaoAtiva.meta) * 100) : 0}%
               </span>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div 
                 className="h-full progress-primary transition-all duration-500"
-                style={{ width: `${(missaoAtiva.progresso / missaoAtiva.meta) * 100}%` }}
+                style={{
+                  width: `${Math.min(
+                    100,
+                    missaoAtiva.meta > 0 ? (missaoAtiva.progresso / missaoAtiva.meta) * 100 : 0,
+                  )}%`,
+                }}
               />
             </div>
           </div>

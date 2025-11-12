@@ -52,14 +52,14 @@ export const api = {
       body: JSON.stringify({ email, senha }),
     }),
 
-  register: (data: any) =>
+  register: (data: Record<string, unknown>) =>
     apiRequest('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
   // Cadastro de empresa (sem autenticação)
-  cadastrarEmpresa: (data: any) =>
+  cadastrarEmpresa: (data: Record<string, unknown>) =>
     fetch(`${API_BASE_URL}/cadastro-empresa`, {
       method: 'POST',
       headers: {
@@ -75,7 +75,7 @@ export const api = {
   getGestores: () =>
     apiRequest('/empresas/gestores'),
 
-  createGestor: (data: any) =>
+  createGestor: (data: Record<string, unknown>) =>
     apiRequest('/empresas/gestores', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -107,13 +107,13 @@ export const api = {
   getRecompensas: () =>
     apiRequest('/recompensas'),
 
-  createRecompensa: (data: any) =>
+  createRecompensa: (data: Record<string, unknown>) =>
     apiRequest('/recompensas', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  updateRecompensa: (id: number, data: any) =>
+  updateRecompensa: (id: number, data: Record<string, unknown>) =>
     apiRequest(`/recompensas/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),

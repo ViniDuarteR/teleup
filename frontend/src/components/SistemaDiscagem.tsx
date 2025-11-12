@@ -126,7 +126,7 @@ const SistemaDiscagem = () => {
   const [tabulacaoAtual, setTabulacaoAtual] = useState("");
   const [resumoTabulacao, setResumoTabulacao] = useState("");
   const [modoSimulado, setModoSimulado] = useState(false);
-
+  
   const emChamada = chamadaAtiva !== null;
 
   const contatosFiltrados = useMemo(() => {
@@ -203,7 +203,7 @@ const SistemaDiscagem = () => {
         },
         body: JSON.stringify({
           numero_cliente: numero,
-          tipo_chamada: "Saída",
+          tipo_chamada: "Saida",
           origem_discagem: origem,
         }),
       });
@@ -346,11 +346,11 @@ const SistemaDiscagem = () => {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <DialpadDiscagem
+      <DialpadDiscagem
           onIniciarChamada={(numero) => iniciarChamada(numero, "manual")}
-          onFinalizarChamada={prepararFinalizacao}
-          emChamada={emChamada}
-          disabled={finalizando}
+        onFinalizarChamada={prepararFinalizacao}
+        emChamada={emChamada}
+        disabled={finalizando}
           numeroAtual={numeroDiscagem}
           onNumeroChange={(valor) => {
             setNumeroDiscagem(valor);

@@ -1,5 +1,5 @@
+import { type ComponentType, type SVGProps } from "react";
 import { Phone, Clock, CheckCircle, Star } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 
 interface Meta {
   id: number;
@@ -17,7 +17,7 @@ interface GridMetasProps {
 
 const GridMetas = ({ metas }: GridMetasProps) => {
   const getIcon = (iconName: string) => {
-    const iconMap: Record<string, React.ComponentType<any>> = {
+    const iconMap: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
       phone: Phone,
       clock: Clock,
       "check-circle": CheckCircle,
@@ -38,10 +38,11 @@ const GridMetas = ({ metas }: GridMetasProps) => {
 
   const formatValue = (value: number, formato?: string) => {
     switch (formato) {
-      case "minutos":
+      case "minutos": {
         const horas = Math.floor(value / 60);
         const mins = value % 60;
         return `${horas}h ${mins}m`;
+      }
       case "porcentagem":
         return `${value}%`;
       default:

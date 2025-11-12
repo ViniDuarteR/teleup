@@ -17,25 +17,6 @@ export const iniciarChamada = async (req: AuthRequest, res: Response<ApiResponse
       return;
     }
 
-    // Verificar se já existe uma chamada em andamento para evitar duplicidade
-    const chamadaEmAndamento = await Chamada.findOne({
-      operador_id: operadorId,
-      status: 'Em Andamento'
-    });
-
-    if (chamadaEmAndamento) {
-      res.json({
-        success: true,
-        message: 'Chamada já estava em andamento',
-        data: {
-          chamada_id: chamadaEmAndamento._id.toString(),
-          operador_id: req.operador.id,
-          status: 'Em Chamada'
-        }
-      });
-      return;
-    }
-
     // Criar nova chamada
     const chamada = await Chamada.create({
       operador_id: operadorId,

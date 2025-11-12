@@ -105,13 +105,14 @@ const TabelaDesempenhoDetalhada = ({ operadores }: TabelaDesempenhoDetalhadaProp
         return a.status.localeCompare(b.status) * fator;
       case 'chamadas':
         return (a.chamadasHoje - b.chamadasHoje) * fator;
-      case 'tempo':
+      case 'tempo': {
         // Converter tempo para segundos para comparação
-        const aSegundos = parseInt(a.tempoMedioAtendimento.split('m')[0]) * 60 + 
-                         parseInt(a.tempoMedioAtendimento.split('m')[1].split('s')[0]);
-        const bSegundos = parseInt(b.tempoMedioAtendimento.split('m')[0]) * 60 + 
-                         parseInt(b.tempoMedioAtendimento.split('m')[1].split('s')[0]);
+        const [aMinStr, aSegStr] = a.tempoMedioAtendimento.split('m');
+        const [bMinStr, bSegStr] = b.tempoMedioAtendimento.split('m');
+        const aSegundos = Number.parseInt(aMinStr, 10) * 60 + Number.parseInt(aSegStr.split('s')[0], 10);
+        const bSegundos = Number.parseInt(bMinStr, 10) * 60 + Number.parseInt(bSegStr.split('s')[0], 10);
         return (aSegundos - bSegundos) * fator;
+      }
       case 'pontos':
         return (a.pontosHoje - b.pontosHoje) * fator;
       default:

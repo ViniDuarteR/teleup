@@ -1,4 +1,5 @@
-// Theme Management System
+import { createContext, useContext } from 'react';
+
 export type Theme = 'light' | 'dark' | 'gaming';
 
 export interface ThemeConfig {
@@ -137,16 +138,13 @@ export const THEMES: Record<Theme, ThemeConfig> = {
   },
 };
 
-// Theme Context
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   config: ThemeConfig;
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
@@ -156,29 +154,6 @@ export const useTheme = () => {
   return context;
 };
 
-interface ThemeProviderProps {
-  children: ReactNode;
-  defaultTheme?: Theme;
-}
+export type { ThemeContextType };
 
-export const ThemeProvider = ({ children, defaultTheme = 'gaming' }: ThemeProviderProps) => {
-  const [theme, setTheme] = useState<Theme>(defaultTheme);
-  const config = THEMES[theme];
 
-  useEffect(() => {
-    // Apply theme to document
-    document.documentElement.setAttribute('data-theme', theme);
-    
-    // Update CSS variables
-    const root = document.documentElement;
-    Object.entries(config.colors).forEach(([key, value]) => {
-      root.style.setProperty(`--color-${key}`, value);
-    });
-  }, [theme, config]);
-
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme, config }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-};

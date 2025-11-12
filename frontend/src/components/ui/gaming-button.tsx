@@ -83,4 +83,5 @@ const GamingButton = React.forwardRef<HTMLButtonElement, GamingButtonProps>(
 
 GamingButton.displayName = "GamingButton";
 
-export { GamingButton, gamingButtonVariants };
+export { GamingButton };
+export type { GamingButtonProps };

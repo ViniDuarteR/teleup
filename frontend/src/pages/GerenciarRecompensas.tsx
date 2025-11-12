@@ -433,7 +433,7 @@ const GerenciarRecompensas = () => {
 
   useEffect(() => {
     buscarRecompensas();
-  }, [token]); // Depender apenas do token, não da função
+  }, [buscarRecompensas]);
 
   // Debug do estado removido para evitar logs desnecessários
 
