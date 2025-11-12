@@ -51,7 +51,7 @@ const GridMetas = ({ metas }: GridMetasProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
       {metas.map((meta) => {
         const Icon = getIcon(meta.icone);
         const percentage = meta.meta > 0 ? (meta.atual / meta.meta) * 100 : 0;

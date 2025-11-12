@@ -346,20 +346,26 @@ const DashboardOperador = () => {
     <div className="min-h-screen bg-background">
       <Header operador={user} />
 
-      <div className="px-6 pb-12 pt-24">
-        <div className="mx-auto grid max-w-[1400px] gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="space-y-6">
-            <GridMetas metas={metas} />
-            <SistemaDiscagem onAtualizarDashboard={() => buscarDadosDashboard(false)} />
-          </div>
+      <div className="w-full flex justify-center px-4 sm:px-6 lg:px-8 pb-12 pt-24">
+        <div className="w-full max-w-[1400px]">
+          <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6 lg:gap-8">
+            <div className="flex flex-col space-y-6 lg:space-y-8">
+              <div className="w-full">
+                <GridMetas metas={metas} />
+              </div>
+              <div className="w-full">
+                <SistemaDiscagem onAtualizarDashboard={() => buscarDadosDashboard(false)} />
+              </div>
+            </div>
 
-          <aside className="space-y-6">
-            <PainelGamificacao
-              missoes={missoes}
-              conquistas={conquistas}
-              pontos={pontosOperador}
-            />
-          </aside>
+            <aside className="flex flex-col space-y-6 lg:space-y-8">
+              <PainelGamificacao
+                missoes={missoes}
+                conquistas={conquistas}
+                pontos={pontosOperador}
+              />
+            </aside>
+          </div>
         </div>
       </div>
     </div>
