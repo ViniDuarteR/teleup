@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/useAuth";
 import Header from "../components/Header";
 import GridMetas from "../components/GridMetas";
@@ -82,6 +82,17 @@ const DashboardOperador = () => {
   const [conquistas, setConquistas] = useState<Conquista[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pontosOperador, setPontosOperador] = useState(user?.pontos_totais ?? 0);
+  const pontosRef = useRef(user?.pontos_totais ?? 0);
+  const tempoRef = useRef(user?.tempo_online ?? 0);
+
+  useEffect(() => {
+    if (typeof user?.pontos_totais === "number") {
+      pontosRef.current = user.pontos_totais;
+    }
+    if (typeof user?.tempo_online === "number") {
+      tempoRef.current = user.tempo_online;
+    }
+  }, [user?.pontos_totais, user?.tempo_online]);
 
 
   // Buscar dados do dashboard
@@ -129,8 +140,18 @@ const DashboardOperador = () => {
 
           if (operador) {
             operadorInfo = operador;
-            setPontosOperador(operador.pontos_totais ?? user?.pontos_totais ?? 0);
-            if (user && updateUser) {
+            const pontosAtualizados = operador.pontos_totais ?? pontosRef.current;
+            const tempoAtualizado = operador.tempo_online ?? tempoRef.current;
+
+            setPontosOperador(pontosAtualizados);
+
+            if (
+              user &&
+              updateUser &&
+              (pontosRef.current !== pontosAtualizados || tempoRef.current !== tempoAtualizado)
+            ) {
+              pontosRef.current = pontosAtualizados;
+              tempoRef.current = tempoAtualizado;
               updateUser({ ...user, ...operador });
             }
           }
@@ -152,7 +173,7 @@ const DashboardOperador = () => {
             });
           } else {
             const chamadasHoje = estatisticasDashboard?.chamadas_hoje ?? 0;
-            const tempoOnlineMinutos = operadorInfo?.tempo_online ?? user?.tempo_online ?? 0;
+            const tempoOnlineMinutos = operadorInfo?.tempo_online ?? tempoRef.current ?? 0;
             metasCalculadas.push(
               {
                 id: 1,
@@ -207,7 +228,7 @@ const DashboardOperador = () => {
 
       if (metasCalculadas.length === 0) {
         const chamadasHojeFallback = estatisticasDashboard?.chamadas_hoje ?? 0;
-        const tempoOnlineFallback = operadorInfo?.tempo_online ?? user?.tempo_online ?? 0;
+        const tempoOnlineFallback = operadorInfo?.tempo_online ?? tempoRef.current ?? 0;
         metasCalculadas.push(
           {
             id: 1,
@@ -294,7 +315,7 @@ const DashboardOperador = () => {
         setIsLoading(false);
       }
     }
-  }, [token, updateUser, user]);
+  }, [token, updateUser]);
 
   useEffect(() => {
     buscarDadosDashboard();

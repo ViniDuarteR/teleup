@@ -289,8 +289,10 @@ const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
   };
 
   const prepararFinalizacao = () => {
-    setMostrarModalAtiva(false);
-    setMostrarFormFinalizar(true);
+    if (chamadaAtiva) {
+      setMostrarModalAtiva(false);
+      setMostrarFormFinalizar(true);
+    }
   };
 
   const finalizarChamadaLocal = (pontosGanhos: number) => {
@@ -394,8 +396,12 @@ const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
   };
 
   const cancelarFinalizacao = () => {
-    setMostrarFormFinalizar(false);
-    setMostrarModalAtiva(true);
+    if (chamadaAtiva) {
+      setMostrarFormFinalizar(false);
+      setMostrarModalAtiva(true);
+    } else {
+      setMostrarFormFinalizar(false);
+    }
   };
 
   const handleSelecionarContato = (contato: ContatoDiscador) => {
