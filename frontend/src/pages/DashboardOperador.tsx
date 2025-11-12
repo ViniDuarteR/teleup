@@ -68,116 +68,233 @@ interface ConquistaAPI {
   pontos_recompensa: number;
 }
 
+interface EstatisticasDashboard {
+  chamadas_hoje?: number;
+  tempo_total?: number;
+  satisfacao_media?: number;
+  resolucoes?: number;
+}
+
 const DashboardOperador = () => {
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const [metas, setMetas] = useState<Meta[]>([]);
   const [missoes, setMissoes] = useState<Missao[]>([]);
   const [conquistas, setConquistas] = useState<Conquista[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pontosOperador, setPontosOperador] = useState(user?.pontos_totais ?? 0);
 
 
   // Buscar dados do dashboard
-  const buscarDadosDashboard = useCallback(async () => {
+  const buscarDadosDashboard = useCallback(async (mostrarLoading = true) => {
     if (!token) {
       console.log('DashboardOperador - No token available');
-      setIsLoading(false);
+      if (mostrarLoading) {
+        setIsLoading(false);
+      }
       return;
     }
 
     try {
-      setIsLoading(true);
+      if (mostrarLoading) {
+        setIsLoading(true);
+      }
       console.log('DashboardOperador - Fetching dashboard data...');
 
-      // Buscar metas - temporariamente desabilitado até implementar endpoint correto
+      const metasCalculadas: Meta[] = [];
+      let missoesCarregadas = false;
+      let conquistasCarregadas = false;
+      let estatisticasDashboard: EstatisticasDashboard | undefined;
+      let operadorInfo: { tempo_online?: number; pontos_totais?: number } | undefined;
+
       try {
-        // Por enquanto, usar dados mockados para evitar erro
-        const metasMockadas = [
+        const dashboardResponse = await fetch(`${API_BASE_URL}/api/operador/dashboard`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const dashboardData = await dashboardResponse.json();
+
+        if (dashboardData.success && dashboardData.data) {
+          const { operador, metas: metasApi, missoes: missoesApi, conquistas: conquistasApi, estatisticas } = dashboardData.data as {
+            operador?: { tempo_online?: number; pontos_totais?: number };
+            metas?: MetaAPI[];
+            missoes?: MissaoAPI[];
+            conquistas?: ConquistaAPI[];
+            estatisticas?: EstatisticasDashboard;
+          };
+
+          estatisticasDashboard = estatisticas;
+
+          if (operador) {
+            operadorInfo = operador;
+            setPontosOperador(operador.pontos_totais ?? user?.pontos_totais ?? 0);
+            if (user && updateUser) {
+              updateUser({ ...user, ...operador });
+            }
+          }
+
+          if (Array.isArray(metasApi) && metasApi.length > 0) {
+            metasApi.forEach((metaApi, index) => {
+              const tipoLower = (metaApi.tipo || '').toLowerCase();
+              const isTempo = tipoLower.includes('tempo');
+
+              metasCalculadas.push({
+                id: typeof metaApi.id === 'number' ? metaApi.id : index + 1,
+                titulo: metaApi.tipo || `Meta ${index + 1}`,
+                atual: metaApi.valor_atual ?? 0,
+                meta: metaApi.valor_meta ?? 0,
+                icone: isTempo ? 'clock' : 'phone',
+                cor: isTempo ? 'success' : 'primary',
+                formato: isTempo ? 'minutos' : undefined,
+              });
+            });
+          } else {
+            const chamadasHoje = estatisticasDashboard?.chamadas_hoje ?? 0;
+            const tempoOnlineMinutos = operadorInfo?.tempo_online ?? user?.tempo_online ?? 0;
+            metasCalculadas.push(
+              {
+                id: 1,
+                titulo: 'Chamadas Atendidas',
+                atual: chamadasHoje,
+                meta: 20,
+                icone: 'phone',
+                cor: 'primary',
+              },
+              {
+                id: 2,
+                titulo: 'Tempo Online',
+                atual: tempoOnlineMinutos,
+                meta: 480,
+                icone: 'clock',
+                cor: 'success',
+                formato: 'minutos',
+              },
+            );
+          }
+
+          if (Array.isArray(missoesApi) && missoesApi.length > 0) {
+            const missoesMapeadas = missoesApi.map((missao: MissaoAPI) => ({
+              id: missao.id,
+              titulo: missao.titulo,
+              descricao: missao.descricao,
+              progresso: missao.progresso_atual || 0,
+              meta: missao.objetivo || 0,
+              pontos_recompensa: missao.recompensa_pontos || 0,
+              tipo: missao.tipo || 'diaria',
+            }));
+            setMissoes(missoesMapeadas);
+            missoesCarregadas = true;
+          }
+
+          if (Array.isArray(conquistasApi) && conquistasApi.length > 0) {
+            const conquistasMapeadas = conquistasApi.slice(0, 3).map((conquista: ConquistaAPI) => ({
+              id: conquista.id,
+              titulo: conquista.nome,
+              descricao: conquista.descricao,
+              icone: 'star',
+              desbloqueada: true,
+              data: new Date().toISOString(),
+            }));
+            setConquistas(conquistasMapeadas);
+            conquistasCarregadas = true;
+          }
+        }
+      } catch (error) {
+        console.error('DashboardOperador - Error fetching operador dashboard:', error);
+      }
+
+      if (metasCalculadas.length === 0) {
+        const chamadasHojeFallback = estatisticasDashboard?.chamadas_hoje ?? 0;
+        const tempoOnlineFallback = operadorInfo?.tempo_online ?? user?.tempo_online ?? 0;
+        metasCalculadas.push(
           {
             id: 1,
             titulo: 'Chamadas Atendidas',
-            atual: 15,
+            atual: chamadasHojeFallback,
             meta: 20,
             icone: 'phone',
             cor: 'primary',
-            formato: undefined
           },
           {
             id: 2,
             titulo: 'Tempo Online',
-            atual: 240,
+            atual: tempoOnlineFallback,
             meta: 480,
             icone: 'clock',
             cor: 'success',
-            formato: 'minutos'
-          }
-        ];
-        setMetas(metasMockadas);
-      } catch (error) {
-        console.error('DashboardOperador - Error fetching metas:', error);
-        // Em caso de erro, definir array vazio
-        setMetas([]);
+            formato: 'minutos',
+          },
+        );
       }
 
-      // Buscar missões
-      try {
-        const missoesResponse = await fetch(`${API_BASE_URL}/api/gamificacao/missoes`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+      setMetas(metasCalculadas);
+
+      // Buscar missões caso o dashboard não tenha retornado
+      if (!missoesCarregadas) {
+        try {
+          const missoesResponse = await fetch(`${API_BASE_URL}/api/gamificacao/missoes`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          const missoesData = await missoesResponse.json();
+          console.log('DashboardOperador - Missoes response:', missoesData);
+          if (missoesData.success) {
+            const missoesMapeadas = missoesData.data.map((missao: MissaoAPI) => ({
+              id: missao.id,
+              titulo: missao.titulo,
+              descricao: missao.descricao,
+              progresso: missao.progresso_atual || 0,
+              meta: missao.objetivo || 0,
+              pontos_recompensa: missao.recompensa_pontos || 0,
+              tipo: missao.tipo || 'diaria'
+            }));
+            setMissoes(missoesMapeadas);
           }
-        });
-        const missoesData = await missoesResponse.json();
-        console.log('DashboardOperador - Missoes response:', missoesData);
-        if (missoesData.success) {
-          // Mapear os dados da API para o formato esperado pelo componente
-          const missoesMapeadas = missoesData.data.map((missao: MissaoAPI) => ({
-            id: missao.id,
-            titulo: missao.titulo,
-            descricao: missao.descricao,
-            progresso: missao.progresso_atual || 0,
-            meta: missao.objetivo || 0,
-            pontos_recompensa: missao.recompensa_pontos || 0,
-            tipo: missao.tipo || 'diaria'
-          }));
-          setMissoes(missoesMapeadas);
+        } catch (error) {
+          console.error('DashboardOperador - Error fetching missoes:', error);
         }
-      } catch (error) {
-        console.error('DashboardOperador - Error fetching missoes:', error);
       }
 
-      // Buscar conquistas
-      try {
-        const conquistasResponse = await fetch(`${API_BASE_URL}/api/gamificacao/conquistas`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+      // Buscar conquistas caso o dashboard não tenha retornado
+      if (!conquistasCarregadas) {
+        try {
+          const conquistasResponse = await fetch(`${API_BASE_URL}/api/gamificacao/conquistas`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          const conquistasData = await conquistasResponse.json();
+          console.log('DashboardOperador - Conquistas response:', conquistasData);
+          if (conquistasData.success) {
+            const conquistasMapeadas = conquistasData.data.slice(0, 3).map((conquista: ConquistaAPI) => ({
+              id: conquista.id,
+              titulo: conquista.nome,
+              descricao: conquista.descricao,
+              icone: 'star',
+              desbloqueada: true,
+              data: new Date().toISOString()
+            }));
+            setConquistas(conquistasMapeadas);
           }
-        });
-        const conquistasData = await conquistasResponse.json();
-        console.log('DashboardOperador - Conquistas response:', conquistasData);
-        if (conquistasData.success) {
-          // Mapear os dados da API para o formato esperado pelo componente
-          const conquistasMapeadas = conquistasData.data.slice(0, 3).map((conquista: ConquistaAPI) => ({
-            id: conquista.id,
-            titulo: conquista.nome,
-            descricao: conquista.descricao,
-            icone: 'star', // Valor padrão
-            desbloqueada: true, // Assumindo que as conquistas retornadas estão desbloqueadas
-            data: new Date().toISOString() // Data atual como padrão
-          }));
-          setConquistas(conquistasMapeadas);
+        } catch (error) {
+          console.error('DashboardOperador - Error fetching conquistas:', error);
         }
-      } catch (error) {
-        console.error('DashboardOperador - Error fetching conquistas:', error);
       }
 
     } catch (error) {
       console.error('DashboardOperador - General error:', error);
       toast.error('Erro ao carregar dados do dashboard');
     } finally {
-      setIsLoading(false);
+      if (mostrarLoading) {
+        setIsLoading(false);
+      }
     }
-  }, [token]);
+  }, [token, updateUser, user]);
 
   useEffect(() => {
     buscarDadosDashboard();
@@ -217,15 +334,15 @@ const DashboardOperador = () => {
           <GridMetas metas={metas} />
           
           {/* Sistema de discagem */}
-          <SistemaDiscagem />
+          <SistemaDiscagem onAtualizarDashboard={() => buscarDadosDashboard(false)} />
         </div>
         
         {/* Painel lateral de gamificação */}
         <div className="w-80">
-          <PainelGamificacao 
-            missoes={missoes} 
+          <PainelGamificacao
+            missoes={missoes}
             conquistas={conquistas}
-            pontos={user.pontos_totais}
+            pontos={pontosOperador}
           />
         </div>
       </div>

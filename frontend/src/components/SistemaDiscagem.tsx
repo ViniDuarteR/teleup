@@ -120,7 +120,11 @@ const formatarDuracao = (segundos: number) => {
   return `${minutos.toString().padStart(2, "0")}:${segs.toString().padStart(2, "0")}`;
 };
 
-const SistemaDiscagem = () => {
+interface SistemaDiscagemProps {
+  onAtualizarDashboard?: () => void;
+}
+
+const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
   const { token, user, updateUser } = useAuth();
   const [chamadaAtiva, setChamadaAtiva] = useState<ChamadaAtiva | null>(null);
   const [duracaoChamada, setDuracaoChamada] = useState(0);
@@ -307,6 +311,8 @@ const SistemaDiscagem = () => {
         pontos_totais: user.pontos_totais + pontosGanhos,
       });
     }
+
+    onAtualizarDashboard?.();
   };
 
   const finalizarChamada = async (dados: DadosFinalizacao) => {
