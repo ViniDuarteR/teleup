@@ -1,17 +1,117 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/useAuth";
 import { toast } from "sonner";
 import DialpadDiscagem from "./DialpadDiscagem";
 import ModalChamadaAtiva from "./ModalChamadaAtiva";
 import FormFinalizarChamada, { DadosFinalizacao } from "./FormFinalizarChamada";
 import { API_BASE_URL } from "../lib/api";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { Building2, Clock, PhoneCall, Search, User2, NotebookPen } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ChamadaAtiva {
-  id: number;
+  id: string;
   numero: string;
   tipo: "Entrada" | "Saída";
   inicio: Date;
 }
+
+interface ContatoMockado {
+  id: number;
+  nome: string;
+  numero: string;
+  empresa: string;
+  segmento: string;
+  observacao?: string;
+}
+
+const TABULACOES_PADRAO = [
+  "Venda concluída",
+  "Cliente interessado",
+  "Agendar retorno",
+  "Sem interesse",
+  "Suporte finalizado",
+  "Transferido para outro setor",
+  "Contato indisponível",
+];
+
+const CONTATOS_MOCKADOS: ContatoMockado[] = [
+  {
+    id: 1,
+    nome: "Ana Souza",
+    numero: "11987654321",
+    empresa: "Mercado São João",
+    segmento: "Varejo",
+    observacao: "Cliente ativo - nível ouro",
+  },
+  {
+    id: 2,
+    nome: "Marcos Lima",
+    numero: "21981234567",
+    empresa: "TechPrime",
+    segmento: "Tecnologia",
+    observacao: "Aguardando proposta comercial",
+  },
+  {
+    id: 3,
+    nome: "Cláudia Ramos",
+    numero: "31999887766",
+    empresa: "HealthCare Plus",
+    segmento: "Saúde",
+    observacao: "Solicitou demonstração do produto",
+  },
+  {
+    id: 4,
+    nome: "Eduardo Santos",
+    numero: "41988776655",
+    empresa: "AutoMax",
+    segmento: "Automotivo",
+    observacao: "Retornar com opções de financiamento",
+  },
+  {
+    id: 5,
+    nome: "Fernanda Oliveira",
+    numero: "51977665544",
+    empresa: "GreenFoods",
+    segmento: "Alimentos",
+    observacao: "Cliente novo – indicado pelo marketing",
+  },
+  {
+    id: 6,
+    nome: "João Pedro",
+    numero: "71966554433",
+    empresa: "SolarUp",
+    segmento: "Energia",
+    observacao: "Interessado no plano premium",
+  },
+];
+
+const calcularPontos = (dados: Pick<DadosFinalizacao, "satisfacao_cliente" | "resolvida">) => {
+  let pontos = 10;
+  if (dados.resolvida) pontos += 20;
+  if (dados.satisfacao_cliente >= 4) pontos += 15;
+  if (dados.satisfacao_cliente === 5) pontos += 10;
+  return pontos;
+};
+
+const formatarDuracao = (segundos: number) => {
+  const minutos = Math.floor(segundos / 60);
+  const segs = segundos % 60;
+  return `${minutos.toString().padStart(2, "0")}:${segs.toString().padStart(2, "0")}`;
+};
 
 const SistemaDiscagem = () => {
   const { token, user, updateUser } = useAuth();
@@ -20,11 +120,26 @@ const SistemaDiscagem = () => {
   const [mostrarModalAtiva, setMostrarModalAtiva] = useState(false);
   const [mostrarFormFinalizar, setMostrarFormFinalizar] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
+  const [numeroDiscagem, setNumeroDiscagem] = useState("");
+  const [filtroContato, setFiltroContato] = useState("");
+  const [contatoSelecionado, setContatoSelecionado] = useState<ContatoMockado | null>(null);
+  const [tabulacaoAtual, setTabulacaoAtual] = useState("");
+  const [resumoTabulacao, setResumoTabulacao] = useState("");
+  const [modoSimulado, setModoSimulado] = useState(false);
 
-  
   const emChamada = chamadaAtiva !== null;
 
-  // Timer da chamada
+  const contatosFiltrados = useMemo(() => {
+    const termo = filtroContato.trim().toLowerCase();
+    if (!termo) return CONTATOS_MOCKADOS;
+    return CONTATOS_MOCKADOS.filter((contato) =>
+      [contato.nome, contato.numero, contato.empresa, contato.segmento]
+        .join(" ")
+        .toLowerCase()
+        .includes(termo)
+    );
+  }, [filtroContato]);
+
   useEffect(() => {
     if (!chamadaAtiva) {
       setDuracaoChamada(0);
@@ -40,10 +155,40 @@ const SistemaDiscagem = () => {
     return () => clearInterval(interval);
   }, [chamadaAtiva]);
 
-  // Iniciar chamada
-  const iniciarChamada = async (numero: string) => {
+  const iniciarChamadaLocal = (numero: string, modo: "api" | "simulado", chamadaId?: string) => {
+    setChamadaAtiva({
+      id: chamadaId ?? Date.now().toString(),
+      numero,
+      tipo: "Saída",
+      inicio: new Date(),
+    });
+    setMostrarModalAtiva(true);
+    setModoSimulado(modo === "simulado");
+
+    if (updateUser && user) {
+      updateUser({ ...user, status: "Em Chamada" });
+    }
+  };
+
+  const iniciarChamada = async (numero: string, origem: "manual" | "contato" = "manual", contato?: ContatoMockado) => {
+    if (emChamada) {
+      toast.error("Finalize a chamada atual antes de iniciar outra");
+      return;
+    }
+
+    if (!numero || numero.length < 8) {
+      toast.error("Informe um número válido para iniciar a chamada");
+      return;
+    }
+
+    setNumeroDiscagem(numero);
+    setContatoSelecionado(contato ?? null);
+    setTabulacaoAtual("");
+    setResumoTabulacao("");
+
     if (!token) {
-      toast.error("Você precisa estar autenticado");
+      iniciarChamadaLocal(numero, "simulado");
+      toast.info("Modo simulado ativo. Chamada iniciada localmente.");
       return;
     }
 
@@ -51,147 +196,371 @@ const SistemaDiscagem = () => {
       toast.loading("Iniciando chamada...", { id: "iniciando-chamada" });
 
       const response = await fetch(`${API_BASE_URL}/api/chamadas/iniciar`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           numero_cliente: numero,
-          tipo_chamada: "Saída"
-        })
+          tipo_chamada: "Saída",
+          origem_discagem: origem,
+        }),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        setChamadaAtiva({
-          id: data.data.chamada_id,
-          numero: numero,
-          tipo: "Saída",
-          inicio: new Date()
-        });
-        
-        setMostrarModalAtiva(true);
-        
-        // Atualizar status do usuário
-        if (updateUser && user) {
-          updateUser({ ...user, status: 'Em Chamada' });
-        }
-
+        iniciarChamadaLocal(numero, "api", data.data.chamada_id);
         toast.success("Chamada iniciada! 📞", { id: "iniciando-chamada" });
       } else {
-        toast.error(data.message || "Erro ao iniciar chamada", { id: "iniciando-chamada" });
+        toast.warning(data.message || "Não foi possível iniciar na API. Chamada simulada iniciada.", {
+          id: "iniciando-chamada",
+        });
+        iniciarChamadaLocal(numero, "simulado");
       }
     } catch (error) {
-      console.error('Erro ao iniciar chamada:', error);
-      toast.error("Erro ao conectar com o servidor", { id: "iniciando-chamada" });
+      console.error("Erro ao iniciar chamada:", error);
+      toast.warning("Servidor indisponível. Chamada simulada iniciada.", { id: "iniciando-chamada" });
+      iniciarChamadaLocal(numero, "simulado");
     }
   };
 
-  // Preparar para finalizar chamada
   const prepararFinalizacao = () => {
     setMostrarModalAtiva(false);
     setMostrarFormFinalizar(true);
   };
 
-  // Finalizar chamada
+  const finalizarChamadaLocal = (pontosGanhos: number) => {
+    toast.success(`Chamada finalizada! +${pontosGanhos} pontos ganhos! 🎉`, { duration: 5000 });
+    setChamadaAtiva(null);
+    setMostrarFormFinalizar(false);
+    setDuracaoChamada(0);
+    setTabulacaoAtual("");
+    setResumoTabulacao("");
+    setModoSimulado(false);
+    setNumeroDiscagem("");
+    setContatoSelecionado(null);
+
+    if (updateUser && user) {
+      updateUser({
+        ...user,
+        status: "Aguardando Chamada",
+        pontos_totais: user.pontos_totais + pontosGanhos,
+      });
+    }
+  };
+
   const finalizarChamada = async (dados: DadosFinalizacao) => {
-    if (!token || !chamadaAtiva) return;
+    if (!chamadaAtiva) return;
+
+    setTabulacaoAtual(dados.tabulacao);
+    setResumoTabulacao(dados.resumo_tabulacao);
+
+    const pontosCalculados = calcularPontos(dados);
 
     try {
       setFinalizando(true);
 
+      if (!token || modoSimulado) {
+        finalizarChamadaLocal(pontosCalculados);
+        return;
+      }
+
+      const payload = {
+        ...dados,
+        duracao_registrada: duracaoChamada,
+        numero_cliente: chamadaAtiva.numero,
+      };
+
       const response = await fetch(`${API_BASE_URL}/api/chamadas/finalizar`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(dados)
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        // Mostrar pontos ganhos
-        toast.success(
-          `Chamada finalizada! +${data.data.pontos_ganhos} pontos ganhos! 🎉`,
-          { duration: 5000 }
-        );
-
-        // Resetar estado
-        setChamadaAtiva(null);
-        setMostrarFormFinalizar(false);
-        setDuracaoChamada(0);
-
-        // Atualizar status do usuário
-        if (updateUser && user) {
-          updateUser({ 
-            ...user, 
-            status: 'Aguardando Chamada',
-            pontos_totais: user.pontos_totais + data.data.pontos_ganhos
-          });
-        }
-
-        // Verificar conquistas
+        finalizarChamadaLocal(data.data.pontos_ganhos);
         verificarConquistas();
       } else {
-        toast.error(data.message || "Erro ao finalizar chamada");
+        toast.warning(data.message || "Não foi possível registrar a finalização. Salvando localmente.");
+        finalizarChamadaLocal(pontosCalculados);
       }
     } catch (error) {
-      console.error('Erro ao finalizar chamada:', error);
-      toast.error("Erro ao conectar com o servidor");
+      console.error("Erro ao finalizar chamada:", error);
+      toast.warning("Servidor indisponível. Salvando finalização localmente.");
+      finalizarChamadaLocal(pontosCalculados);
     } finally {
       setFinalizando(false);
     }
   };
 
-  // Verificar conquistas desbloqueadas
   const verificarConquistas = async () => {
     if (!token) return;
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/gamificacao/verificar-conquistas`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
       const data = await response.json();
 
-      if (data.success && data.data.novas_conquistas?.length > 0) {
-        data.data.novas_conquistas.forEach((conquista: any) => {
-          toast.success(
-            `🏆 Nova conquista desbloqueada: ${conquista.nome}!`,
-            { duration: 5000 }
-          );
-        });
+      if (data.success) {
+        const novasConquistas = data.data?.novas_conquistas as Array<{ nome: string }> | undefined;
+        if (novasConquistas && novasConquistas.length > 0) {
+          novasConquistas.forEach((conquista) => {
+            toast.success(`🏆 Nova conquista desbloqueada: ${conquista.nome}!`, {
+              duration: 5000,
+            });
+          });
+        }
       }
     } catch (error) {
-      console.error('Erro ao verificar conquistas:', error);
+      console.error("Erro ao verificar conquistas:", error);
     }
   };
 
-  // Cancelar finalização
   const cancelarFinalizacao = () => {
     setMostrarFormFinalizar(false);
     setMostrarModalAtiva(true);
   };
 
-  return (
-    <div className="space-y-4">
-      {/* Componente de discagem */}
-      <DialpadDiscagem
-        onIniciarChamada={iniciarChamada}
-        onFinalizarChamada={prepararFinalizacao}
-        emChamada={emChamada}
-        disabled={finalizando}
-      />
+  const handleSelecionarContato = (contato: ContatoMockado) => {
+    if (emChamada) {
+      toast.error("Finalize a chamada atual antes de iniciar outra");
+      return;
+    }
 
-      {/* Modal de chamada ativa */}
+    iniciarChamada(contato.numero, "contato", contato);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <DialpadDiscagem
+          onIniciarChamada={(numero) => iniciarChamada(numero, "manual")}
+          onFinalizarChamada={prepararFinalizacao}
+          emChamada={emChamada}
+          disabled={finalizando}
+          numeroAtual={numeroDiscagem}
+          onNumeroChange={(valor) => {
+            setNumeroDiscagem(valor);
+            if (!emChamada) {
+              setContatoSelecionado(null);
+            }
+          }}
+        />
+
+        <Card className="p-6 space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <PhoneCall className="w-5 h-5 text-primary" />
+                Lista Telefônica Mock
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Clique em um contato para iniciar uma chamada simulada ou registrar o atendimento.
+              </p>
+            </div>
+            <Badge variant="outline" className="uppercase tracking-wide">
+              Mock
+            </Badge>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome, empresa ou telefone..."
+              className="pl-9"
+              value={filtroContato}
+              onChange={(event) => setFiltroContato(event.target.value)}
+            />
+          </div>
+
+          <ScrollArea className="h-72 pr-2">
+            <div className="space-y-3">
+              {contatosFiltrados.map((contato) => {
+                const selecionado = contatoSelecionado?.id === contato.id && emChamada;
+                return (
+                  <button
+                    key={contato.id}
+                    onClick={() => handleSelecionarContato(contato)}
+                    className={cn(
+                      "w-full text-left rounded-xl border p-4 transition-all",
+                      "hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                      selecionado && "border-primary bg-primary/10 shadow-sm"
+                    )}
+                    type="button"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <User2 className="w-4 h-4 text-primary" />
+                        {contato.nome}
+                      </div>
+                      <Badge variant="secondary">{contato.segmento}</Badge>
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                      <span className="font-mono text-sm text-foreground">{contato.numero}</span>
+                      <span className="flex items-center gap-1">
+                        <Building2 className="w-3 h-3" />
+                        {contato.empresa}
+                      </span>
+                    </div>
+                    {contato.observacao && (
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        <NotebookPen className="mr-1 inline-block h-3 w-3 text-primary" />
+                        {contato.observacao}
+                      </p>
+                    )}
+                  </button>
+                );
+              })}
+
+              {contatosFiltrados.length === 0 && (
+                <Card className="border-dashed p-6 text-center text-sm text-muted-foreground">
+                  Nenhum contato encontrado com esse filtro.
+                </Card>
+              )}
+            </div>
+          </ScrollArea>
+        </Card>
+      </div>
+
+      {emChamada ? (
+        <Card className="space-y-6 p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                Chamada ativa
+              </span>
+              <h4 className="text-2xl font-semibold text-foreground">
+                {contatoSelecionado?.nome ?? chamadaAtiva?.numero}
+              </h4>
+              <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                {contatoSelecionado && (
+                  <>
+                    <span className="flex items-center gap-1">
+                      <Building2 className="h-3.5 w-3.5" />
+                      {contatoSelecionado.empresa}
+                    </span>
+                    <span className="flex items-center gap-1 font-mono text-foreground">
+                      <PhoneCall className="h-3.5 w-3.5" />
+                      {contatoSelecionado.numero}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge variant="secondary">
+                {tabulacaoAtual ? `Tabulação: ${tabulacaoAtual}` : "Tabulação pendente"}
+              </Badge>
+              {modoSimulado && (
+                <Badge variant="outline" className="border-dashed border-warning/60 text-warning">
+                  Modo simulado
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border bg-muted/30 p-4">
+              <Label className="text-xs uppercase text-muted-foreground">Duração</Label>
+              <div className="mt-2 flex items-center gap-2 text-xl font-semibold">
+                <Clock className="h-4 w-4 text-success" />
+                {formatarDuracao(duracaoChamada)}
+              </div>
+            </div>
+            <div className="rounded-xl border bg-muted/30 p-4">
+              <Label className="text-xs uppercase text-muted-foreground">Número</Label>
+              <div className="mt-2 font-mono text-lg font-semibold">{chamadaAtiva?.numero}</div>
+            </div>
+            <div className="rounded-xl border bg-muted/30 p-4">
+              <Label className="text-xs uppercase text-muted-foreground">Tipo</Label>
+              <div className="mt-2 text-lg font-semibold text-primary">{chamadaAtiva?.tipo}</div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold text-foreground">
+                Tabulação rápida *
+              </Label>
+              <Select
+                value={tabulacaoAtual}
+                onValueChange={setTabulacaoAtual}
+                disabled={finalizando}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione a tabulação desta chamada" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TABULACOES_PADRAO.map((opcao) => (
+                    <SelectItem key={opcao} value={opcao}>
+                      {opcao}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-3">
+              <Label htmlFor="tabulacao-resumo" className="text-sm font-semibold text-foreground">
+                Resumo da tabulação (opcional)
+              </Label>
+              <Textarea
+                id="tabulacao-resumo"
+                placeholder="Adicione um resumo enquanto conversa com o cliente..."
+                value={resumoTabulacao}
+                onChange={(event) => setResumoTabulacao(event.target.value)}
+                disabled={finalizando}
+                className="min-h-24 resize-none"
+                maxLength={280}
+              />
+              <div className="text-right text-xs text-muted-foreground">
+                {resumoTabulacao.length}/280 caracteres
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-sm text-muted-foreground">
+              Utilize o botão abaixo para finalizar e registrar a tabulação da chamada.
+            </span>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setMostrarModalAtiva(true)}
+                disabled={finalizando}
+              >
+                Ver detalhes
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={prepararFinalizacao}
+                disabled={finalizando}
+              >
+                Encerrar e tabular
+              </Button>
+            </div>
+          </div>
+        </Card>
+      ) : (
+        <Card className="border-dashed p-6 text-center text-sm text-muted-foreground">
+          Inicie uma chamada pelo discador ou selecione um contato da lista telefônica mock para
+          começar um atendimento.
+        </Card>
+      )}
+
       {chamadaAtiva && (
         <ModalChamadaAtiva
           aberto={mostrarModalAtiva}
@@ -201,7 +570,6 @@ const SistemaDiscagem = () => {
         />
       )}
 
-      {/* Form de finalização */}
       {chamadaAtiva && (
         <FormFinalizarChamada
           aberto={mostrarFormFinalizar}
@@ -210,6 +578,11 @@ const SistemaDiscagem = () => {
           duracao={duracaoChamada}
           onFinalizar={finalizarChamada}
           onCancelar={cancelarFinalizacao}
+          tabulacaoInicial={tabulacaoAtual}
+          resumoTabulacaoInicial={resumoTabulacao}
+          onTabulacaoChange={setTabulacaoAtual}
+          onResumoTabulacaoChange={setResumoTabulacao}
+          tabulacoesDisponiveis={TABULACOES_PADRAO}
         />
       )}
     </div>

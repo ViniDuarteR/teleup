@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Phone, Delete, PhoneOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,15 +9,19 @@ interface DialpadDiscagemProps {
   onFinalizarChamada: () => void;
   emChamada: boolean;
   disabled?: boolean;
+  numeroAtual?: string;
+  onNumeroChange?: (numero: string) => void;
 }
 
 const DialpadDiscagem = ({ 
   onIniciarChamada, 
   onFinalizarChamada, 
   emChamada, 
-  disabled = false 
+  disabled = false,
+  numeroAtual = "",
+  onNumeroChange
 }: DialpadDiscagemProps) => {
-  const [numero, setNumero] = useState("");
+  const [numero, setNumero] = useState(numeroAtual);
   const [animatingKey, setAnimatingKey] = useState<string | null>(null);
   const [isCalling, setIsCalling] = useState(false);
 
@@ -37,33 +41,49 @@ const DialpadDiscagem = ({
     { numero: "#", letras: "" },
   ];
 
+  // Sincronizar número externo
+  useEffect(() => {
+    if (numeroAtual !== numero) {
+      setNumero(numeroAtual);
+    }
+  }, [numeroAtual, numero]);
+
   // Adicionar número
-  const adicionarNumero = (num: string) => {
+  const adicionarNumero = useCallback((num: string) => {
     if (emChamada || disabled) return;
     
-    setNumero(prev => prev + num);
+    setNumero(prev => {
+      const novoNumero = prev + num;
+      onNumeroChange?.(novoNumero);
+      return novoNumero;
+    });
     setAnimatingKey(num);
     
     // Som de clique (opcional - pode adicionar depois)
     // playClickSound();
     
     setTimeout(() => setAnimatingKey(null), 150);
-  };
+  }, [emChamada, disabled, onNumeroChange]);
 
   // Remover último dígito
-  const removerUltimo = () => {
+  const removerUltimo = useCallback(() => {
     if (emChamada || disabled) return;
-    setNumero(prev => prev.slice(0, -1));
-  };
+    setNumero(prev => {
+      const novoNumero = prev.slice(0, -1);
+      onNumeroChange?.(novoNumero);
+      return novoNumero;
+    });
+  }, [emChamada, disabled, onNumeroChange]);
 
   // Limpar tudo
-  const limpar = () => {
+  const limpar = useCallback(() => {
     if (emChamada || disabled) return;
     setNumero("");
-  };
+    onNumeroChange?.("");
+  }, [emChamada, disabled, onNumeroChange]);
 
   // Iniciar chamada com animação
-  const iniciarChamada = () => {
+  const iniciarChamada = useCallback(() => {
     if (!numero || numero.length < 8 || emChamada || disabled) return;
     
     // Ativar animação de chamada
@@ -74,13 +94,14 @@ const DialpadDiscagem = ({
       onIniciarChamada(numero);
       setIsCalling(false);
     }, 1500); // 1.5 segundos de animação
-  };
+  }, [numero, emChamada, disabled, onIniciarChamada]);
 
   // Finalizar chamada
-  const finalizar = () => {
+  const finalizar = useCallback(() => {
     onFinalizarChamada();
     setNumero("");
-  };
+    onNumeroChange?.("");
+  }, [onFinalizarChamada, onNumeroChange]);
 
   // Suporte a teclado físico
   useEffect(() => {
@@ -100,7 +121,7 @@ const DialpadDiscagem = ({
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [numero, emChamada, disabled]);
+  }, [numero, emChamada, disabled, adicionarNumero, removerUltimo, iniciarChamada]);
 
   return (
     <Card className={cn(
@@ -134,7 +155,11 @@ const DialpadDiscagem = ({
               <input
                 type="tel"
                 value={numero}
-                onChange={(e) => setNumero(e.target.value.replace(/[^0-9*#]/g, ""))}
+                onChange={(e) => {
+                  const somenteNumeros = e.target.value.replace(/[^0-9*#]/g, "");
+                  setNumero(somenteNumeros);
+                  onNumeroChange?.(somenteNumeros);
+                }}
                 placeholder="Digite o número"
                 disabled={disabled}
                 className={cn(

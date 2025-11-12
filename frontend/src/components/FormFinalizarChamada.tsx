@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Star, CheckCircle2, XCircle, MessageSquare, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Star, CheckCircle2, XCircle, MessageSquare, Sparkles, ClipboardList } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,23 +12,37 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface FormFinalizarChamadaProps {
   aberto: boolean;
-  chamadaId: number | null;
+  chamadaId: string | null;
   numeroChamada: string;
   duracao: number;
   onFinalizar: (dados: DadosFinalizacao) => Promise<void>;
   onCancelar: () => void;
+  tabulacaoInicial?: string;
+  resumoTabulacaoInicial?: string;
+  onTabulacaoChange?: (valor: string) => void;
+  onResumoTabulacaoChange?: (valor: string) => void;
+  tabulacoesDisponiveis?: string[];
 }
 
 export interface DadosFinalizacao {
-  chamada_id: number;
+  chamada_id: string;
   satisfacao_cliente: number;
   resolvida: boolean;
   observacoes: string;
+  tabulacao: string;
+  resumo_tabulacao: string;
 }
 
 const FormFinalizarChamada = ({ 
@@ -37,12 +51,36 @@ const FormFinalizarChamada = ({
   numeroChamada, 
   duracao,
   onFinalizar,
-  onCancelar 
+  onCancelar,
+  tabulacaoInicial,
+  resumoTabulacaoInicial,
+  onTabulacaoChange,
+  onResumoTabulacaoChange,
+  tabulacoesDisponiveis
 }: FormFinalizarChamadaProps) => {
   const [satisfacao, setSatisfacao] = useState<number>(0);
   const [resolvida, setResolvida] = useState<string>("sim");
   const [observacoes, setObservacoes] = useState("");
   const [loading, setLoading] = useState(false);
+  const [tabulacao, setTabulacao] = useState("");
+  const [resumoTabulacao, setResumoTabulacao] = useState("");
+
+  const opcoesTabulacao = tabulacoesDisponiveis ?? [
+    "Venda concluída",
+    "Cliente interessado",
+    "Agendar retorno",
+    "Sem interesse",
+    "Suporte finalizado",
+    "Transferido para outro setor",
+    "Contato indisponível",
+  ];
+
+  useEffect(() => {
+    if (aberto) {
+      setTabulacao(tabulacaoInicial ?? "");
+      setResumoTabulacao(resumoTabulacaoInicial ?? "");
+    }
+  }, [aberto, tabulacaoInicial, resumoTabulacaoInicial]);
 
   // Formatar duração
   const formatarDuracao = (segundos: number) => {
@@ -56,6 +94,8 @@ const FormFinalizarChamada = ({
     setSatisfacao(0);
     setResolvida("sim");
     setObservacoes("");
+    setTabulacao("");
+    setResumoTabulacao("");
   };
 
   // Submeter formulário
@@ -70,6 +110,11 @@ const FormFinalizarChamada = ({
       return;
     }
 
+    if (!tabulacao) {
+      toast.error("Selecione uma tabulação para concluir a chamada");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -77,7 +122,9 @@ const FormFinalizarChamada = ({
         chamada_id: chamadaId,
         satisfacao_cliente: satisfacao,
         resolvida: resolvida === "sim",
-        observacoes: observacoes.trim()
+        observacoes: observacoes.trim(),
+        tabulacao,
+        resumo_tabulacao: resumoTabulacao.trim()
       });
 
       // Resetar e fechar
@@ -208,11 +255,61 @@ const FormFinalizarChamada = ({
             </RadioGroup>
           </div>
 
+          {/* Tabulação da chamada */}
+          <div className="space-y-3">
+            <Label className="text-base font-semibold flex items-center gap-2">
+              <ClipboardList className="w-4 h-4" />
+              Tabulação da chamada *
+            </Label>
+            <Select
+              value={tabulacao}
+              onValueChange={(valor) => {
+                setTabulacao(valor);
+                onTabulacaoChange?.(valor);
+              }}
+              disabled={loading}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecione uma opção de tabulação" />
+              </SelectTrigger>
+              <SelectContent>
+                {opcoesTabulacao.map((opcao) => (
+                  <SelectItem key={opcao} value={opcao}>
+                    {opcao}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Resumo da tabulação */}
+          <div className="space-y-3">
+            <Label htmlFor="resumo-tabulacao" className="text-base font-semibold flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              Resumo da tabulação (opcional)
+            </Label>
+            <Textarea
+              id="resumo-tabulacao"
+              placeholder="Descreva o resultado do contato e os próximos passos..."
+              value={resumoTabulacao}
+              onChange={(e) => {
+                setResumoTabulacao(e.target.value);
+                onResumoTabulacaoChange?.(e.target.value);
+              }}
+              disabled={loading}
+              className="min-h-24 resize-none"
+              maxLength={280}
+            />
+            <div className="text-xs text-muted-foreground text-right">
+              {resumoTabulacao.length}/280 caracteres
+            </div>
+          </div>
+
           {/* Observações */}
           <div className="space-y-3">
             <Label htmlFor="observacoes" className="text-base font-semibold flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />
-              Observações (opcional)
+              Observações adicionais (opcional)
             </Label>
             <Textarea
               id="observacoes"
