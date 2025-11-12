@@ -257,6 +257,8 @@ const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
     try {
       toast.loading("Iniciando chamada...", { id: "iniciando-chamada" });
 
+      toast.loading("Iniciando chamada...", { id: "iniciando-chamada" });
+
       const response = await fetch(`${API_BASE_URL}/api/chamadas/iniciar`, {
         method: "POST",
         headers: {
@@ -285,6 +287,8 @@ const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
       console.error("Erro ao iniciar chamada:", error);
       toast.warning("Servidor indisponível. Chamada simulada iniciada.", { id: "iniciando-chamada" });
       iniciarChamadaLocal(numero, "simulado");
+    } finally {
+      toast.dismiss("iniciando-chamada");
     }
   };
 
