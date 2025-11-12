@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Building2, Clock, PhoneCall, Search, User2, NotebookPen, RefreshCw } from "lucide-react";
+import { Building2, Clock, PhoneCall, Search, User2, NotebookPen, RefreshCw, PanelRightClose, PanelRightOpen } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -194,6 +194,7 @@ const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
   const [tabulacaoAtual, setTabulacaoAtual] = useState("");
   const [resumoTabulacao, setResumoTabulacao] = useState("");
   const [modoSimulado, setModoSimulado] = useState(false);
+  const [listaColapsada, setListaColapsada] = useState(false);
   
   const emChamada = chamadaAtiva !== null;
 
@@ -475,122 +476,151 @@ const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      <DialpadDiscagem
-          onIniciarChamada={(numero) => iniciarChamada(numero, "manual")}
-        onFinalizarChamada={prepararFinalizacao}
-        emChamada={emChamada}
-        disabled={finalizando}
-          numeroAtual={numeroDiscagem}
-          onNumeroChange={(valor) => {
-            setNumeroDiscagem(valor);
-            if (!emChamada) {
-              setContatoSelecionado(null);
-            }
-          }}
-        />
+      <div
+        className={cn(
+          "grid items-start gap-4",
+          listaColapsada
+            ? "lg:grid-cols-[minmax(0,380px)]"
+            : "lg:grid-cols-[minmax(0,380px)_minmax(0,320px)]"
+        )}
+      >
+        <div className="relative">
+          <DialpadDiscagem
+            onIniciarChamada={(numero) => iniciarChamada(numero, "manual")}
+            onFinalizarChamada={prepararFinalizacao}
+            emChamada={emChamada}
+            disabled={finalizando}
+            numeroAtual={numeroDiscagem}
+            onNumeroChange={(valor) => {
+              setNumeroDiscagem(valor);
+              if (!emChamada) {
+                setContatoSelecionado(null);
+              }
+            }}
+          />
+          {listaColapsada && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden lg:flex absolute top-4 right-4"
+              onClick={() => setListaColapsada(false)}
+            >
+              <PanelRightOpen className="h-4 w-4" />
+              <span className="sr-only">Mostrar lista</span>
+            </Button>
+          )}
+        </div>
 
-        <Card className="p-6 space-y-4">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <PhoneCall className="w-5 h-5 text-primary" />
-                Lista Telefônica
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Clique em um contato para iniciar uma chamada imediatamente.
-              </p>
+        {!listaColapsada && (
+          <Card className="flex h-full flex-col space-y-4 p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <PhoneCall className="h-5 w-5 text-primary" />
+                  Lista Telefônica
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Clique em um contato para iniciar uma chamada imediatamente.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant={origemContatos === "api" ? "secondary" : "outline"}
+                  className="uppercase tracking-wide"
+                >
+                  {origemContatos === "api" ? "Dados da empresa" : "Mock"}
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={carregarContatos}
+                  disabled={carregandoContatos}
+                  className="h-9 w-9"
+                >
+                  <RefreshCw className={cn("h-4 w-4", carregandoContatos && "animate-spin")} />
+                  <span className="sr-only">Atualizar contatos</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="hidden h-9 w-9 lg:flex"
+                  onClick={() => setListaColapsada(true)}
+                >
+                  <PanelRightClose className="h-4 w-4" />
+                  <span className="sr-only">Colapsar lista</span>
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge
-                variant={origemContatos === "api" ? "secondary" : "outline"}
-                className="uppercase tracking-wide"
-              >
-                {origemContatos === "api" ? "Dados da empresa" : "Mock"}
-              </Badge>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={carregarContatos}
-                disabled={carregandoContatos}
-                className="h-9 w-9"
-              >
-                <RefreshCw className={cn("h-4 w-4", carregandoContatos && "animate-spin")} />
-                <span className="sr-only">Atualizar contatos</span>
-              </Button>
+
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome, empresa ou telefone..."
+                className="pl-9"
+                value={filtroContato}
+                onChange={(event) => setFiltroContato(event.target.value)}
+              />
             </div>
-          </div>
 
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome, empresa ou telefone..."
-              className="pl-9"
-              value={filtroContato}
-              onChange={(event) => setFiltroContato(event.target.value)}
-            />
-          </div>
+            <ScrollArea className="flex-1 pr-2">
+              <div className="space-y-3">
+                {carregandoContatos && (
+                  <div className="py-6 text-center text-sm text-muted-foreground">
+                    Carregando contatos...
+                  </div>
+                )}
 
-          <ScrollArea className="h-72 pr-2">
-            <div className="space-y-3">
-              {carregandoContatos && (
-                <div className="py-6 text-center text-sm text-muted-foreground">
-                  Carregando contatos...
-                </div>
-              )}
+                {!carregandoContatos && contatosFiltrados.length === 0 && (
+                  <Card className="border-dashed p-6 text-center text-sm text-muted-foreground">
+                    Nenhum contato encontrado com esse filtro.
+                  </Card>
+                )}
 
-              {!carregandoContatos && contatosFiltrados.length === 0 && (
-                <Card className="border-dashed p-6 text-center text-sm text-muted-foreground">
-                  Nenhum contato encontrado com esse filtro.
-                </Card>
-              )}
-
-              {!carregandoContatos &&
-                contatosFiltrados.length > 0 &&
-                contatosFiltrados.map((contato) => {
-                  const selecionado = contatoSelecionado?.id === contato.id;
-                  return (
-                    <button
-                      key={contato.id}
-                      onClick={() => handleSelecionarContato(contato)}
-                      className={cn(
-                        "w-full text-left rounded-xl border p-4 transition-all",
-                        "hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                        selecionado && "border-primary bg-primary/10 shadow-sm"
-                      )}
-                      type="button"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                          <User2 className="w-4 h-4 text-primary" />
-                          {contato.nome}
+                {!carregandoContatos &&
+                  contatosFiltrados.length > 0 &&
+                  contatosFiltrados.map((contato) => {
+                    const selecionado = contatoSelecionado?.id === contato.id;
+                    return (
+                      <button
+                        key={contato.id}
+                        onClick={() => handleSelecionarContato(contato)}
+                        className={cn(
+                          "w-full text-left rounded-xl border p-4 transition-all",
+                          "hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                          selecionado && "border-primary bg-primary/10 shadow-sm"
+                        )}
+                        type="button"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                            <User2 className="h-4 w-4 text-primary" />
+                            {contato.nome}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary">{contato.segmento}</Badge>
+                            {contato.origem === "mock" && <Badge variant="outline">Mock</Badge>}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary">{contato.segmento}</Badge>
-                          {contato.origem === "mock" && (
-                            <Badge variant="outline">Mock</Badge>
-                          )}
+                        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                          <span className="font-mono text-sm text-foreground">{contato.numero}</span>
+                          <span className="flex items-center gap-1">
+                            <Building2 className="h-3 w-3" />
+                            {contato.empresa}
+                          </span>
                         </div>
-                      </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                        <span className="font-mono text-sm text-foreground">{contato.numero}</span>
-                        <span className="flex items-center gap-1">
-                          <Building2 className="w-3 h-3" />
-                          {contato.empresa}
-                        </span>
-                      </div>
-                      {contato.observacao && (
-                        <p className="mt-3 text-xs text-muted-foreground">
-                          <NotebookPen className="mr-1 inline-block h-3 w-3 text-primary" />
-                          {contato.observacao}
-                        </p>
-                      )}
-                    </button>
-                  );
-                })}
-            </div>
-          </ScrollArea>
-        </Card>
+                        {contato.observacao && (
+                          <p className="mt-3 text-xs text-muted-foreground">
+                            <NotebookPen className="mr-1 inline-block h-3 w-3 text-primary" />
+                            {contato.observacao}
+                          </p>
+                        )}
+                      </button>
+                    );
+                  })}
+              </div>
+            </ScrollArea>
+          </Card>
+        )}
       </div>
 
       {emChamada ? (
