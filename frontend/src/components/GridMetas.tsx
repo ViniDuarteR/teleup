@@ -51,7 +51,7 @@ const GridMetas = ({ metas }: GridMetasProps) => {
   };
 
   return (
-    <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+    <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-5">
       {metas.map((meta) => {
         const Icon = getIcon(meta.icone);
         const percentage = meta.meta > 0 ? (meta.atual / meta.meta) * 100 : 0;
@@ -60,41 +60,41 @@ const GridMetas = ({ metas }: GridMetasProps) => {
         return (
           <div 
             key={meta.id} 
-            className={`gaming-card p-6 rounded-lg transition-all duration-300 hover:scale-105 ${
+            className={`gaming-card p-4 lg:p-5 rounded-lg transition-all duration-300 hover:scale-105 ${
               isCompleted ? 'gaming-card-glow' : ''
             }`}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-lg bg-${meta.cor}/20`}>
-                <Icon className={`w-6 h-6 text-${meta.cor}`} />
+            <div className="flex items-center justify-between mb-3">
+              <div className={`p-2 lg:p-2.5 rounded-lg bg-${meta.cor}/20`}>
+                <Icon className={`w-5 h-5 lg:w-6 lg:h-6 text-${meta.cor}`} />
               </div>
               {isCompleted && (
                 <div className="text-success animate-pulse">
-                  <CheckCircle className="w-5 h-5" />
+                  <CheckCircle className="w-4 h-4 lg:w-5 lg:h-5" />
                 </div>
               )}
             </div>
             
-            <h3 className="font-semibold text-foreground mb-2">{meta.titulo}</h3>
+            <h3 className="font-semibold text-sm lg:text-base text-foreground mb-2">{meta.titulo}</h3>
             
-            <div className="space-y-3">
+            <div className="space-y-2 lg:space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-2xl font-bold text-foreground">
+                <span className="text-xl lg:text-2xl font-bold text-foreground">
                   {formatValue(meta.atual, meta.formato)}
                 </span>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs lg:text-sm text-muted-foreground">
                   / {formatValue(meta.meta, meta.formato)}
                 </span>
               </div>
               
-              <div className="space-y-2">
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="space-y-1.5 lg:space-y-2">
+                <div className="h-1.5 lg:h-2 bg-muted rounded-full overflow-hidden">
                   <div 
                     className={`h-full ${getProgressClass(meta.cor)} transition-all duration-500`}
                     style={{ width: `${Math.min(percentage, 100)}%` }}
                   />
                 </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
+                <div className="flex justify-between text-[10px] lg:text-xs text-muted-foreground">
                   <span>{isNaN(percentage) ? '0' : percentage.toFixed(0)}% completo</span>
                   <span className={isCompleted ? 'text-success font-semibold' : ''}>
                     {isCompleted ? 'META ATINGIDA!' : `Faltam ${Math.max(0, meta.meta - meta.atual)}`}

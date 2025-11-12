@@ -125,28 +125,28 @@ const DialpadDiscagem = ({
 
   return (
     <Card className={cn(
-      "p-6 space-y-4 transition-all duration-300",
+      "p-4 lg:p-6 space-y-3 lg:space-y-4 transition-all duration-300 h-full flex flex-col",
       emChamada && "ring-2 ring-success shadow-lg shadow-success/20"
     )}>
       {/* Título do componente */}
       <div className="text-center">
-        <h3 className="text-lg font-semibold text-foreground mb-2">
+        <h3 className="text-base lg:text-lg font-semibold text-foreground mb-1">
           📞 Sistema de Discagem
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs lg:text-sm text-muted-foreground">
           Digite o número e clique em "Ligar"
         </p>
       </div>
 
       {/* Display do número */}
-      <div className="min-h-16 flex items-center justify-center">
+      <div className="min-h-12 lg:min-h-14 flex items-center justify-center">
         <div className="text-center w-full">
           {emChamada ? (
-            <div className="space-y-2">
-              <div className="text-sm text-muted-foreground animate-pulse">
+            <div className="space-y-1">
+              <div className="text-xs lg:text-sm text-muted-foreground animate-pulse">
                 Chamada ativa
               </div>
-              <div className="text-2xl font-bold text-success">
+              <div className="text-xl lg:text-2xl font-bold text-success">
                 {numero || "Sem número"}
               </div>
             </div>
@@ -163,7 +163,7 @@ const DialpadDiscagem = ({
                 placeholder="Digite o número"
                 disabled={disabled}
                 className={cn(
-                  "w-full text-center text-2xl font-mono font-bold bg-transparent",
+                  "w-full text-center text-xl lg:text-2xl font-mono font-bold bg-transparent",
                   "border-none outline-none focus:ring-0",
                   "text-foreground placeholder:text-muted-foreground/50",
                   "disabled:opacity-50 disabled:cursor-not-allowed"
@@ -187,7 +187,7 @@ const DialpadDiscagem = ({
       </div>
 
       {/* Grid do teclado */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 lg:gap-3 flex-1">
         {teclas.map((tecla) => (
           <Button
             key={tecla.numero}
@@ -196,15 +196,15 @@ const DialpadDiscagem = ({
             onClick={() => adicionarNumero(tecla.numero)}
             disabled={emChamada || disabled}
             className={cn(
-              "h-16 flex flex-col items-center justify-center",
+              "h-12 lg:h-14 flex flex-col items-center justify-center",
               "hover:bg-primary/10 hover:border-primary transition-all",
               "active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed",
               animatingKey === tecla.numero && "scale-95 bg-primary/20 border-primary"
             )}
           >
-            <span className="text-2xl font-bold">{tecla.numero}</span>
+            <span className="text-lg lg:text-xl font-bold">{tecla.numero}</span>
             {tecla.letras && (
-              <span className="text-[10px] text-muted-foreground tracking-wider">
+              <span className="text-[9px] lg:text-[10px] text-muted-foreground tracking-wider">
                 {tecla.letras}
               </span>
             )}
@@ -213,7 +213,7 @@ const DialpadDiscagem = ({
       </div>
 
       {/* Botões de ação */}
-      <div className="grid grid-cols-2 gap-3 pt-2">
+      <div className="grid grid-cols-2 gap-2 lg:gap-3 pt-1">
         {emChamada ? (
           <>
             <Button
@@ -221,9 +221,9 @@ const DialpadDiscagem = ({
               size="lg"
               onClick={removerUltimo}
               disabled={disabled}
-              className="h-14"
+              className="h-11 lg:h-12 text-sm"
             >
-              <Delete className="w-5 h-5 mr-2" />
+              <Delete className="w-4 h-4 lg:w-5 lg:h-5 mr-1 lg:mr-2" />
               Apagar
             </Button>
             <Button
@@ -231,9 +231,9 @@ const DialpadDiscagem = ({
               size="lg"
               onClick={finalizar}
               disabled={disabled}
-              className="h-14 btn-gaming bg-destructive hover:bg-destructive/90"
+              className="h-11 lg:h-12 btn-gaming bg-destructive hover:bg-destructive/90 text-sm"
             >
-              <PhoneOff className="w-5 h-5 mr-2" />
+              <PhoneOff className="w-4 h-4 lg:w-5 lg:h-5 mr-1 lg:mr-2" />
               Finalizar
             </Button>
           </>
@@ -244,9 +244,9 @@ const DialpadDiscagem = ({
               size="lg"
               onClick={removerUltimo}
               disabled={!numero || disabled}
-              className="h-14"
+              className="h-11 lg:h-12 text-sm"
             >
-              <Delete className="w-5 h-5 mr-2" />
+              <Delete className="w-4 h-4 lg:w-5 lg:h-5 mr-1 lg:mr-2" />
               Apagar
             </Button>
             <Button
@@ -255,7 +255,7 @@ const DialpadDiscagem = ({
               onClick={iniciarChamada}
               disabled={!numero || numero.length < 8 || disabled || isCalling}
               className={cn(
-                "h-14 btn-gaming relative overflow-hidden",
+                "h-11 lg:h-12 btn-gaming relative overflow-hidden text-sm",
                 numero.length >= 8 && !isCalling && "bg-success hover:bg-success/90 pulse-glow",
                 isCalling && "bg-primary ring-4 ring-primary/50 ring-animation"
               )}

@@ -473,16 +473,16 @@ const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="h-full flex flex-col space-y-4">
       <div
         className={cn(
-          "grid items-start gap-6",
+          "grid items-stretch gap-4 flex-1 min-h-0",
           listaColapsada
             ? "lg:grid-cols-[minmax(0,1fr)]"
-            : "lg:grid-cols-[minmax(0,1fr)_360px]"
+            : "lg:grid-cols-[minmax(0,1fr)_380px]"
         )}
       >
-        <div className="relative">
+        <div className="relative flex flex-col min-h-0">
           <DialpadDiscagem
             onIniciarChamada={(numero) => iniciarChamada(numero, "manual")}
             onFinalizarChamada={prepararFinalizacao}
@@ -510,15 +510,15 @@ const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
         </div>
 
         {!listaColapsada && (
-          <Card className="relative flex h-full flex-col overflow-hidden border border-primary/10 bg-gradient-to-br from-[#181531] via-[#14102b] to-[#0f0d24] p-0 shadow-lg">
-            <div className="relative flex items-start justify-between gap-4 border-b border-white/5 bg-white/5 px-6 pb-5 pt-6">
+          <Card className="relative flex flex-col overflow-hidden border border-primary/10 bg-gradient-to-br from-[#181531] via-[#14102b] to-[#0f0d24] p-0 shadow-lg max-h-[calc(100vh-280px)]">
+            <div className="relative flex items-start justify-between gap-4 border-b border-white/5 bg-white/5 px-4 lg:px-6 pb-3 lg:pb-4 pt-4 lg:pt-5 flex-shrink-0">
               <div className="space-y-1">
-                <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-primary">
-                  <PhoneCall className="h-3.5 w-3.5" />
+                <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-2 lg:px-3 py-0.5 lg:py-1 text-[10px] lg:text-xs font-semibold uppercase tracking-widest text-primary">
+                  <PhoneCall className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
                   Contatos
                 </span>
-                <h3 className="text-lg font-semibold text-foreground">Lista Telefônica</h3>
-                <p className="text-xs text-muted-foreground">
+                <h3 className="text-base lg:text-lg font-semibold text-foreground">Lista Telefônica</h3>
+                <p className="text-[10px] lg:text-xs text-muted-foreground">
                   Clique em um contato para iniciar uma chamada imediatamente.
                 </p>
               </div>
@@ -551,20 +551,20 @@ const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
               </div>
             </div>
 
-            <div className="border-b border-white/5 px-6 pb-5 pt-4">
+            <div className="border-b border-white/5 px-4 lg:px-6 pb-3 lg:pb-4 pt-3 lg:pt-4 flex-shrink-0">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
+                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 lg:h-4 lg:w-4 -translate-y-1/2 text-muted-foreground/70" />
                 <Input
                   placeholder="Buscar por nome, empresa ou telefone..."
-                  className="rounded-2xl border border-white/10 bg-white/5 pl-10 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary/60 focus:ring-2 focus:ring-primary/30"
+                  className="rounded-xl lg:rounded-2xl border border-white/10 bg-white/5 pl-9 lg:pl-10 text-xs lg:text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary/60 focus:ring-2 focus:ring-primary/30 h-9 lg:h-10"
                   value={filtroContato}
                   onChange={(event) => setFiltroContato(event.target.value)}
                 />
               </div>
             </div>
 
-            <ScrollArea className="flex-1 px-6 pb-6">
-              <div className="space-y-3 pb-2">
+            <ScrollArea className="flex-1 px-4 lg:px-6 pb-4 lg:pb-6 max-h-[500px] min-h-0">
+              <div className="space-y-2 lg:space-y-3 pb-2">
                 {carregandoContatos && (
                   <div className="rounded-2xl border border-white/10 bg-white/5 py-6 text-center text-sm text-muted-foreground">
                     Carregando contatos...
