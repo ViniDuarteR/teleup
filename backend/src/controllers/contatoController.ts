@@ -11,11 +11,83 @@ const CONTATOS_PADRAO = [
     segmento: 'Varejo',
     observacao: 'Cliente ativo - nível ouro'
   },
-    { nome: 'Marcos Lima', numero: '21981234567', empresa: 'TechPrime', segmento: 'Tecnologia', observacao: 'Aguardando proposta comercial' },
-    { nome: 'Cláudia Ramos', numero: '31999887766', empresa: 'HealthCare Plus', segmento: 'Saúde', observacao: 'Solicitou demonstração do produto' },
-    { nome: 'Eduardo Santos', numero: '41988776655', empresa: 'AutoMax', segmento: 'Automotivo', observacao: 'Retornar com opções de financiamento' },
-    { nome: 'Fernanda Oliveira', numero: '51977665544', empresa: 'GreenFoods', segmento: 'Alimentos', observacao: 'Cliente novo – indicado pelo marketing' },
-    { nome: 'João Pedro', numero: '71966554433', empresa: 'SolarUp', segmento: 'Energia', observacao: 'Interessado no plano premium' }
+  {
+    nome: 'Marcos Lima',
+    numero: '21981234567',
+    empresa: 'TechPrime',
+    segmento: 'Tecnologia',
+    observacao: 'Aguardando proposta comercial'
+  },
+  {
+    nome: 'Cláudia Ramos',
+    numero: '31999887766',
+    empresa: 'HealthCare Plus',
+    segmento: 'Saúde',
+    observacao: 'Solicitou demonstração do produto'
+  },
+  {
+    nome: 'Eduardo Santos',
+    numero: '41988776655',
+    empresa: 'AutoMax',
+    segmento: 'Automotivo',
+    observacao: 'Retornar com opções de financiamento'
+  },
+  {
+    nome: 'Fernanda Oliveira',
+    numero: '51977665544',
+    empresa: 'GreenFoods',
+    segmento: 'Alimentos',
+    observacao: 'Cliente novo – indicado pelo marketing'
+  },
+  {
+    nome: 'João Pedro',
+    numero: '71966554433',
+    empresa: 'SolarUp',
+    segmento: 'Energia',
+    observacao: 'Interessado no plano premium'
+  },
+  {
+    nome: 'Luciana Pereira',
+    numero: '11999887711',
+    empresa: 'Casa Verde',
+    segmento: 'Construção',
+    observacao: 'Solicitou catálogo atualizado'
+  },
+  {
+    nome: 'Rafael Gomes',
+    numero: '21988776644',
+    empresa: 'FitNow',
+    segmento: 'Saúde e Fitness',
+    observacao: 'Interessado em plano corporativo'
+  },
+  {
+    nome: 'Patrícia Nunes',
+    numero: '31977666533',
+    empresa: 'MegaTech',
+    segmento: 'Tecnologia',
+    observacao: 'Aguardando proposta de upgrade'
+  },
+  {
+    nome: 'Carlos Alberto',
+    numero: '41966554422',
+    empresa: 'AutoFrota',
+    segmento: 'Logística',
+    observacao: 'Renovação de contrato em análise'
+  },
+  {
+    nome: 'Juliana Batista',
+    numero: '51955443322',
+    empresa: 'EcoFoods',
+    segmento: 'Alimentação',
+    observacao: 'Aguardando visita técnica'
+  },
+  {
+    nome: 'Marcelo Ribeiro',
+    numero: '71944332211',
+    empresa: 'EnergiaMais',
+    segmento: 'Energia',
+    observacao: 'Solicitou simulação de economia'
+  }
 ];
 
 const obterEmpresaId = async (req: AuthRequest): Promise<mongoose.Types.ObjectId | null> => {
@@ -53,6 +125,19 @@ export const listarContatosDiscador = async (
       }));
       await Contato.insertMany(contatosSeed);
       contatos = await Contato.find({ empresa_id: empresaId }).sort({ nome: 1 });
+    } else if (contatos.length < CONTATOS_PADRAO.length) {
+      const numerosExistentes = new Set(contatos.map((contato) => contato.numero));
+      const faltantes = CONTATOS_PADRAO.filter((contato) => !numerosExistentes.has(contato.numero));
+      if (faltantes.length > 0) {
+        await Contato.insertMany(
+          faltantes.map((contato) => ({
+            ...contato,
+            empresa_id: empresaId,
+            origem: 'default'
+          }))
+        );
+        contatos = await Contato.find({ empresa_id: empresaId }).sort({ nome: 1 });
+      }
     }
 
     res.json({
