@@ -9,11 +9,29 @@ export const iniciarChamada = async (req: AuthRequest, res: Response<ApiResponse
     const { numero_cliente, tipo_chamada = 'Entrada' } = req.body as IniciarChamadaRequest;
     const operadorId = new mongoose.Types.ObjectId(req.operador.id);
 
-    // Verificar se operador está disponível
-    if (req.operador.status_operacional !== 'Aguardando Chamada') {
+    if (!numero_cliente) {
       res.status(400).json({
         success: false,
-        message: 'Operador deve estar aguardando chamada para iniciar uma nova'
+        message: 'Número do cliente é obrigatório para iniciar a chamada'
+      });
+      return;
+    }
+
+    // Verificar se já existe uma chamada em andamento para evitar duplicidade
+    const chamadaEmAndamento = await Chamada.findOne({
+      operador_id: operadorId,
+      status: 'Em Andamento'
+    });
+
+    if (chamadaEmAndamento) {
+      res.json({
+        success: true,
+        message: 'Chamada já estava em andamento',
+        data: {
+          chamada_id: chamadaEmAndamento._id.toString(),
+          operador_id: req.operador.id,
+          status: 'Em Chamada'
+        }
       });
       return;
     }
@@ -32,6 +50,7 @@ export const iniciarChamada = async (req: AuthRequest, res: Response<ApiResponse
       { _id: operadorId },
       { status_operacional: 'Em Chamada' }
     );
+    req.operador.status_operacional = 'Em Chamada';
 
     res.json({
       success: true,
