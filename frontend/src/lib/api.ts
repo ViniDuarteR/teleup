@@ -131,6 +131,14 @@ export const api = {
       body: JSON.stringify({ recompensa_id: recompensaId }),
     }),
 
+  // Contatos
+  getContatosDiscador: () => apiRequest('/contatos/discador'),
+  criarContato: (data: Record<string, unknown>) =>
+    apiRequest('/contatos', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
   // Chamadas
   iniciarChamada: (numero: string) =>
     apiRequest('/chamadas/iniciar', {

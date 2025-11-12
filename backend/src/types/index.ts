@@ -7,6 +7,7 @@ export interface Operador {
   email: string;
   senha: string;
   tipo: 'operador' | 'gestor';
+  empresa_id?: string;
   avatar?: string;
   nivel: number;
   xp_atual: number;
@@ -32,6 +33,16 @@ export interface Chamada {
   resolvida: boolean;
   observacoes?: string;
   pontos_ganhos: number;
+}
+
+export interface Contato {
+  id: string;
+  nome: string;
+  numero: string;
+  empresa: string;
+  segmento: string;
+  observacao?: string;
+  origem?: string;
 }
 
 export interface Meta {

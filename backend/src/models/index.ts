@@ -7,4 +7,5 @@ export { Recompensa, IRecompensa } from './Recompensa';
 export { Meta, IMeta } from './Meta';
 export { ProgressoMeta, IProgressoMeta } from './ProgressoMeta';
 export { Compra, ICompra } from './Compra';
+export { Contato, IContato } from './Contato';
 

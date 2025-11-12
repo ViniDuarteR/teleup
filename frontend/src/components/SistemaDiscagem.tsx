@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/useAuth";
 import { toast } from "sonner";
 import DialpadDiscagem from "./DialpadDiscagem";
@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Building2, Clock, PhoneCall, Search, User2, NotebookPen } from "lucide-react";
+import { Building2, Clock, PhoneCall, Search, User2, NotebookPen, RefreshCw } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -29,13 +29,14 @@ interface ChamadaAtiva {
   inicio: Date;
 }
 
-interface ContatoMockado {
-  id: number;
+interface ContatoDiscador {
+  id: string;
   nome: string;
   numero: string;
   empresa: string;
   segmento: string;
   observacao?: string;
+  origem?: string;
 }
 
 const TABULACOES_PADRAO = [
@@ -48,54 +49,60 @@ const TABULACOES_PADRAO = [
   "Contato indisponível",
 ];
 
-const CONTATOS_MOCKADOS: ContatoMockado[] = [
+const CONTATOS_PADRAO: ContatoDiscador[] = [
   {
-    id: 1,
+    id: "mock-1",
     nome: "Ana Souza",
     numero: "11987654321",
     empresa: "Mercado São João",
     segmento: "Varejo",
     observacao: "Cliente ativo - nível ouro",
+    origem: "mock",
   },
   {
-    id: 2,
+    id: "mock-2",
     nome: "Marcos Lima",
     numero: "21981234567",
     empresa: "TechPrime",
     segmento: "Tecnologia",
     observacao: "Aguardando proposta comercial",
+    origem: "mock",
   },
   {
-    id: 3,
+    id: "mock-3",
     nome: "Cláudia Ramos",
     numero: "31999887766",
     empresa: "HealthCare Plus",
     segmento: "Saúde",
     observacao: "Solicitou demonstração do produto",
+    origem: "mock",
   },
   {
-    id: 4,
+    id: "mock-4",
     nome: "Eduardo Santos",
     numero: "41988776655",
     empresa: "AutoMax",
     segmento: "Automotivo",
     observacao: "Retornar com opções de financiamento",
+    origem: "mock",
   },
   {
-    id: 5,
+    id: "mock-5",
     nome: "Fernanda Oliveira",
     numero: "51977665544",
     empresa: "GreenFoods",
     segmento: "Alimentos",
     observacao: "Cliente novo – indicado pelo marketing",
+    origem: "mock",
   },
   {
-    id: 6,
+    id: "mock-6",
     nome: "João Pedro",
     numero: "71966554433",
     empresa: "SolarUp",
     segmento: "Energia",
     observacao: "Interessado no plano premium",
+    origem: "mock",
   },
 ];
 
@@ -122,23 +129,74 @@ const SistemaDiscagem = () => {
   const [finalizando, setFinalizando] = useState(false);
   const [numeroDiscagem, setNumeroDiscagem] = useState("");
   const [filtroContato, setFiltroContato] = useState("");
-  const [contatoSelecionado, setContatoSelecionado] = useState<ContatoMockado | null>(null);
+  const [contatos, setContatos] = useState<ContatoDiscador[]>(CONTATOS_PADRAO);
+  const [origemContatos, setOrigemContatos] = useState<"api" | "mock">("mock");
+  const [carregandoContatos, setCarregandoContatos] = useState(false);
+  const [contatoSelecionado, setContatoSelecionado] = useState<ContatoDiscador | null>(null);
   const [tabulacaoAtual, setTabulacaoAtual] = useState("");
   const [resumoTabulacao, setResumoTabulacao] = useState("");
   const [modoSimulado, setModoSimulado] = useState(false);
   
   const emChamada = chamadaAtiva !== null;
 
+  const carregarContatos = useCallback(async () => {
+    if (!token) {
+      setContatos(CONTATOS_PADRAO);
+      setOrigemContatos("mock");
+      return;
+    }
+
+    setCarregandoContatos(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/contatos/discador`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+
+      if (data.success && Array.isArray(data.data?.contatos) && data.data.contatos.length > 0) {
+        setContatos(
+          data.data.contatos.map((contato: ContatoDiscador) => ({
+            id: contato.id,
+            nome: contato.nome,
+            numero: contato.numero,
+            empresa: contato.empresa,
+            segmento: contato.segmento,
+            observacao: contato.observacao,
+            origem: contato.origem ?? "api",
+          })),
+        );
+        setOrigemContatos("api");
+      } else {
+        setContatos(CONTATOS_PADRAO);
+        setOrigemContatos("mock");
+      }
+    } catch (error) {
+      console.error("Erro ao carregar contatos do discador:", error);
+      toast.warning("Não foi possível carregar a lista de contatos. Usando dados padrão.");
+      setContatos(CONTATOS_PADRAO);
+      setOrigemContatos("mock");
+    } finally {
+      setCarregandoContatos(false);
+    }
+  }, [token]);
+
   const contatosFiltrados = useMemo(() => {
     const termo = filtroContato.trim().toLowerCase();
-    if (!termo) return CONTATOS_MOCKADOS;
-    return CONTATOS_MOCKADOS.filter((contato) =>
+    if (!termo) return contatos;
+    return contatos.filter((contato) =>
       [contato.nome, contato.numero, contato.empresa, contato.segmento]
         .join(" ")
         .toLowerCase()
         .includes(termo)
     );
-  }, [filtroContato]);
+  }, [filtroContato, contatos]);
+
+  useEffect(() => {
+    carregarContatos();
+  }, [carregarContatos]);
 
   useEffect(() => {
     if (!chamadaAtiva) {
@@ -170,7 +228,7 @@ const SistemaDiscagem = () => {
     }
   };
 
-  const iniciarChamada = async (numero: string, origem: "manual" | "contato" = "manual", contato?: ContatoMockado) => {
+  const iniciarChamada = async (numero: string, origem: "manual" | "contato" = "manual", contato?: ContatoDiscador) => {
     if (emChamada) {
       toast.error("Finalize a chamada atual antes de iniciar outra");
       return;
@@ -334,12 +392,14 @@ const SistemaDiscagem = () => {
     setMostrarModalAtiva(true);
   };
 
-  const handleSelecionarContato = (contato: ContatoMockado) => {
+  const handleSelecionarContato = (contato: ContatoDiscador) => {
     if (emChamada) {
       toast.error("Finalize a chamada atual antes de iniciar outra");
       return;
     }
 
+    setContatoSelecionado(contato);
+    setNumeroDiscagem(contato.numero);
     iniciarChamada(contato.numero, "contato", contato);
   };
 
@@ -365,15 +425,30 @@ const SistemaDiscagem = () => {
             <div>
               <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
                 <PhoneCall className="w-5 h-5 text-primary" />
-                Lista Telefônica Mock
+                Lista Telefônica
               </h3>
               <p className="text-sm text-muted-foreground">
-                Clique em um contato para iniciar uma chamada simulada ou registrar o atendimento.
+                Clique em um contato para iniciar uma chamada imediatamente.
               </p>
             </div>
-            <Badge variant="outline" className="uppercase tracking-wide">
-              Mock
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge
+                variant={origemContatos === "api" ? "secondary" : "outline"}
+                className="uppercase tracking-wide"
+              >
+                {origemContatos === "api" ? "Dados da empresa" : "Mock"}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={carregarContatos}
+                disabled={carregandoContatos}
+                className="h-9 w-9"
+              >
+                <RefreshCw className={cn("h-4 w-4", carregandoContatos && "animate-spin")} />
+                <span className="sr-only">Atualizar contatos</span>
+              </Button>
+            </div>
           </div>
 
           <div className="relative">
@@ -388,48 +463,61 @@ const SistemaDiscagem = () => {
 
           <ScrollArea className="h-72 pr-2">
             <div className="space-y-3">
-              {contatosFiltrados.map((contato) => {
-                const selecionado = contatoSelecionado?.id === contato.id && emChamada;
-                return (
-                  <button
-                    key={contato.id}
-                    onClick={() => handleSelecionarContato(contato)}
-                    className={cn(
-                      "w-full text-left rounded-xl border p-4 transition-all",
-                      "hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                      selecionado && "border-primary bg-primary/10 shadow-sm"
-                    )}
-                    type="button"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                        <User2 className="w-4 h-4 text-primary" />
-                        {contato.nome}
-                      </div>
-                      <Badge variant="secondary">{contato.segmento}</Badge>
-                    </div>
-                    <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                      <span className="font-mono text-sm text-foreground">{contato.numero}</span>
-                      <span className="flex items-center gap-1">
-                        <Building2 className="w-3 h-3" />
-                        {contato.empresa}
-                      </span>
-                    </div>
-                    {contato.observacao && (
-                      <p className="mt-3 text-xs text-muted-foreground">
-                        <NotebookPen className="mr-1 inline-block h-3 w-3 text-primary" />
-                        {contato.observacao}
-                      </p>
-                    )}
-                  </button>
-                );
-              })}
+              {carregandoContatos && (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  Carregando contatos...
+                </div>
+              )}
 
-              {contatosFiltrados.length === 0 && (
+              {!carregandoContatos && contatosFiltrados.length === 0 && (
                 <Card className="border-dashed p-6 text-center text-sm text-muted-foreground">
                   Nenhum contato encontrado com esse filtro.
                 </Card>
               )}
+
+              {!carregandoContatos &&
+                contatosFiltrados.length > 0 &&
+                contatosFiltrados.map((contato) => {
+                  const selecionado = contatoSelecionado?.id === contato.id;
+                  return (
+                    <button
+                      key={contato.id}
+                      onClick={() => handleSelecionarContato(contato)}
+                      className={cn(
+                        "w-full text-left rounded-xl border p-4 transition-all",
+                        "hover:border-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                        selecionado && "border-primary bg-primary/10 shadow-sm"
+                      )}
+                      type="button"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                          <User2 className="w-4 h-4 text-primary" />
+                          {contato.nome}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">{contato.segmento}</Badge>
+                          {contato.origem === "mock" && (
+                            <Badge variant="outline">Mock</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                        <span className="font-mono text-sm text-foreground">{contato.numero}</span>
+                        <span className="flex items-center gap-1">
+                          <Building2 className="w-3 h-3" />
+                          {contato.empresa}
+                        </span>
+                      </div>
+                      {contato.observacao && (
+                        <p className="mt-3 text-xs text-muted-foreground">
+                          <NotebookPen className="mr-1 inline-block h-3 w-3 text-primary" />
+                          {contato.observacao}
+                        </p>
+                      )}
+                    </button>
+                  );
+                })}
             </div>
           </ScrollArea>
         </Card>

@@ -42,7 +42,8 @@ export const authenticateToken = async (
         nome: gestor.nome,
         email: gestor.email,
         tipo: 'gestor',
-        status: gestor.status
+        status: gestor.status,
+        empresa_id: gestor.empresa_id?.toString()
       } as any;
       req.user = {
         id: gestor._id.toString(),
@@ -75,7 +76,8 @@ export const authenticateToken = async (
         tempo_online: operador.tempo_online,
         avatar: operador.avatar,
         data_criacao: operador.data_criacao,
-        data_atualizacao: operador.data_atualizacao
+        data_atualizacao: operador.data_atualizacao,
+        empresa_id: operador.empresa_id.toString()
       } as any;
       req.user = {
         id: operador._id.toString(),

@@ -24,6 +24,7 @@ import empresasRoutes from './routes/empresas';
 import cadastroEmpresaRoutes from './routes/cadastroEmpresa';
 import setupRoutes from './routes/setup';
 import metasRoutes from './routes/metas';
+import contatosRoutes from './routes/contatos';
 
 // Importar tipos
 import { SocketData } from './types';
@@ -129,6 +130,7 @@ app.use('/api/gestor-auth', gestorAuthRoutes);
 app.use('/api/gestores', gestoresRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/recompensas', recompensasRoutes);
+app.use('/api/contatos', contatosRoutes);
 app.use('/api/empresa-auth', empresaAuthRoutes);
 app.use('/api/empresas', empresasRoutes);
 app.use('/api/setup', setupRoutes);
