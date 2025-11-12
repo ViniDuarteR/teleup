@@ -315,7 +315,7 @@ const DashboardOperador = () => {
         setIsLoading(false);
       }
     }
-  }, [token, updateUser]);
+  }, [token, updateUser, user]);
 
   useEffect(() => {
     buscarDadosDashboard();

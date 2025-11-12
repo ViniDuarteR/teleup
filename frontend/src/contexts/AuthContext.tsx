@@ -8,6 +8,21 @@ interface AuthProviderProps {
 }
 
 
+const normalizeAvatar = (avatar?: string) => {
+  if (!avatar) return undefined;
+  if (avatar.startsWith('http://') || avatar.startsWith('https://')) return avatar;
+  const base = API_BASE_URL.replace(/\/$/, '');
+  return `${base}/${avatar.replace(/^\//, '')}`;
+};
+
+const withNormalizedAvatar = (userData: User | null): User | null => {
+  if (!userData) return null;
+  return {
+    ...userData,
+    avatar: normalizeAvatar(userData.avatar),
+  };
+};
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -20,7 +35,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     if (savedToken && savedUser) {
       setToken(savedToken);
-      setUser(JSON.parse(savedUser));
+      setUser(withNormalizedAvatar(JSON.parse(savedUser)));
     }
     setIsLoading(false);
   }, []);
@@ -65,10 +80,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 userData.tipo = 'operador';
               }
               
+              const normalizedUser = withNormalizedAvatar(userData);
+
               setToken(newToken);
-              setUser(userData);
+              setUser(normalizedUser);
               localStorage.setItem('teleup_token', newToken);
-              localStorage.setItem('teleup_user', JSON.stringify(userData));
+              localStorage.setItem('teleup_user', JSON.stringify(normalizedUser));
               return true;
             }
           }
@@ -110,8 +127,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const updateUser = (updatedUser: User) => {
-    setUser(updatedUser);
-    localStorage.setItem('teleup_user', JSON.stringify(updatedUser));
+    const normalizedUser = withNormalizedAvatar(updatedUser);
+    setUser(normalizedUser);
+    localStorage.setItem('teleup_user', JSON.stringify(normalizedUser));
   };
 
   const isAuthenticated = !!token && !!user;
