@@ -30,11 +30,6 @@
       "src": "/(.*)",
       "dest": "frontend/index.html"
     }
-  ],
-  "functions": {
-    "backend/dist/index.js": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }
 
