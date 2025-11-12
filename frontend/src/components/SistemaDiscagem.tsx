@@ -312,8 +312,6 @@ const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
     try {
       toast.loading("Iniciando chamada...", { id: "iniciando-chamada" });
 
-      toast.loading("Iniciando chamada...", { id: "iniciando-chamada" });
-
       const response = await fetch(`${API_BASE_URL}/api/chamadas/iniciar`, {
         method: "POST",
         headers: {

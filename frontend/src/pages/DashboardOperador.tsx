@@ -335,7 +335,7 @@ const DashboardOperador = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
+        <div className="space-y-4 text-center">
           <p className="text-muted-foreground">Usuário não encontrado</p>
         </div>
       </div>
@@ -344,27 +344,22 @@ const DashboardOperador = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header fixo */}
       <Header operador={user} />
-      
-      {/* Layout principal */}
-      <div className="flex gap-6 p-6 pt-24">
-        {/* Conteúdo principal */}
-        <div className="flex-1 space-y-6">
-          {/* Grid de metas */}
-          <GridMetas metas={metas} />
-          
-          {/* Sistema de discagem */}
-          <SistemaDiscagem onAtualizarDashboard={() => buscarDadosDashboard(false)} />
-        </div>
-        
-        {/* Painel lateral de gamificação */}
-        <div className="w-80">
-          <PainelGamificacao
-            missoes={missoes}
-            conquistas={conquistas}
-            pontos={pontosOperador}
-          />
+
+      <div className="px-6 pb-12 pt-24">
+        <div className="mx-auto grid max-w-[1400px] gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="space-y-6">
+            <GridMetas metas={metas} />
+            <SistemaDiscagem onAtualizarDashboard={() => buscarDadosDashboard(false)} />
+          </div>
+
+          <aside className="space-y-6">
+            <PainelGamificacao
+              missoes={missoes}
+              conquistas={conquistas}
+              pontos={pontosOperador}
+            />
+          </aside>
         </div>
       </div>
     </div>
