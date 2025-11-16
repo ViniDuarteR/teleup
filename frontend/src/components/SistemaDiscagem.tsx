@@ -198,6 +198,13 @@ const SistemaDiscagem = ({ onAtualizarDashboard }: SistemaDiscagemProps) => {
   
   const emChamada = chamadaAtiva !== null;
 
+  // Garantir que o modal da chamada ativa seja aberto sempre que houver uma chamada
+  useEffect(() => {
+    if (chamadaAtiva && !mostrarModalAtiva && !mostrarFormFinalizar) {
+      setMostrarModalAtiva(true);
+    }
+  }, [chamadaAtiva, mostrarModalAtiva, mostrarFormFinalizar]);
+
   const carregarContatos = useCallback(async () => {
     if (!token) {
       setContatos(CONTATOS_PADRAO);
